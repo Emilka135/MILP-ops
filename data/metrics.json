@@ -1,0 +1,1152 @@
+{
+  "generated_at": "2026-10-13T16:18:18+03:00",
+  "sources": {
+    "appointments": "C:\\VS Code Proj\\HACKTONE\\data\\raw\\appointments.csv",
+    "calls": "C:\\VS Code Proj\\HACKTONE\\data\\raw\\calls.csv"
+  },
+  "period": {
+    "appointments_from": "25.03.2026",
+    "appointments_to": "24.09.2026",
+    "appointments_days": 154,
+    "calls_from": "01.06.2026",
+    "calls_to": "31.08.2026",
+    "calls_days": 92
+  },
+  "calls": {
+    "total": 17772,
+    "period_from": "01.06.2026",
+    "period_to": "31.08.2026",
+    "days": 92,
+    "months": 3,
+    "calls_per_month": 5924,
+    "by_result": {
+      "записан": 7646,
+      "справка": 4898,
+      "перевод": 1541,
+      "пропущен": 3687
+    },
+    "by_result_share": {
+      "записан": 0.4302,
+      "справка": 0.2756,
+      "перевод": 0.0867,
+      "пропущен": 0.2075
+    },
+    "automation_share": 0.7058,
+    "escalation_share": 0.0867,
+    "missed": {
+      "total": 3687,
+      "share": 0.2075,
+      "per_day_mean": 40.1,
+      "by_hour": [
+        {
+          "hour": 7,
+          "total": 357,
+          "missed": 357,
+          "missed_share": 1.0,
+          "записан": 0,
+          "справка": 0,
+          "перевод": 0,
+          "пропущен": 357
+        },
+        {
+          "hour": 8,
+          "total": 1909,
+          "missed": 405,
+          "missed_share": 0.2122,
+          "записан": 822,
+          "справка": 524,
+          "перевод": 158,
+          "пропущен": 405
+        },
+        {
+          "hour": 9,
+          "total": 2414,
+          "missed": 551,
+          "missed_share": 0.2283,
+          "записан": 1026,
+          "справка": 627,
+          "перевод": 210,
+          "пропущен": 551
+        },
+        {
+          "hour": 10,
+          "total": 2073,
+          "missed": 447,
+          "missed_share": 0.2156,
+          "записан": 875,
+          "справка": 568,
+          "перевод": 183,
+          "пропущен": 447
+        },
+        {
+          "hour": 11,
+          "total": 1720,
+          "missed": 196,
+          "missed_share": 0.114,
+          "записан": 842,
+          "справка": 514,
+          "перевод": 168,
+          "пропущен": 196
+        },
+        {
+          "hour": 12,
+          "total": 1394,
+          "missed": 168,
+          "missed_share": 0.1205,
+          "записан": 644,
+          "справка": 453,
+          "перевод": 129,
+          "пропущен": 168
+        },
+        {
+          "hour": 13,
+          "total": 1138,
+          "missed": 137,
+          "missed_share": 0.1204,
+          "записан": 564,
+          "справка": 323,
+          "перевод": 114,
+          "пропущен": 137
+        },
+        {
+          "hour": 14,
+          "total": 1366,
+          "missed": 165,
+          "missed_share": 0.1208,
+          "записан": 616,
+          "справка": 446,
+          "перевод": 139,
+          "пропущен": 165
+        },
+        {
+          "hour": 15,
+          "total": 1272,
+          "missed": 219,
+          "missed_share": 0.1722,
+          "записан": 562,
+          "справка": 373,
+          "перевод": 118,
+          "пропущен": 219
+        },
+        {
+          "hour": 16,
+          "total": 1242,
+          "missed": 240,
+          "missed_share": 0.1932,
+          "записан": 549,
+          "справка": 335,
+          "перевод": 118,
+          "пропущен": 240
+        },
+        {
+          "hour": 17,
+          "total": 1110,
+          "missed": 200,
+          "missed_share": 0.1802,
+          "записан": 509,
+          "справка": 316,
+          "перевод": 85,
+          "пропущен": 200
+        },
+        {
+          "hour": 18,
+          "total": 840,
+          "missed": 152,
+          "missed_share": 0.181,
+          "записан": 377,
+          "справка": 248,
+          "перевод": 63,
+          "пропущен": 152
+        },
+        {
+          "hour": 19,
+          "total": 582,
+          "missed": 95,
+          "missed_share": 0.1632,
+          "записан": 260,
+          "справка": 171,
+          "перевод": 56,
+          "пропущен": 95
+        },
+        {
+          "hour": 20,
+          "total": 245,
+          "missed": 245,
+          "missed_share": 1.0,
+          "записан": 0,
+          "справка": 0,
+          "перевод": 0,
+          "пропущен": 245
+        },
+        {
+          "hour": 21,
+          "total": 110,
+          "missed": 110,
+          "missed_share": 1.0,
+          "записан": 0,
+          "справка": 0,
+          "перевод": 0,
+          "пропущен": 110
+        }
+      ],
+      "by_weekday": [
+        {
+          "weekday": 0,
+          "name": "Пн",
+          "total": 4359,
+          "missed": 709,
+          "missed_share": 0.1627
+        },
+        {
+          "weekday": 1,
+          "name": "Вт",
+          "total": 3131,
+          "missed": 478,
+          "missed_share": 0.1527
+        },
+        {
+          "weekday": 2,
+          "name": "Ср",
+          "total": 3062,
+          "missed": 461,
+          "missed_share": 0.1506
+        },
+        {
+          "weekday": 3,
+          "name": "Чт",
+          "total": 2795,
+          "missed": 437,
+          "missed_share": 0.1564
+        },
+        {
+          "weekday": 4,
+          "name": "Пт",
+          "total": 2556,
+          "missed": 429,
+          "missed_share": 0.1678
+        },
+        {
+          "weekday": 5,
+          "name": "Сб",
+          "total": 1403,
+          "missed": 707,
+          "missed_share": 0.5039
+        },
+        {
+          "weekday": 6,
+          "name": "Вс",
+          "total": 466,
+          "missed": 466,
+          "missed_share": 1.0
+        }
+      ],
+      "peak_hour": {
+        "hour": 9,
+        "total": 2414,
+        "missed": 551,
+        "missed_share": 0.2283,
+        "записан": 1026,
+        "справка": 627,
+        "перевод": 210,
+        "пропущен": 551
+      },
+      "peak_day": {
+        "date": "10.08.2026",
+        "missed": 66
+      },
+      "callers": 2980,
+      "callers_more_than_once": 607,
+      "out_of_operator_hours": {
+        "total": 1305,
+        "missed": 1305,
+        "missed_share": 1.0,
+        "share_of_all": 0.0734,
+        "rule": "регламент 2.2: операторы будни 07:00-20:00, суббота 08:30-15:00, воскресенье — нет"
+      },
+      "inside_operator_hours": {
+        "total": 2382,
+        "share_of_missed": 0.6461,
+        "top_hours": [
+          {
+            "hour": 9,
+            "missed": 481
+          },
+          {
+            "hour": 10,
+            "missed": 407
+          },
+          {
+            "hour": 7,
+            "missed": 315
+          }
+        ],
+        "first_open_hour": {
+          "hour": 7,
+          "total": 357,
+          "missed": 357,
+          "comment": "все звонки в 07:xx пропущены: по регламенту 2.2 линия открыта с 07:00, фактически операторы поднимают трубку с 08:00"
+        }
+      }
+    },
+    "wait_sec": {
+      "mean": 22.1,
+      "median": 12.0,
+      "p90": 55.0,
+      "p95": 83.0,
+      "max": 300,
+      "norm_sec": 30,
+      "over_norm": 3637,
+      "over_norm_share": 0.2046,
+      "total_hours": 109.2,
+      "by_result": {
+        "записан": {
+          "count": 7646,
+          "mean": 18.0,
+          "median": 10.0,
+          "p90": 44.0,
+          "max": 240
+        },
+        "перевод": {
+          "count": 1541,
+          "mean": 17.7,
+          "median": 10.0,
+          "p90": 41.0,
+          "max": 240
+        },
+        "пропущен": {
+          "count": 3687,
+          "mean": 37.7,
+          "median": 18.0,
+          "p90": 98.0,
+          "max": 300
+        },
+        "справка": {
+          "count": 4898,
+          "mean": 18.1,
+          "median": 10.0,
+          "p90": 43.0,
+          "max": 240
+        }
+      },
+      "peak": {
+        "sec": 300,
+        "at": "10.06.2026 08:14",
+        "result": "пропущен"
+      }
+    },
+    "duration_sec": {
+      "total_minutes": 28841.6,
+      "mean_all_sec": 97.4,
+      "served_calls": 14085,
+      "mean_served_sec": 122.9,
+      "scenario_target_sec": 150,
+      "by_result": {
+        "записан": {
+          "count": 7646,
+          "mean": 166.6,
+          "median": 151.0,
+          "p90": 266.0,
+          "max": 746,
+          "total_minutes": 21229.7
+        },
+        "перевод": {
+          "count": 1541,
+          "mean": 49.6,
+          "median": 44.0,
+          "p90": 80.0,
+          "max": 192,
+          "total_minutes": 1274.5
+        },
+        "пропущен": {
+          "count": 3687,
+          "mean": 0.0,
+          "median": 0.0,
+          "p90": 0.0,
+          "max": 0,
+          "total_minutes": 0.0
+        },
+        "справка": {
+          "count": 4898,
+          "mean": 77.6,
+          "median": 70.0,
+          "p90": 127.0,
+          "max": 291,
+          "total_minutes": 6337.5
+        }
+      },
+      "booked_over_target": 3824,
+      "booked_over_target_share": 0.5001
+    },
+    "peak_hour": {
+      "hour": 9,
+      "calls": 2414
+    },
+    "peak_day": {
+      "date": "10.08.2026",
+      "calls": 359
+    },
+    "by_month": [
+      {
+        "month": "2026-06",
+        "name": "июнь 2026",
+        "total": 5624,
+        "missed": 1192
+      },
+      {
+        "month": "2026-07",
+        "name": "июль 2026",
+        "total": 5702,
+        "missed": 1120
+      },
+      {
+        "month": "2026-08",
+        "name": "август 2026",
+        "total": 6446,
+        "missed": 1375
+      }
+    ],
+    "hourly": [
+      {
+        "hour": 7,
+        "total": 357,
+        "missed": 357,
+        "missed_share": 1.0,
+        "записан": 0,
+        "справка": 0,
+        "перевод": 0,
+        "пропущен": 357
+      },
+      {
+        "hour": 8,
+        "total": 1909,
+        "missed": 405,
+        "missed_share": 0.2122,
+        "записан": 822,
+        "справка": 524,
+        "перевод": 158,
+        "пропущен": 405
+      },
+      {
+        "hour": 9,
+        "total": 2414,
+        "missed": 551,
+        "missed_share": 0.2283,
+        "записан": 1026,
+        "справка": 627,
+        "перевод": 210,
+        "пропущен": 551
+      },
+      {
+        "hour": 10,
+        "total": 2073,
+        "missed": 447,
+        "missed_share": 0.2156,
+        "записан": 875,
+        "справка": 568,
+        "перевод": 183,
+        "пропущен": 447
+      },
+      {
+        "hour": 11,
+        "total": 1720,
+        "missed": 196,
+        "missed_share": 0.114,
+        "записан": 842,
+        "справка": 514,
+        "перевод": 168,
+        "пропущен": 196
+      },
+      {
+        "hour": 12,
+        "total": 1394,
+        "missed": 168,
+        "missed_share": 0.1205,
+        "записан": 644,
+        "справка": 453,
+        "перевод": 129,
+        "пропущен": 168
+      },
+      {
+        "hour": 13,
+        "total": 1138,
+        "missed": 137,
+        "missed_share": 0.1204,
+        "записан": 564,
+        "справка": 323,
+        "перевод": 114,
+        "пропущен": 137
+      },
+      {
+        "hour": 14,
+        "total": 1366,
+        "missed": 165,
+        "missed_share": 0.1208,
+        "записан": 616,
+        "справка": 446,
+        "перевод": 139,
+        "пропущен": 165
+      },
+      {
+        "hour": 15,
+        "total": 1272,
+        "missed": 219,
+        "missed_share": 0.1722,
+        "записан": 562,
+        "справка": 373,
+        "перевод": 118,
+        "пропущен": 219
+      },
+      {
+        "hour": 16,
+        "total": 1242,
+        "missed": 240,
+        "missed_share": 0.1932,
+        "записан": 549,
+        "справка": 335,
+        "перевод": 118,
+        "пропущен": 240
+      },
+      {
+        "hour": 17,
+        "total": 1110,
+        "missed": 200,
+        "missed_share": 0.1802,
+        "записан": 509,
+        "справка": 316,
+        "перевод": 85,
+        "пропущен": 200
+      },
+      {
+        "hour": 18,
+        "total": 840,
+        "missed": 152,
+        "missed_share": 0.181,
+        "записан": 377,
+        "справка": 248,
+        "перевод": 63,
+        "пропущен": 152
+      },
+      {
+        "hour": 19,
+        "total": 582,
+        "missed": 95,
+        "missed_share": 0.1632,
+        "записан": 260,
+        "справка": 171,
+        "перевод": 56,
+        "пропущен": 95
+      },
+      {
+        "hour": 20,
+        "total": 245,
+        "missed": 245,
+        "missed_share": 1.0,
+        "записан": 0,
+        "справка": 0,
+        "перевод": 0,
+        "пропущен": 245
+      },
+      {
+        "hour": 21,
+        "total": 110,
+        "missed": 110,
+        "missed_share": 1.0,
+        "записан": 0,
+        "справка": 0,
+        "перевод": 0,
+        "пропущен": 110
+      }
+    ]
+  },
+  "appointments": {
+    "total": 35470,
+    "period_from": "25.03.2026",
+    "period_to": "24.09.2026",
+    "days": 154,
+    "by_status": {
+      "Состоялся": 27080,
+      "Отменён": 4311,
+      "Неявка": 4079
+    },
+    "attendance": {
+      "completed_share": 0.7635,
+      "cancelled_share": 0.1215,
+      "no_show_share": 0.115,
+      "no_show_share_of_arrivals": 0.1309
+    },
+    "no_show": {
+      "total": 4079,
+      "share": 0.115,
+      "share_of_arrivals": 0.1309,
+      "by_specialty": [
+        {
+          "specialty": "терапевт",
+          "total": 8701,
+          "completed": 6703,
+          "cancelled": 1023,
+          "no_show": 975,
+          "no_show_rate": 0.1121,
+          "no_show_rate_of_arrivals": 0.127,
+          "cancel_rate": 0.1176,
+          "attendance_rate": 0.7704
+        },
+        {
+          "specialty": "педиатр",
+          "total": 5895,
+          "completed": 4439,
+          "cancelled": 906,
+          "no_show": 550,
+          "no_show_rate": 0.0933,
+          "no_show_rate_of_arrivals": 0.1102,
+          "cancel_rate": 0.1537,
+          "attendance_rate": 0.753
+        },
+        {
+          "specialty": "оториноларинголог",
+          "total": 4119,
+          "completed": 2959,
+          "cancelled": 543,
+          "no_show": 617,
+          "no_show_rate": 0.1498,
+          "no_show_rate_of_arrivals": 0.1725,
+          "cancel_rate": 0.1318,
+          "attendance_rate": 0.7184
+        },
+        {
+          "specialty": "офтальмолог",
+          "total": 3719,
+          "completed": 2884,
+          "cancelled": 407,
+          "no_show": 428,
+          "no_show_rate": 0.1151,
+          "no_show_rate_of_arrivals": 0.1292,
+          "cancel_rate": 0.1094,
+          "attendance_rate": 0.7755
+        },
+        {
+          "specialty": "акушер-гинеколог",
+          "total": 2680,
+          "completed": 2130,
+          "cancelled": 316,
+          "no_show": 234,
+          "no_show_rate": 0.0873,
+          "no_show_rate_of_arrivals": 0.099,
+          "cancel_rate": 0.1179,
+          "attendance_rate": 0.7948
+        },
+        {
+          "specialty": "травматолог-ортопед",
+          "total": 1882,
+          "completed": 1444,
+          "cancelled": 197,
+          "no_show": 241,
+          "no_show_rate": 0.1281,
+          "no_show_rate_of_arrivals": 0.143,
+          "cancel_rate": 0.1047,
+          "attendance_rate": 0.7673
+        },
+        {
+          "specialty": "невролог",
+          "total": 1854,
+          "completed": 1407,
+          "cancelled": 199,
+          "no_show": 248,
+          "no_show_rate": 0.1338,
+          "no_show_rate_of_arrivals": 0.1498,
+          "cancel_rate": 0.1073,
+          "attendance_rate": 0.7589
+        },
+        {
+          "specialty": "кардиолог",
+          "total": 1752,
+          "completed": 1440,
+          "cancelled": 172,
+          "no_show": 140,
+          "no_show_rate": 0.0799,
+          "no_show_rate_of_arrivals": 0.0886,
+          "cancel_rate": 0.0982,
+          "attendance_rate": 0.8219
+        },
+        {
+          "specialty": "дерматовенеролог",
+          "total": 1712,
+          "completed": 1209,
+          "cancelled": 222,
+          "no_show": 281,
+          "no_show_rate": 0.1641,
+          "no_show_rate_of_arrivals": 0.1886,
+          "cancel_rate": 0.1297,
+          "attendance_rate": 0.7062
+        },
+        {
+          "specialty": "эндокринолог",
+          "total": 1197,
+          "completed": 979,
+          "cancelled": 112,
+          "no_show": 106,
+          "no_show_rate": 0.0886,
+          "no_show_rate_of_arrivals": 0.0977,
+          "cancel_rate": 0.0936,
+          "attendance_rate": 0.8179
+        },
+        {
+          "specialty": "уролог",
+          "total": 713,
+          "completed": 541,
+          "cancelled": 73,
+          "no_show": 99,
+          "no_show_rate": 0.1388,
+          "no_show_rate_of_arrivals": 0.1547,
+          "cancel_rate": 0.1024,
+          "attendance_rate": 0.7588
+        },
+        {
+          "specialty": "гастроэнтеролог",
+          "total": 642,
+          "completed": 482,
+          "cancelled": 74,
+          "no_show": 86,
+          "no_show_rate": 0.134,
+          "no_show_rate_of_arrivals": 0.1514,
+          "cancel_rate": 0.1153,
+          "attendance_rate": 0.7508
+        },
+        {
+          "specialty": "хирург",
+          "total": 604,
+          "completed": 463,
+          "cancelled": 67,
+          "no_show": 74,
+          "no_show_rate": 0.1225,
+          "no_show_rate_of_arrivals": 0.1378,
+          "cancel_rate": 0.1109,
+          "attendance_rate": 0.7666
+        }
+      ],
+      "worst_specialties": [
+        {
+          "specialty": "дерматовенеролог",
+          "total": 1712,
+          "completed": 1209,
+          "cancelled": 222,
+          "no_show": 281,
+          "no_show_rate": 0.1641,
+          "no_show_rate_of_arrivals": 0.1886,
+          "cancel_rate": 0.1297,
+          "attendance_rate": 0.7062
+        },
+        {
+          "specialty": "оториноларинголог",
+          "total": 4119,
+          "completed": 2959,
+          "cancelled": 543,
+          "no_show": 617,
+          "no_show_rate": 0.1498,
+          "no_show_rate_of_arrivals": 0.1725,
+          "cancel_rate": 0.1318,
+          "attendance_rate": 0.7184
+        },
+        {
+          "specialty": "уролог",
+          "total": 713,
+          "completed": 541,
+          "cancelled": 73,
+          "no_show": 99,
+          "no_show_rate": 0.1388,
+          "no_show_rate_of_arrivals": 0.1547,
+          "cancel_rate": 0.1024,
+          "attendance_rate": 0.7588
+        },
+        {
+          "specialty": "гастроэнтеролог",
+          "total": 642,
+          "completed": 482,
+          "cancelled": 74,
+          "no_show": 86,
+          "no_show_rate": 0.134,
+          "no_show_rate_of_arrivals": 0.1514,
+          "cancel_rate": 0.1153,
+          "attendance_rate": 0.7508
+        },
+        {
+          "specialty": "невролог",
+          "total": 1854,
+          "completed": 1407,
+          "cancelled": 199,
+          "no_show": 248,
+          "no_show_rate": 0.1338,
+          "no_show_rate_of_arrivals": 0.1498,
+          "cancel_rate": 0.1073,
+          "attendance_rate": 0.7589
+        }
+      ]
+    },
+    "by_specialty": [
+      {
+        "specialty": "терапевт",
+        "total": 8701,
+        "completed": 6703,
+        "cancelled": 1023,
+        "no_show": 975,
+        "no_show_rate": 0.1121,
+        "no_show_rate_of_arrivals": 0.127,
+        "cancel_rate": 0.1176,
+        "attendance_rate": 0.7704
+      },
+      {
+        "specialty": "педиатр",
+        "total": 5895,
+        "completed": 4439,
+        "cancelled": 906,
+        "no_show": 550,
+        "no_show_rate": 0.0933,
+        "no_show_rate_of_arrivals": 0.1102,
+        "cancel_rate": 0.1537,
+        "attendance_rate": 0.753
+      },
+      {
+        "specialty": "оториноларинголог",
+        "total": 4119,
+        "completed": 2959,
+        "cancelled": 543,
+        "no_show": 617,
+        "no_show_rate": 0.1498,
+        "no_show_rate_of_arrivals": 0.1725,
+        "cancel_rate": 0.1318,
+        "attendance_rate": 0.7184
+      },
+      {
+        "specialty": "офтальмолог",
+        "total": 3719,
+        "completed": 2884,
+        "cancelled": 407,
+        "no_show": 428,
+        "no_show_rate": 0.1151,
+        "no_show_rate_of_arrivals": 0.1292,
+        "cancel_rate": 0.1094,
+        "attendance_rate": 0.7755
+      },
+      {
+        "specialty": "акушер-гинеколог",
+        "total": 2680,
+        "completed": 2130,
+        "cancelled": 316,
+        "no_show": 234,
+        "no_show_rate": 0.0873,
+        "no_show_rate_of_arrivals": 0.099,
+        "cancel_rate": 0.1179,
+        "attendance_rate": 0.7948
+      },
+      {
+        "specialty": "травматолог-ортопед",
+        "total": 1882,
+        "completed": 1444,
+        "cancelled": 197,
+        "no_show": 241,
+        "no_show_rate": 0.1281,
+        "no_show_rate_of_arrivals": 0.143,
+        "cancel_rate": 0.1047,
+        "attendance_rate": 0.7673
+      },
+      {
+        "specialty": "невролог",
+        "total": 1854,
+        "completed": 1407,
+        "cancelled": 199,
+        "no_show": 248,
+        "no_show_rate": 0.1338,
+        "no_show_rate_of_arrivals": 0.1498,
+        "cancel_rate": 0.1073,
+        "attendance_rate": 0.7589
+      },
+      {
+        "specialty": "кардиолог",
+        "total": 1752,
+        "completed": 1440,
+        "cancelled": 172,
+        "no_show": 140,
+        "no_show_rate": 0.0799,
+        "no_show_rate_of_arrivals": 0.0886,
+        "cancel_rate": 0.0982,
+        "attendance_rate": 0.8219
+      },
+      {
+        "specialty": "дерматовенеролог",
+        "total": 1712,
+        "completed": 1209,
+        "cancelled": 222,
+        "no_show": 281,
+        "no_show_rate": 0.1641,
+        "no_show_rate_of_arrivals": 0.1886,
+        "cancel_rate": 0.1297,
+        "attendance_rate": 0.7062
+      },
+      {
+        "specialty": "эндокринолог",
+        "total": 1197,
+        "completed": 979,
+        "cancelled": 112,
+        "no_show": 106,
+        "no_show_rate": 0.0886,
+        "no_show_rate_of_arrivals": 0.0977,
+        "cancel_rate": 0.0936,
+        "attendance_rate": 0.8179
+      },
+      {
+        "specialty": "уролог",
+        "total": 713,
+        "completed": 541,
+        "cancelled": 73,
+        "no_show": 99,
+        "no_show_rate": 0.1388,
+        "no_show_rate_of_arrivals": 0.1547,
+        "cancel_rate": 0.1024,
+        "attendance_rate": 0.7588
+      },
+      {
+        "specialty": "гастроэнтеролог",
+        "total": 642,
+        "completed": 482,
+        "cancelled": 74,
+        "no_show": 86,
+        "no_show_rate": 0.134,
+        "no_show_rate_of_arrivals": 0.1514,
+        "cancel_rate": 0.1153,
+        "attendance_rate": 0.7508
+      },
+      {
+        "specialty": "хирург",
+        "total": 604,
+        "completed": 463,
+        "cancelled": 67,
+        "no_show": 74,
+        "no_show_rate": 0.1225,
+        "no_show_rate_of_arrivals": 0.1378,
+        "cancel_rate": 0.1109,
+        "attendance_rate": 0.7666
+      }
+    ],
+    "by_weekday": [
+      {
+        "weekday": 0,
+        "name": "Пн",
+        "total": 6320,
+        "no_show": 820,
+        "no_show_rate": 0.1297
+      },
+      {
+        "weekday": 1,
+        "name": "Вт",
+        "total": 7190,
+        "no_show": 801,
+        "no_show_rate": 0.1114
+      },
+      {
+        "weekday": 2,
+        "name": "Ср",
+        "total": 7092,
+        "no_show": 775,
+        "no_show_rate": 0.1093
+      },
+      {
+        "weekday": 3,
+        "name": "Чт",
+        "total": 7412,
+        "no_show": 844,
+        "no_show_rate": 0.1139
+      },
+      {
+        "weekday": 4,
+        "name": "Пт",
+        "total": 5635,
+        "no_show": 609,
+        "no_show_rate": 0.1081
+      },
+      {
+        "weekday": 5,
+        "name": "Сб",
+        "total": 1821,
+        "no_show": 230,
+        "no_show_rate": 0.1263
+      }
+    ],
+    "by_month": [
+      {
+        "month": "2026-03",
+        "total": 1579,
+        "no_show": 195,
+        "cancelled": 158
+      },
+      {
+        "month": "2026-04",
+        "total": 7083,
+        "no_show": 762,
+        "cancelled": 818
+      },
+      {
+        "month": "2026-05",
+        "total": 5698,
+        "no_show": 684,
+        "cancelled": 724
+      },
+      {
+        "month": "2026-06",
+        "total": 5507,
+        "no_show": 662,
+        "cancelled": 570
+      },
+      {
+        "month": "2026-07",
+        "total": 5039,
+        "no_show": 586,
+        "cancelled": 713
+      },
+      {
+        "month": "2026-08",
+        "total": 4742,
+        "no_show": 534,
+        "cancelled": 669
+      },
+      {
+        "month": "2026-09",
+        "total": 5822,
+        "no_show": 656,
+        "cancelled": 659
+      }
+    ],
+    "by_hour": [
+      {
+        "hour": 8,
+        "total": 2046
+      },
+      {
+        "hour": 9,
+        "total": 3483
+      },
+      {
+        "hour": 10,
+        "total": 3468
+      },
+      {
+        "hour": 11,
+        "total": 3471
+      },
+      {
+        "hour": 12,
+        "total": 3266
+      },
+      {
+        "hour": 13,
+        "total": 3290
+      },
+      {
+        "hour": 14,
+        "total": 3223
+      },
+      {
+        "hour": 15,
+        "total": 2994
+      },
+      {
+        "hour": 16,
+        "total": 3017
+      },
+      {
+        "hour": 17,
+        "total": 3162
+      },
+      {
+        "hour": 18,
+        "total": 2075
+      },
+      {
+        "hour": 19,
+        "total": 1975
+      }
+    ],
+    "patients": {
+      "unique": 9030,
+      "visits_per_patient_mean": 3.93,
+      "visits_per_patient_max": 58
+    }
+  },
+  "economics": {
+    "currency": "RUB",
+    "assumptions": {
+      "calls_per_month": 5924,
+      "operator_salary_rub_month": 45000.0,
+      "operator_hours_month": 168.0,
+      "insurance_rate": 0.302,
+      "overhead_rate": 0.2,
+      "operator_hour_cost_rub": 420.0,
+      "operator_hour_cost_derived_rub": 418.5,
+      "operator_minute_cost_rub": 7.0,
+      "operator_minutes_per_call": 2.048,
+      "handled_by_assistant_share": 0.7,
+      "assistant_monthly_cost_rub": 25000.0,
+      "development_cost_rub": 300000.0,
+      "amortization_months": 36,
+      "wait_norm_sec": 30,
+      "scenario_target_sec": 150
+    },
+    "formulas": {
+      "operator_hour_cost_rub": "operator_salary_rub_month / operator_hours_month * (1 + insurance_rate) * (1 + overhead_rate)",
+      "operator_minutes_per_call": "сумма duration_sec обслуженных звонков / 60 / число обслуженных звонков",
+      "baseline_operator_minutes_month": "calls_per_month * operator_minutes_per_call",
+      "saved_operator_minutes_month": "baseline_operator_minutes_month * handled_by_assistant_share",
+      "saved_rub_month": "saved_operator_minutes_month * operator_minute_cost_rub",
+      "assistant_cost_rub_month": "assistant_monthly_cost_rub + development_cost_rub / amortization_months",
+      "net_rub_month": "saved_rub_month - assistant_cost_rub_month",
+      "payback_months": "development_cost_rub / (saved_rub_month - assistant_monthly_cost_rub)",
+      "roi_percent_year": "net_rub_month * 12 / (assistant_cost_rub_month * 12) * 100",
+      "fte_released": "saved_operator_minutes_month / 60 / operator_hours_month"
+    },
+    "monthly": {
+      "baseline_operator_minutes": 12132.0,
+      "baseline_operator_hours": 202.2,
+      "baseline_rub": 84926.0,
+      "with_assistant_operator_minutes": 3640.0,
+      "with_assistant_rub": 25478.0,
+      "saved_operator_minutes": 8493.0,
+      "saved_operator_hours": 141.5,
+      "fte_released": 0.84,
+      "saved_rub": 59449.0,
+      "assistant_cost_rub": 33333.0,
+      "net_rub": 26115.0,
+      "net_rub_year": 313382.0,
+      "payback_months": 8.7,
+      "roi_percent_year": 78.3
+    },
+    "quality": {
+      "missed_per_month": 1229,
+      "missed_share": 0.2075,
+      "target_missed_share": 0.05,
+      "out_of_operator_hours_per_month": 435,
+      "out_of_operator_hours_missed_share": 1.0,
+      "wait_over_norm_share": 0.2046,
+      "no_show_share": 0.115,
+      "no_show_share_of_arrivals": 0.1309
+    },
+    "notes": [
+      "Все ставки — параметры прототипа (ECON в tools/analyze_data.py), жюри может подставить свои.",
+      "Доля handled_by_assistant_share взята из факта: доля звонков «записан + справка» в журнале, округлённая вниз.",
+      "Пропущенные звонки в деньги не переведены: это метрика качества (ГА отвечает круглосуточно), а не экономия минут оператора.",
+      "Экономия считается только на обслуженных звонках, чтобы не задваивать счёт по уже пропущенным."
+    ]
+  },
+  "assumptions": [
+    "Источники: data/raw/appointments.csv (история записей МИС) и data/raw/calls.csv (журнал звонков регистратуры) — выгрузки кейса.",
+    "«Неявка» — пациент не пришёл (статус «Неявка»); «Отменён» — запись отменена заранее; доля неявок считается и от всех записей, и от дошедших до приёма.",
+    "Норма ожидания на линии 30 секунд и целевая длительность сценария записи 2,5 минуты — регламент 3.1 и 3.2.",
+    "Часы работы операторов: будни 07:00–20:00, суббота 08:30–15:00, воскресенье — нет (регламент 2.2); ГА работает круглосуточно.",
+    "Экономика — модель с явными параметрами (tools/analyze_data.py, ECON): ставка оператора, стоимость ГА, стоимость разработки и срок амортизации."
+  ],
+  "highlights": [
+    "Пропущено 3687 из 17772 звонков (20.8%) — цель ≤ 5%.",
+    "Среднее ожидание 22.1 с, максимум 300 с; дольше нормы 30 с — 20.5% звонков.",
+    "Все звонки вне часов работы операторов (1305) пропущены — их закрывает ГА круглосуточно.",
+    "Внутри часов работы операторов пропущено 2382 звонков; в субботу пропускается каждый второй звонок.",
+    "Неявки: 4079 (11.5% записей), от дошедших — 13.1%.",
+    "Экономия 141.5 ч/мес (0.84 FTE), 59449 ₽/мес."
+  ]
+}

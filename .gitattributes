@@ -1,0 +1,34 @@
+# Единые переводы строк и корректная работа с бинарными файлами.
+# Нужно, чтобы скрипты запускались и на Windows, и на Linux/macOS.
+
+* text=auto eol=lf
+
+*.py       text eol=lf
+*.js       text eol=lf
+*.css      text eol=lf
+*.html     text eol=lf
+*.json     text eol=lf
+*.md       text eol=lf
+*.txt      text eol=lf
+*.yml      text eol=lf
+*.yaml     text eol=lf
+
+# Windows-скрипты должны остаться в CRLF
+*.bat      text eol=crlf
+*.cmd      text eol=crlf
+*.ps1      text eol=crlf
+
+# Бинарные файлы — без преобразований и без diff
+*.csv      text eol=lf
+*.docx     binary
+*.xlsx     binary
+*.pptx     binary
+*.pdf      binary
+*.png      binary
+*.jpg      binary
+*.jpeg     binary
+
+# CSV и JSON-выгрузки не считаем «сгенерированными» в статистике
+data/*.json linguist-generated=true
+data/reglament.txt linguist-vendored=true
+docs/openapi.json linguist-vendored=true

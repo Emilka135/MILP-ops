@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Голосовой ассистент регистратуры — демо-стенд</title>
+<meta name="description" content="Демо голосового ассистента регистратуры поликлиники № 7: диалог, что понял ассистент, вызовы API стенда, карточка перевода, экран оператора, метрики.">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark" aria-hidden="true">ГА</div>
+    <div class="brand-text">
+      <h1>Голосовой ассистент регистратуры</h1>
+      <p class="brand-sub">ГБУЗ «Городская поликлиника № 7» · кейс № 2 «Голосовые интерфейсы» · хакатон «Точка сборки»</p>
+    </div>
+  </div>
+
+  <div class="stand-box" aria-label="Состояние стенда">
+    <div class="stand-badges">
+      <span id="badge-stand" class="badge badge-unknown" title="GET /api/health → offline / token_set">стенд: проверяю…</span>
+      <span id="badge-token" class="badge badge-muted" title="GET /api/health → token_set">токен: —</span>
+      <span id="badge-doctors" class="badge badge-muted" title="GET /api/health → doctors, horizon_days">справочник: —</span>
+      <span id="badge-session" class="badge badge-muted" title="POST /api/session">сессия: —</span>
+    </div>
+    <div class="stand-row">
+      <label class="field-inline" for="input-base">
+        <span>адрес сервера</span>
+        <input id="input-base" type="text" spellcheck="false" autocomplete="off" placeholder="http://127.0.0.1:8000">
+      </label>
+      <button id="btn-health" class="btn btn-ghost" type="button">Обновить статус</button>
+    </div>
+    <p id="base-hint" class="hint hint-small">Проверяю адрес…</p>
+  </div>
+</header>
+
+<section class="panel panel-scenarios" aria-labelledby="scenarios-title">
+  <div class="panel-head">
+    <h2 id="scenarios-title">Демо-сценарии</h2>
+    <div class="panel-head-actions">
+      <span id="toast" class="toast" role="status" aria-live="polite"></span>
+      <button id="btn-reset" class="btn btn-warn" type="button" title="POST /api/session/{id}/reset и новая сессия">Сбросить демо</button>
+    </div>
+  </div>
+  <div class="panel-body">
+    <p class="hint">Каждая кнопка вызывает <code>POST /api/demo/{n}</code> и проигрывает шаги сценария в ленте диалога. Порядок 1–8 повторяет демо-скрипт ТЗ, кнопка 9 добавлена сверх скрипта. Проверка красных флагов и маршрутизации идёт до любой другой логики.</p>
+    <div id="scenario-buttons" class="scenario-grid" role="group" aria-label="Кнопки демо-сценариев"></div>
+  </div>
+</section>
+
+<main class="layout">
+
+  <!-- 1. ДИАЛОГ -->
+  <section class="panel panel-dialog" aria-labelledby="dialog-title">
+    <div class="panel-head">
+      <h2 id="dialog-title">Диалог с пациентом</h2>
+      <span id="dialog-mode" class="badge badge-muted">режим: голос + текст</span>
+    </div>
+    <div class="panel-body panel-body-flush">
+      <div id="voice-status" class="notice notice-info">Проверяю доступность распознавания и синтеза речи…</div>
+      <div id="dialog-feed" class="dialog-feed" aria-live="polite">
+        <p class="empty">Начните разговор: наберите реплику пациента или включите микрофон. Либо нажмите сценарий выше.</p>
+      </div>
+    </div>
+    <form id="dialog-form" class="dialog-form" autocomplete="off">
+      <div class="dialog-tools">
+        <button id="btn-mic" class="btn btn-mic" type="button" title="Web Speech API: распознавание речи">
+          <span class="mic-dot" aria-hidden="true"></span><span id="mic-label">Микрофон</span>
+        </button>
+        <button id="btn-tts" class="btn btn-ghost" type="button" aria-pressed="true" title="Синтез речи: озвучивать ответы ассистента">🔊 Озвучивание: вкл</button>
+      </div>
+      <div class="dialog-input-row">
+        <input id="dialog-input" class="input" type="text" placeholder="Реплика пациента, например: «Здравствуйте, хочу записаться к терапевту»" aria-label="Реплика пациента">
+        <button id="btn-send" class="btn btn-primary" type="submit">Отправить</button>
+      </div>
+      <p class="hint hint-small">Ввод отправляется как <code>POST /api/turn</code> с телом <code>{session_id, text}</code>. Enter — отправить.</p>
+    </form>
+  </section>
+
+  <!-- 2. ЧТО ПОНЯЛ АССИСТЕНТ -->
+  <section class="panel panel-understanding" aria-labelledby="understanding-title">
+    <div class="panel-head">
+      <h2 id="understanding-title">Что понял ассистент</h2>
+      <span class="badge badge-muted">по ответу /api/turn</span>
+    </div>
+    <div class="panel-body">
+      <div class="kv-grid">
+        <div class="kv">
+          <span class="kv-label">Интент</span>
+          <span id="u-intent" class="kv-value mono">—</span>
+        </div>
+        <div class="kv">
+          <span class="kv-label">Сценарий</span>
+          <span id="u-scenario" class="kv-value mono">—</span>
+        </div>
+        <div class="kv">
+          <span class="kv-label">Состояние автомата</span>
+          <span id="u-step" class="kv-value mono">—</span>
+        </div>
+        <div class="kv">
+          <span class="kv-label">Код результата</span>
+          <span id="u-outcome" class="kv-value mono">—</span>
+        </div>
+      </div>
+
+      <div id="u-safety-box" class="safety-box safety-ok">
+        <div class="safety-head">
+          <span class="safety-title">Safety-вердикт</span>
+          <span id="u-safety-verdict" class="badge badge-ok">норма</span>
+          <span id="u-safety-rule" class="badge badge-muted mono">R-—</span>
+        </div>
+        <p id="u-safety-reason" class="safety-reason">Реплика проверена safety-слоем: срабатываний нет.</p>
+        <p id="u-safety-matched" class="safety-matched"></p>
+      </div>
+
+      <h3 class="sub-h">Собранные параметры <span id="u-params-count" class="badge badge-muted">0</span></h3>
+      <div id="u-params" class="chip-list"><p class="empty">Параметры появятся по ходу диалога.</p></div>
+
+      <h3 class="sub-h">Предложенные слоты <span id="u-slots-count" class="badge badge-muted">0</span></h3>
+      <div id="u-slots" class="chip-list"><p class="empty">Слоты не предлагались.</p></div>
+
+      <h3 class="sub-h">Счётчики и флаги</h3>
+      <div id="u-counters" class="counter-grid"></div>
+      <p id="u-patient-line" class="hint hint-small" hidden></p>
+    </div>
+  </section>
+
+  <!-- 3. ВЫЗОВЫ API -->
+  <section class="panel panel-api" aria-labelledby="api-title">
+    <div class="panel-head">
+      <h2 id="api-title">Вызовы API</h2>
+      <div class="panel-head-actions">
+        <span id="api-count" class="badge badge-muted">0</span>
+        <button id="btn-log-clear" class="btn btn-ghost btn-xs" type="button">Очистить</button>
+      </div>
+    </div>
+    <div class="panel-body panel-body-flush">
+      <div class="legend">
+        <span class="src src-mock">MOCK</span><span class="legend-text">оффлайн-стенд (токена нет)</span>
+        <span class="src src-mis">MIS</span><span class="legend-text">реальный стенд</span>
+        <span class="src src-ui">UI</span><span class="legend-text">запрос интерфейса к демо-серверу</span>
+      </div>
+      <div class="table-wrap">
+        <table class="api-table">
+          <thead>
+            <tr>
+              <th class="col-time">Время</th>
+              <th class="col-method">Метод</th>
+              <th class="col-path">Путь</th>
+              <th class="col-code">Код</th>
+              <th class="col-ms">мс</th>
+              <th class="col-src">Source</th>
+              <th class="col-note">Подпись</th>
+            </tr>
+          </thead>
+          <tbody id="api-log">
+            <tr class="api-empty"><td colspan="7">Журнал пуст. Выполните реплику или сценарий — вызовы появятся здесь.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="hint hint-small">Источник строк <code>MIS</code>/<code>MOCK</code> — поле <code>source</code> из <code>actions[]</code> ответа <code>/api/turn</code> и <code>/api/session/{id}</code> (журнал стенда). Сверяйте панель с журналом обращений к API стенда: путь, код и длительность должны совпадать.</p>
+    </div>
+  </section>
+
+  <!-- 4. КАРТОЧКА ПЕРЕВОДА -->
+  <section class="panel panel-transfer" aria-labelledby="transfer-title">
+    <div class="panel-head">
+      <h2 id="transfer-title">Карточка перевода</h2>
+      <span class="badge badge-muted">Приложение В регламента</span>
+    </div>
+    <div class="panel-body">
+      <div id="transfer-body">
+        <p class="empty">Переводов пока не было. Карточка появится при срабатывании правила R-xx, просьбе оператора или жалобе.</p>
+      </div>
+      <details id="transfer-raw-box" class="raw-box" hidden>
+        <summary>Сырой JSON перевода</summary>
+        <pre id="transfer-raw" class="raw-json"></pre>
+      </details>
+    </div>
+  </section>
+
+  <!-- 5. ЭКРАН ОПЕРАТОРА -->
+  <section class="panel panel-operator" aria-labelledby="operator-title">
+    <div class="panel-head">
+      <h2 id="operator-title">Экран оператора</h2>
+      <div class="panel-head-actions">
+        <span id="queue-count" class="badge badge-muted">очередь: 0</span>
+        <button id="btn-queue-refresh" class="btn btn-ghost btn-xs" type="button">Обновить</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="operator-cols">
+        <div class="queue-col">
+          <h3 class="sub-h">Очередь переводов</h3>
+          <div id="queue" class="queue"><p class="empty">Очередь пуста.</p></div>
+        </div>
+        <div class="queue-card-col">
+          <h3 class="sub-h">Карточка выбранного перевода</h3>
+          <div id="op-current" class="op-current"><p class="empty">Выберите перевод в очереди слева.</p></div>
+          <div class="op-actions">
+            <button id="btn-accept" class="btn btn-primary" type="button" disabled>Принять</button>
+            <label class="field-inline" for="op-outcome">
+              <span>Итог</span>
+              <select id="op-outcome" class="input select"></select>
+            </label>
+            <button id="btn-outcome" class="btn" type="button" disabled>Зафиксировать итог</button>
+          </div>
+          <p class="hint hint-small">Принять → <code>POST /api/transfers/{id}/accept</code>. Итог → тот же эндпоинт с телом <code>{outcome}</code> (код из Приложения Г).</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. МЕТРИКИ И ЭКОНОМИКА -->
+  <section class="panel panel-metrics" aria-labelledby="metrics-title">
+    <div class="panel-head">
+      <h2 id="metrics-title">Метрики и экономика</h2>
+      <div class="panel-head-actions">
+        <span id="metrics-source" class="badge badge-muted">источник: /api/metrics</span>
+        <button id="btn-metrics-refresh" class="btn btn-ghost btn-xs" type="button">Обновить</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="formulas">
+        <h3 class="sub-h">Формулы, по которым считаем (видны в интерфейсе)</h3>
+        <ul id="formula-list" class="formula-list">
+          <li><span class="formula-name">Доля пропущенных звонков</span><code class="formula">пропущенные звонки ÷ все звонки × 100%</code><span class="formula-target">цель ≤ 15% (сейчас 30–40%)</span></li>
+          <li><span class="formula-name">Доля неявок на приём</span><code class="formula">неявки (статус «не пришёл») ÷ все записи × 100%</code><span class="formula-target">цель ≤ 12% (сейчас 18–25%)</span></li>
+          <li><span class="formula-name">Обработано без человека</span><code class="formula">звонки с кодом результата без перевода ÷ все звонки × 100%</code><span class="formula-target">цель ≥ 60%</span></li>
+          <li><span class="formula-name">Среднее время ожидания</span><code class="formula">Σ времени ожидания на линии ÷ число ответов</code><span class="formula-target">цель ≤ 30 секунд</span></li>
+          <li><span class="formula-name">Средняя длительность сценария</span><code class="formula">Σ длительности звонков ÷ число звонков</code><span class="formula-target">цель ≤ 2,5 мин (оператор 4–5 мин)</span></li>
+          <li><span class="formula-name">Доля обоснованных переводов</span><code class="formula">переводы, принятые регистратором ÷ все переводы × 100%</code><span class="formula-target">цель ≥ 90%</span></li>
+          <li><span class="formula-name">Экономика</span><code class="formula">сэкономленное время = (время оператора − время ассистента) × число звонков без перевода; экономия = сэкономленное время × стоимость минуты оператора</code><span class="formula-target">допущения и ставку задаём явно в data/metrics.json</span></li>
+        </ul>
+      </div>
+      <div id="metrics-body" class="metrics-body">
+        <p class="empty">Нажмите «Обновить», чтобы загрузить <code>/api/metrics</code>.</p>
+      </div>
+      <details id="metrics-raw-box" class="raw-box" hidden>
+        <summary>Сырой JSON метрик</summary>
+        <pre id="metrics-raw" class="raw-json"></pre>
+      </details>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <span>Демо-прототип: диалоговый автомат + safety-слой + MIS-стенд «Регистратура». Персональные данные в журналах не отображаются: только идентификаторы и маски.</span>
+  <span class="footer-api">Эндпоинты: /api/health · /api/session · /api/turn · /api/session/{id} · /api/doctors · /api/slots · /api/metrics · /api/kb · /api/transfers · /api/demo/{n} · /api/tests</span>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

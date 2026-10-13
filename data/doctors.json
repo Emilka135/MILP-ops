@@ -1,0 +1,463 @@
+{
+  "generated_at": "2026-10-13T16:17:43+03:00",
+  "source": "история записей",
+  "note": "specialty/step/shift вычислены из истории записей; cabinet и weekdays — демонстрационные расширения",
+  "doctors": [
+    {
+      "id": 1,
+      "full_name": "Андреев Николай Васильевич",
+      "specialty": "уролог",
+      "is_active": true,
+      "shift": {
+        "start": "09:00",
+        "end": "18:00"
+      },
+      "step_minutes": 30,
+      "cabinet": "391",
+      "weekdays": [
+        1,
+        3
+      ]
+    },
+    {
+      "id": 2,
+      "full_name": "Белова Ольга Николаевна",
+      "specialty": "педиатр",
+      "is_active": true,
+      "shift": {
+        "start": "08:00",
+        "end": "14:00"
+      },
+      "step_minutes": 20,
+      "cabinet": "101",
+      "weekdays": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "id": 3,
+      "full_name": "Васильева Татьяна Геннадьевна",
+      "specialty": "терапевт",
+      "is_active": true,
+      "shift": {
+        "start": "09:00",
+        "end": "18:00"
+      },
+      "step_minutes": 20,
+      "cabinet": "201",
+      "weekdays": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "id": 4,
+      "full_name": "Волков Артём Сергеевич",
+      "specialty": "оториноларинголог",
+      "is_active": true,
+      "shift": {
+        "start": "14:00",
+        "end": "20:00"
+      },
+      "step_minutes": 20,
+      "cabinet": "331",
+      "weekdays": [
+        0,
+        2,
+        4,
+        5
+      ]
+    },
+    {
+      "id": 5,
+      "full_name": "Громов Илья Александрович",
+      "specialty": "педиатр",
+      "is_active": true,
+      "shift": {
+        "start": "14:00",
+        "end": "20:00"
+      },
+      "step_minutes": 20,
+      "cabinet": "102",
+      "weekdays": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "id": 6,
+      "full_name": "Егоров Максим Андреевич",
+      "specialty": "офтальмолог",
+      "is_active": true,
+      "shift": {
+        "start": "14:00",
+        "end": "20:00"
+      },
+      "step_minutes": 20,
+      "cabinet": "321",
+      "weekdays": [
+        1,
+        3,
+        5
+      ]
+    },
+    {
+      "id": 7,
+      "full_name": "Зайцев Константин Ильич",
+      "specialty": "травматолог-ортопед",
+      "is_active": true,
+      "shift": {
+        "start": "08:00",
+        "end": "20:00"
+      },
+      "step_minutes": 30,
+      "cabinet": "341",
+      "weekdays": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "id": 8,
+      "full_name": "Захаров Дмитрий Олегович",
+      "specialty": "невролог",
+      "is_active": true,
+      "shift": {
+        "start": "14:00",
+        "end": "20:00"
+      },
+      "step_minutes": 30,
+      "cabinet": "351",
+      "weekdays": [
+        1,
+        3,
+        5
+      ]
+    },
+    {
+      "id": 9,
+      "full_name": "Киселёв Алексей Романович",
+      "specialty": "кардиолог",
+      "is_active": true,
+      "shift": {
+        "start": "14:00",
+        "end": "20:00"
+      },
+      "step_minutes": 30,
+      "cabinet": "361",
+      "weekdays": [
+        1,
+        3,
+        5
+      ]
+    },
+    {
+      "id": 10,
+      "full_name": "Ковалёва Юлия Дмитриевна",
+      "specialty": "акушер-гинеколог",
+      "is_active": true,
+      "shift": {
+        "start": "08:00",
+        "end": "14:00"
+      },
+      "step_minutes": 30,
+      "cabinet": "401",
+      "weekdays": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "id": 11,
+      "full_name": "Кузнецов Андрей Павлович",
+      "specialty": "терапевт",
+      "is_active": true,
+      "shift": {
+        "start": "14:00",
+        "end": "20:00"
+      },
+      "step_minutes": 20,
+      "cabinet": "202",
+      "weekdays": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "id": 12,
+      "full_name": "Лебедев Сергей Игоревич",
+      "specialty": "кардиолог",
+      "is_active": true,
+      "shift": {
+        "start": "09:00",
+        "end": "18:00"
+      },
+      "step_minutes": 30,
+      "cabinet": "362",
+      "weekdays": [
+        0,
+        2,
+        4
+      ]
+    },
+    {
+      "id": 13,
+      "full_name": "Макаров Павел Сергеевич",
+      "specialty": "хирург",
+      "is_active": true,
+      "shift": {
+        "start": "08:00",
+        "end": "14:00"
+      },
+      "step_minutes": 30,
+      "cabinet": "311",
+      "weekdays": [
+        0,
+        2,
+        4
+      ]
+    },
+    {
+      "id": 14,
+      "full_name": "Медведева Алина Игоревна",
+      "specialty": "оториноларинголог",
+      "is_active": true,
+      "shift": {
+        "start": "09:00",
+        "end": "18:00"
+      },
+      "step_minutes": 20,
+      "cabinet": "332",
+      "weekdays": [
+        1,
+        3
+      ]
+    },
+    {
+      "id": 15,
+      "full_name": "Морозова Светлана Петровна",
+      "specialty": "офтальмолог",
+      "is_active": true,
+      "shift": {
+        "start": "09:00",
+        "end": "18:00"
+      },
+      "step_minutes": 20,
+      "cabinet": "322",
+      "weekdays": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "id": 16,
+      "full_name": "Никитина Ирина Владимировна",
+      "specialty": "оториноларинголог",
+      "is_active": true,
+      "shift": {
+        "start": "08:00",
+        "end": "14:00"
+      },
+      "step_minutes": 20,
+      "cabinet": "333",
+      "weekdays": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "id": 17,
+      "full_name": "Орлова Марина Сергеевна",
+      "specialty": "терапевт",
+      "is_active": true,
+      "shift": {
+        "start": "08:00",
+        "end": "20:00"
+      },
+      "step_minutes": 20,
+      "cabinet": "203",
+      "weekdays": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "id": 18,
+      "full_name": "Павлов Роман Евгеньевич",
+      "specialty": "гастроэнтеролог",
+      "is_active": true,
+      "shift": {
+        "start": "08:00",
+        "end": "20:00"
+      },
+      "step_minutes": 30,
+      "cabinet": "396",
+      "weekdays": [
+        0,
+        2,
+        4
+      ]
+    },
+    {
+      "id": 19,
+      "full_name": "Попова Дарья Андреевна",
+      "specialty": "педиатр",
+      "is_active": true,
+      "shift": {
+        "start": "08:00",
+        "end": "20:00"
+      },
+      "step_minutes": 20,
+      "cabinet": "103",
+      "weekdays": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "id": 20,
+      "full_name": "Семёнова Виктория Алексеевна",
+      "specialty": "акушер-гинеколог",
+      "is_active": true,
+      "shift": {
+        "start": "14:00",
+        "end": "20:00"
+      },
+      "step_minutes": 30,
+      "cabinet": "402",
+      "weekdays": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "id": 21,
+      "full_name": "Смирнова Елена Викторовна",
+      "specialty": "терапевт",
+      "is_active": true,
+      "shift": {
+        "start": "08:00",
+        "end": "14:00"
+      },
+      "step_minutes": 20,
+      "cabinet": "204",
+      "weekdays": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "id": 22,
+      "full_name": "Соколова Анна Михайловна",
+      "specialty": "эндокринолог",
+      "is_active": true,
+      "shift": {
+        "start": "09:00",
+        "end": "18:00"
+      },
+      "step_minutes": 30,
+      "cabinet": "381",
+      "weekdays": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "id": 23,
+      "full_name": "Степанов Григорий Львович",
+      "specialty": "травматолог-ортопед",
+      "is_active": true,
+      "shift": {
+        "start": "14:00",
+        "end": "20:00"
+      },
+      "step_minutes": 30,
+      "cabinet": "342",
+      "weekdays": [
+        0,
+        2,
+        4
+      ]
+    },
+    {
+      "id": 24,
+      "full_name": "Тихонова Екатерина Олеговна",
+      "specialty": "дерматовенеролог",
+      "is_active": true,
+      "shift": {
+        "start": "08:00",
+        "end": "20:00"
+      },
+      "step_minutes": 20,
+      "cabinet": "371",
+      "weekdays": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "id": 25,
+      "full_name": "Фёдорова Наталья Юрьевна",
+      "specialty": "невролог",
+      "is_active": true,
+      "shift": {
+        "start": "08:00",
+        "end": "14:00"
+      },
+      "step_minutes": 30,
+      "cabinet": "352",
+      "weekdays": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ]
+    }
+  ]
+}
