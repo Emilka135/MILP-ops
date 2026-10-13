@@ -112,13 +112,107 @@ def _http_test() -> int:
         else:
             print("  Сервер не поднялся — пропускаю HTTP-проверки")
             return 1
-        return _run(os.path.join(ROOT, "tests", "test_http.py"), "--base", base)
+        code = _run(os.path.join(ROOT, "tests", "test_http.py"), "--base", base)
+        code |= _ui_test(base)
+        return code
     finally:
         server.terminate()
         try:
             server.wait(timeout=10)
         except subprocess.TimeoutExpired:
             server.kill()
+
+
+def _find_chrome() -> str:
+    candidates = [
+        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+        r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+        r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+        "/usr/bin/google-chrome",
+        "/usr/bin/chromium",
+        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    ]
+    for path in candidates:
+        if os.path.exists(path):
+            return path
+    return ""
+
+
+def _ui_test(base: str) -> int:
+    """Проверить интерфейс: рендер в headless-браузере и поведение аккордеона.
+
+    Возвращает 0, если браузера нет: отсутствие Chrome на машине не должно
+    валить общий самотест, но об этом честно сообщается.
+    """
+    import subprocess
+    import tempfile
+    import time
+
+    chrome = _find_chrome()
+    if not chrome:
+        print("\n  Интерфейс: Chrome не найден — проверки интерфейса пропущены")
+        return 0
+
+    code = _run(os.path.join(ROOT, "tests", "test_frontend.py"), "--url", base)
+
+    # Поведение аккордеона проверяется через CDP: нужен Node с WebSocket и
+    # Chrome с отладочным портом.
+    node = os.environ.get("DSH_NODE") or shutil_which("node") or _bundled_node()
+    if not node:
+        print("  Поведение аккордеона: Node не найден — проверка пропущена")
+        return code
+
+    probe = os.path.join(ROOT, "tools", "ui_probe.js")
+    if not os.path.exists(probe):
+        return code
+
+    print("\n" + "=" * 74)
+    print("  Поведение интерфейса (аккордеон) — Chrome DevTools Protocol")
+    print("=" * 74)
+    port = _free_port()
+    profile = os.path.join(tempfile.gettempdir(), f"clinic-ui-probe-{os.getpid()}")
+    browser = subprocess.Popen(
+        [chrome, "--headless=new", "--disable-gpu", "--no-sandbox", "--no-first-run",
+         f"--remote-debugging-port={port}", f"--user-data-dir={profile}", "about:blank"],
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+    )
+    try:
+        time.sleep(4)
+        result = subprocess.call(
+            [node, probe, "--port", str(port), "--url", base + "/",
+             "--out", os.path.join(tempfile.gettempdir(), "clinic-ui-probe"),
+             "--shot-dir", os.path.join(tempfile.gettempdir(), "clinic-ui-shots"),
+             "--quiet"],
+            cwd=ROOT,
+        )
+        if result != 0:
+            code |= 1
+    finally:
+        browser.terminate()
+        try:
+            browser.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            browser.kill()
+    return code
+
+
+def shutil_which(name: str) -> str:
+    import shutil
+
+    return shutil.which(name) or ""
+
+
+def _bundled_node() -> str:
+    """Node из рантайма DSH, если он есть рядом."""
+    candidates = [
+        os.path.expanduser(r"~\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\node\bin\node.exe"),
+        r"C:\Users\Emilka\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\node\bin\node.exe",
+    ]
+    for path in candidates:
+        if os.path.exists(path):
+            return path
+    return ""
 
 
 def build_data() -> int:
