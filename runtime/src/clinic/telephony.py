@@ -262,7 +262,7 @@ class Bridge:
             ctx.media = media["id"]
             self.ari.bridge(ctx.channel, ctx.media)
             self.client.call(
-                "call.start", call_id=call_id, flow=flow, caller_phone=phone, vars=vars
+                "call.start", call_id=call_id, flow=flow, caller_phone=phone, registrar_number=str(channel.get("dialplan",{}).get("exten","100")), vars=vars
             )
             threading.Thread(target=self.controls, args=(ctx,), daemon=True).start()
             threading.Thread(target=self.playback, args=(ctx,), daemon=True).start()

@@ -110,6 +110,7 @@ services:
       BIND: 0.0.0.0:8080
     ports: ["127.0.0.1:${HTTP_PORT:-8080}:8080"]
     depends_on:
+      nightly: {condition: service_started}
       audio-check: {condition: service_completed_successfully}
       crm: {condition: service_healthy}
       nlu: {condition: service_healthy}
@@ -150,6 +151,7 @@ services:
       EDITOR_BUILD_QUEUE: "1"
       AUDIO_BANK_DIR: /audio
       TTS_URL: http://tts:8080
+      CRM_URL: http://crm:8080
     ports: ["127.0.0.1:${EDITOR_PORT:-8090}:8090"]
     volumes: ["./scenarios:/workspace/scenarios", "editor-data:/data", "editor-cargo:/workspace/target", "audio-bank:/audio:ro"]
     healthcheck:
@@ -167,6 +169,13 @@ services:
       EDITOR_DATA: /data
       CARGO_BUILD_JOBS: "2"
       AUDIO_BANK_DIR: /audio
+  nightly:
+    <<: *module
+    build: {context: ., dockerfile: docker/module.Dockerfile, args: {MODULE: crm}}
+    command: ["python", "-m", "clinic", "nightly"]
+    healthcheck: {disable: true}
+    depends_on:
+      crm: {condition: service_healthy}
   stand:
     <<: *module
     profiles: [contract]

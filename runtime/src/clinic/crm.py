@@ -114,6 +114,8 @@ class ClinicCrm:
 
         hours.initialize(self.reg)
         self.hours = hours
+        from .learning import Learning
+        self.learning = Learning(self.reg)
         self.clinic = {
             "clinic_name": os.environ.get(
                 "CLINIC_NAME", "Демонстрационная поликлиника"
@@ -123,6 +125,8 @@ class ClinicCrm:
 
     def handle(self, op, args):
         try:
+            if op.startswith("learning."):
+                return self.learning.handle(op, args, now(), not self.hours.is_open(self.reg, now()))
             if op == "schedule.service":
                 return "ok", {
                     "schedule": self.hours.schedule(

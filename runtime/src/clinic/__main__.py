@@ -15,7 +15,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "module",
-        choices=["crm", "nlu", "tts", "asr", "sms", "operator", "stand", "outbound"],
+        choices=["crm", "nlu", "tts", "asr", "sms", "operator", "stand", "outbound", "nightly"],
     )
     parser.add_argument("--port", type=int, default=int(os.environ.get("PORT", "8081")))
     parser.add_argument("--host", default=os.environ.get("HOST", "127.0.0.1"))
@@ -24,6 +24,10 @@ def main():
         from .stand import make_stand_server
 
         server = make_stand_server(ns.host, ns.port)
+    elif ns.module == "nightly":
+        from .nightly import run
+
+        return run()
     elif ns.module == "outbound":
         from .outbound import run
 

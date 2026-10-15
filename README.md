@@ -125,3 +125,5 @@ GitHub Actions: тесты, SCA, лицензии Rust, функциональн
 | `docs/requirements/` | исходное ТЗ и комментарии |
 
 Документы: [архитектура](docs/ARCHITECTURE.md), [сборка](docs/BUILD_REQUIREMENTS.md), [эксплуатация](docs/RUNTIME_REQUIREMENTS.md), [ASR / 2026](docs/RESEARCH_ASR_2026.md), [Крылов / Deeray](docs/RESEARCH_KRYLOV.md), [мощность 12/16/24/32 GiB](docs/CAPACITY.md), [соответствие ТЗ](docs/TRACEABILITY.md).
+
+Мастерская регистратора и наблюдателя: `/registrar` на адресе редактора. Временный вход — `user/user`, без входа — просмотр звонков и соседних шагов. Администратор — `admin/admin`. [Работа со звонком и предложением исправления](docs/WORKSHOP.md). [Незавершённые задачи](TODO.md).

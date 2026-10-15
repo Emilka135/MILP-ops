@@ -244,7 +244,7 @@ impl Session {
             let a = &st.args;
             match st.kind.as_str() {
                 "set" => self.set(&a["var"], self.value(&a["value"])),
-                "say" => { let mut action = Action::new("say", json!({})); action.text = self.render(&st.text);
+                "say" => { let mut action = Action::new("say", json!({"scenario_state": self.state_name()})); action.text = self.render(&st.text);
                     action.rate = a.get("rate").and_then(|s| s.parse().ok()).unwrap_or(n.rate); actions.push(action); }
                 "sms" => actions.push(Action::new("sms", json!({"template": a["template"], "vars": self.vars}))),
                 "transfer" => actions.push(Action::new("transfer", json!({"reason": self.value(a.get("reason").map(String::as_str).unwrap_or("$reason")), "vars": self.vars, "history": self.history}))),

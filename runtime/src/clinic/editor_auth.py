@@ -5,6 +5,7 @@ import hashlib
 import hmac
 import json
 import os
+import re
 from pathlib import Path
 import secrets
 import threading
@@ -13,7 +14,7 @@ from http.cookies import SimpleCookie
 
 
 def password_hash(password):
-    if password != "admin" and len(password) < 12:
+    if password not in {"admin", "user"} and len(password) < 12:
         raise ValueError("Пароль должен содержать не менее 12 символов")
     salt = secrets.token_bytes(16)
     digest = hashlib.scrypt(password.encode(), salt=salt, n=16384, r=8, p=1)
@@ -45,28 +46,47 @@ class EditorAuth:
                 flush=True,
             )
 
-    def allowed(self, headers):
-        if self.token and hmac.compare_digest(
-            headers.get("Authorization", ""), "Bearer " + self.token
-        ):
-            return True
-        cookie = SimpleCookie()
-        try:
-            cookie.load(headers.get("Cookie", ""))
-        except Exception:
-            return False
-        item = cookie.get("clinic_admin")
-        if not item:
-            return False
-        digest = hashlib.sha256(item.value.encode()).hexdigest()
-        with self.lock:
-            expiry = self.sessions.get(digest, 0)
-            if expiry > time.time():
-                return True
-            self.sessions.pop(digest, None)
-        return False
+        if 'user' not in self.accounts():
+            self.add_account('user','100','user','Регистратор')
 
-    def login(self, password, client):
+    def identity(self, headers):
+        if self.token and hmac.compare_digest(headers.get('Authorization',''), 'Bearer '+self.token):
+            return {'username':'admin','role':'admin','registrar':None}
+        cookie=SimpleCookie()
+        try:cookie.load(headers.get('Cookie',''))
+        except Exception:return None
+        item=cookie.get('clinic_admin')
+        if not item:return None
+        digest=hashlib.sha256(item.value.encode()).hexdigest()
+        with self.lock:
+            session=self.sessions.get(digest)
+            if session and session['expires']>time.time():return dict(session['identity'])
+            self.sessions.pop(digest,None)
+        return None
+
+    def allowed(self, headers):
+        return self.identity(headers) is not None
+
+    def accounts(self):
+        path=self.path.parent/'registrar-accounts.json'
+        return json.loads(path.read_text()) if path.exists() else {}
+
+    def add_account(self, username, registrar, password, label=''):
+        if not isinstance(username,str) or not re.fullmatch('[a-zA-Z0-9_]{3,40}',username) or username=='admin':
+            raise ValueError('Логин: 3–40 латинских букв, цифр или _')
+        if not re.fullmatch('[+0-9]{1,24}',str(registrar)):
+            raise ValueError('Укажите номер рабочего места')
+        if not isinstance(password,str) or (len(password)<12 and not (username=='user' and password=='user')):
+            raise ValueError('Пароль регистратора — не менее 12 символов')
+        with self.lock:
+            accounts=self.accounts()
+            accounts[username]={'registrar':str(registrar),'label':str(label)[:100],'password':password_hash(password)}
+            path=self.path.parent/'registrar-accounts.json'
+            temp=path.with_suffix('.tmp');temp.write_text(json.dumps(accounts,ensure_ascii=False));os.chmod(temp,0o600);os.replace(temp,path)
+            self.sessions={k:v for k,v in self.sessions.items() if v['identity']['username']!=username}
+        return {'username':username,'registrar':str(registrar),'label':str(label)[:100]}
+
+    def login(self, password, client, username="admin"):
         if not isinstance(password, str) or len(password) > 1024:
             raise ValueError("Неверный пароль")
         with self.lock:
@@ -77,19 +97,19 @@ class EditorAuth:
                 raise ValueError("Слишком много попыток. Повторите через 15 минут.")
             attempts.append(time.time())
             self.attempts[client] = attempts
-        record = json.loads(self.path.read_text())
+        account=self.accounts().get(str(username)) if username!='admin' else None
+        identity={'username':str(username),'role':'admin' if username=='admin' else 'registrar','registrar':account['registrar'] if account else None,'label':account.get('label','') if account else 'Администратор'}
+        record = account['password'] if account else json.loads(self.path.read_text())
         digest = hashlib.scrypt(
             password.encode(), salt=base64.b64decode(record["salt"]), n=16384, r=8, p=1
         )
-        if not hmac.compare_digest(digest, base64.b64decode(record["hash"])):
+        if (username != "admin" and account is None) or not hmac.compare_digest(digest, base64.b64decode(record["hash"])):
             raise ValueError("Неверный пароль")
         session = secrets.token_urlsafe(32)
         with self.lock:
             self.attempts.pop(client, None)
-            self.sessions = {k: v for k, v in self.sessions.items() if v > time.time()}
-            self.sessions[hashlib.sha256(session.encode()).hexdigest()] = (
-                time.time() + 8 * 3600
-            )
+            self.sessions = {k: v for k, v in self.sessions.items() if v['expires'] > time.time()}
+            self.sessions[hashlib.sha256(session.encode()).hexdigest()] = {'expires':time.time()+8*3600,'identity':identity}
         return session
 
     def logout(self, headers):

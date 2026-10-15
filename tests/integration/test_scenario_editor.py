@@ -131,3 +131,14 @@ def test_login_rate_limit_and_changed_password(tmp_path):
         auth.login('admin', 'other')
     cookie = auth.login('new long password', 'other')
     assert auth.allowed({'Cookie':'clinic_admin='+cookie})
+
+
+def test_registrar_identity_is_bound_to_account_not_form(tmp_path):
+    auth = EditorAuth(tmp_path/'password.json')
+    auth.add_account('registrar_101','101','a long temporary password','Регистратор')
+    token=auth.login('a long temporary password','local','registrar_101')
+    identity=auth.identity({'Cookie':'clinic_admin='+token})
+    assert identity['role']=='registrar' and identity['registrar']=='101'
+    with pytest.raises(ValueError):auth.login('admin','other','missing_user')
+    auth.add_account('registrar_101','101','another long password')
+    assert not auth.allowed({'Cookie':'clinic_admin='+token})

@@ -441,10 +441,16 @@ def make_server(repo, static, host="127.0.0.1", port=8090, token=""):
             if parsed.path == "/health":
                 return self.send_json(200, {"status": "ok"})
             if parsed.path.startswith("/api/"):
-                if parsed.path != "/api/login" and not auth.allowed(self.headers):
-                    return self.send_json(
-                        401, {"error": "Войдите с паролем администратора"}
-                    )
+                identity = auth.identity(self.headers)
+                workshop = parsed.path.startswith('/api/workshop/')
+                if identity is None and (workshop or parsed.path == '/api/me'):
+                    identity = {'username':'observer','role':'observer','registrar':None,'label':'Наблюдатель'}
+                if parsed.path != '/api/login' and identity is None:
+                    return self.send_json(401, {'error':'Войдите с паролем администратора'})
+                if identity and identity['role'] == 'observer' and post and parsed.path != '/api/login':
+                    return self.send_json(403, {'error':'Наблюдатель может только просматривать'})
+                if identity and identity['role'] == 'registrar' and not (workshop or parsed.path in {'/api/me','/api/logout'}):
+                    return self.send_json(403, {'error':'Конструктор всей системы доступен администратору'})
                 origin = self.headers.get("Origin")
                 if (
                     post
@@ -468,7 +474,7 @@ def make_server(repo, static, host="127.0.0.1", port=8090, token=""):
                     route = parsed.path
                     if post and route == "/api/login":
                         session = auth.login(
-                            data.get("password", ""), self.client_address[0]
+                            data.get("password", ""), self.client_address[0], data.get("username", "admin")
                         )
                         self.send_response(200)
                         self.send_header("Content-Type", "application/json")
@@ -490,6 +496,25 @@ def make_server(repo, static, host="127.0.0.1", port=8090, token=""):
                     if post and route == "/api/logout":
                         auth.logout(self.headers)
                         return self.send_json(200, {"authenticated": False})
+                    if not post and route == '/api/me':
+                        return self.send_json(200, identity)
+                    if not post and route == '/api/accounts':
+                        return self.send_json(200, {'accounts':[{'username':key,'registrar':value['registrar'],'label':value.get('label','')} for key,value in auth.accounts().items()]})
+                    if post and route == '/api/accounts':
+                        return self.send_json(200, auth.add_account(data['username'],data['registrar'],data['password'],data.get('label','')))
+                    if not post and route == '/api/workshop/voice':
+                        from .workshop import recorded_voice
+                        query=parse_qs(parsed.query)
+                        raw=recorded_voice(repo,query.get('state',[''])[0],int(query.get('index',['0'])[0]))
+                        self.send_response(200)
+                        self.send_header('Content-Type','audio/wav')
+                        self.send_header('Content-Length',str(len(raw)))
+                        self.send_header('Cache-Control','no-store')
+                        self.end_headers();self.wfile.write(raw)
+                        return
+                    if route.startswith('/api/workshop/'):
+                        from .workshop import request
+                        return self.send_json(200, request(repo,route,post,data,parse_qs(parsed.query),identity))
                     if not post and route.startswith('/api/audio/file/'):
                         from .admin_audio import recording
                         raw = recording(repo.root, route.rsplit('/', 1)[1])
@@ -551,7 +576,7 @@ def make_server(repo, static, host="127.0.0.1", port=8090, token=""):
                     )
             if post:
                 return self.send_json(404, {"error": "Маршрут не найден"})
-            relative = parsed.path.lstrip("/") or "index.html"
+            relative = "index.html" if parsed.path in {"/", "/registrar"} else parsed.path.lstrip("/")
             path = (static / relative).resolve()
             if not path.is_relative_to(static) or not path.is_file():
                 return self.send_json(404, {"error": "Файл не найден"})

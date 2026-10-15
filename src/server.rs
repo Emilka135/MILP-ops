@@ -20,6 +20,7 @@ use tokio::sync::{Mutex, RwLock};
 struct Call {
     session: Session,
     prompts: Vec<String>,
+    transcript: Vec<Value>,
     clips: VecDeque<Value>,
     sms: Vec<Value>,
     transfer: Option<Value>,
@@ -82,6 +83,12 @@ impl App {
             match a.kind.as_str() {
                 "say" => {
                     c.prompts.push(a.text.clone());
+                    c.transcript.push(
+                        json!({"role":"assistant","text":a.text,"state":a.args["scenario_state"]}),
+                    );
+                    if c.transcript.len() > 500 {
+                        c.transcript.remove(0);
+                    }
                     let r = self
                         .bus
                         .call("tts", "say", json!({"text":a.text,"rate":a.rate}), id)
@@ -157,6 +164,23 @@ impl App {
         if c.session.finished {
             c.deadline = None;
         }
+        let archive = self
+            .bus
+            .call(
+                "crm",
+                "learning.archive",
+                json!({
+                    "call_id":id,"registrar":c.session.vars.get("registrar_number"),
+                    "finished":c.session.finished,"outcome":c.session.status,
+                    "duration_s":c.started.elapsed().as_secs_f64(),"transcript":c.transcript,
+                    "trace":c.session.history,"experiment_id":c.session.vars.get("experiment_id")
+                }),
+                id,
+            )
+            .await;
+        if archive.status != "ok" && !c.errors.iter().any(|e| e == "call archive unavailable") {
+            c.errors.push("call archive unavailable".into());
+        }
     }
     async fn event(&self, id: &str, op: &str, args: &Value) -> Result<Value, String> {
         let call = self
@@ -184,7 +208,17 @@ impl App {
             return Ok(c.snapshot());
         }
         let mut ev = match op {
-            "call.dtmf" => Event::new("dtmf", args["digit"].as_str().ok_or("missing digit")?),
+            "call.dtmf" => {
+                let digit = args["digit"].as_str().ok_or("missing digit")?;
+                let source_state = c.session.state_name();
+                c.transcript.push(
+                    json!({"role":"dtmf","text":format!("Клавиша {digit}"),"state":source_state}),
+                );
+                if c.transcript.len() > 500 {
+                    c.transcript.remove(0);
+                }
+                Event::new("dtmf", digit)
+            }
             "call.silence" => Event::new("silence", ""),
             "call.timeout" if self.demo => Event::new("timeout", ""),
             "call.hangup" => Event::new("hangup", ""),
@@ -203,6 +237,13 @@ impl App {
                 } else {
                     args["text"].as_str().unwrap_or("").to_owned()
                 };
+                if op != "call.partial" {
+                    let source_state = c.session.state_name();
+                    c.transcript.push(json!({"role":"patient","text":recognized.chars().take(4000).collect::<String>(),"state":source_state}));
+                    if c.transcript.len() > 500 {
+                        c.transcript.remove(0);
+                    }
+                }
                 let r = self
                     .bus
                     .call(
@@ -324,6 +365,9 @@ impl App {
             json!(args["caller_phone"].as_str().unwrap_or("")),
         );
         vars.insert("call_id".into(), json!(id));
+        let registrar = args["registrar_number"].as_str().unwrap_or("100");
+        vars.insert("registrar_number".into(), json!(registrar));
+
         if flow == "reminder" {
             let r = self
                 .bus
@@ -355,6 +399,7 @@ impl App {
         let c = Arc::new(Mutex::new(Call {
             session,
             prompts: vec![],
+            transcript: vec![],
             clips: VecDeque::new(),
             sms: vec![],
             transfer: None,
