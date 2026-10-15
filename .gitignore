@@ -99,3 +99,18 @@ $RECYCLE.BIN/
 *.rej
 ~$*
 nul
+
+# Rust, models and generated local reports
+/target/
+/modules/*/models/*
+!/modules/*/models/.gitkeep
+/reports/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.pt
+*.onnx
+*.asc
+
+/imports/*
+!/imports/README.md

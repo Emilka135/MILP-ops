@@ -1,0 +1,260 @@
+flowchart TD
+    welcome["welcome"]
+    listen_free["listen_free\nASR"]
+    goodbye_silent(("goodbye_silent"))
+    info_menu["info_menu"]
+    info_schedule[["info_schedule\ncrm.clinic_info"]]
+    info_holidays[["info_holidays\ncrm.holidays"]]
+    info_other["info_other"]
+    info_say["info_say"]
+    goodbye(("goodbye"))
+    intent_book["intent_book"]
+    intent_existing["intent_existing"]
+    id_start[["id_start\ncrm.lookup_phone"]]
+    id_self_or_other["id_self_or_other"]
+    id_self["id_self"]
+    id_other["id_other"]
+    id_birth_check[/"id_birth_check\nDTMF ввод"/]
+    id_verify_birth[["id_verify_birth\ncrm.find_patient"]]
+    id_birth_mismatch["id_birth_mismatch"]
+    id_ask_method["id_ask_method"]
+    id_ask_snils[/"id_ask_snils\nDTMF ввод"/]
+    id_lookup_snils[["id_lookup_snils\ncrm.find_patient"]]
+    id_ask_card[/"id_ask_card\nDTMF ввод"/]
+    id_lookup_card[["id_lookup_card\ncrm.find_patient"]]
+    id_ask_phone[/"id_ask_phone\nDTMF ввод"/]
+    id_lookup_phone[["id_lookup_phone\ncrm.find_patient"]]
+    id_birth_for_phone[/"id_birth_for_phone\nDTMF ввод"/]
+    id_verify_birth_phone[["id_verify_birth_phone\ncrm.find_patient"]]
+    id_not_found["id_not_found"]
+    id_done["id_done"]
+    book_entry["book_entry"]
+    book_start["book_start"]
+    book_set_1["book_set_1"]
+    book_set_2["book_set_2"]
+    book_set_3["book_set_3"]
+    book_set_4["book_set_4"]
+    book_set_5["book_set_5"]
+    book_ask_specialty["book_ask_specialty\nASR"]
+    book_specialty_from_speech["book_specialty_from_speech"]
+    book_specialty_unknown["book_specialty_unknown"]
+    book_referral_check[["book_referral_check\ncrm.referral_required"]]
+    book_ask_referral["book_ask_referral\nASR"]
+    book_has_referral["book_has_referral"]
+    book_find_slot[["book_find_slot\ncrm.find_slots"]]
+    book_offer_relaxed["book_offer_relaxed"]
+    book_offer["book_offer\nASR"]
+    book_next_day[["book_next_day\ncrm.next_day"]]
+    book_check_day[["book_check_day\ncrm.check_day"]]
+    book_offer_other_day["book_offer_other_day"]
+    book_part_from_offer[["book_part_from_offer\ncrm.nearest_in_part"]]
+    book_do[["book_do\ncrm.book"]]
+    book_taken["book_taken"]
+    book_done(("book_done"))
+    existing_start[["existing_start\ncrm.my_booking"]]
+    existing_route["existing_route"]
+    existing_none["existing_none\nASR"]
+    existing_menu["existing_menu\nASR"]
+    cancel_confirm["cancel_confirm\nASR"]
+    cancel_do[["cancel_do\ncrm.cancel"]]
+    cancel_done(("cancel_done"))
+    confirm_do[["confirm_do\ncrm.confirm"]]
+    confirm_done(("confirm_done"))
+    operator{{"operator\nоператор"}}
+    welcome -->|"1"| intent_book
+    welcome -->|"2"| intent_existing
+    welcome -->|"3"| info_menu
+    welcome -->|"0 reason=requested"| operator
+    welcome -->|"timeout 60s"| listen_free
+    welcome -->|"invalid"| welcome
+    welcome -->|"retry 3 reason=no_valid_input"| operator
+    listen_free -->|"intent emergency|complaint|medical|operator reason=human_only"| operator
+    listen_free -->|"intent book|referral"| intent_book
+    listen_free -->|"intent reschedule|cancel|confirm|my_booking"| intent_existing
+    listen_free -->|"intent info_schedule"| info_schedule
+    listen_free -->|"intent info_holidays"| info_holidays
+    listen_free -->|"intent info_address|info_docs"| info_other
+    listen_free -->|"silence"| goodbye_silent
+    listen_free -->|"any reason=speech_unclassified"| operator
+    listen_free -->|"timeout 10s"| goodbye_silent
+    info_menu -->|"1"| info_schedule
+    info_menu -->|"2"| info_holidays
+    info_menu -->|"3"| info_other
+    info_menu -->|"9"| welcome
+    info_menu -->|"timeout 15s"| info_menu
+    info_menu -->|"retry 2"| welcome
+    info_schedule -->|"ok"| info_say
+    info_schedule -->|"error reason=crm_error"| operator
+    info_holidays -->|"ok"| info_say
+    info_holidays -->|"error reason=crm_error"| operator
+    info_other --> info_say
+    info_say -->|"1"| intent_book
+    info_say -->|"2"| info_say
+    info_say -->|"0"| goodbye
+    info_say -->|"timeout 15s"| goodbye
+    info_say -->|"retry 2"| goodbye
+    intent_book --> id_start
+    intent_existing --> id_start
+    id_start -->|"ok"| id_self_or_other
+    id_start -->|"many"| id_self_or_other
+    id_start -->|"empty"| id_ask_method
+    id_start -->|"error reason=crm_error"| operator
+    id_self_or_other -->|"1"| id_self
+    id_self_or_other -->|"2"| id_other
+    id_self_or_other -->|"timeout 15s"| id_self_or_other
+    id_self_or_other -->|"retry 2 reason=no_valid_input"| operator
+    id_self --> id_birth_check
+    id_other --> id_ask_method
+    id_birth_check -->|"ok"| id_verify_birth
+    id_birth_check -->|"timeout"| id_birth_check
+    id_birth_check -->|"retry 2 reason=identity_failed"| operator
+    id_verify_birth -->|"ok"| id_done
+    id_verify_birth -->|"empty"| id_birth_mismatch
+    id_verify_birth -->|"many reason=ambiguous_identity"| operator
+    id_verify_birth -->|"error reason=crm_error"| operator
+    id_birth_mismatch --> id_ask_method
+    id_ask_method -->|"1"| id_ask_snils
+    id_ask_method -->|"2"| id_ask_card
+    id_ask_method -->|"3"| id_ask_phone
+    id_ask_method -->|"timeout 15s"| id_ask_method
+    id_ask_method -->|"retry 2 reason=identity_failed"| operator
+    id_ask_snils -->|"ok"| id_lookup_snils
+    id_ask_snils -->|"timeout"| id_ask_snils
+    id_ask_snils -->|"retry 2 reason=identity_failed"| operator
+    id_lookup_snils -->|"ok"| id_done
+    id_lookup_snils -->|"empty"| id_not_found
+    id_lookup_snils -->|"many reason=ambiguous_identity"| operator
+    id_lookup_snils -->|"error reason=crm_error"| operator
+    id_ask_card -->|"ok"| id_lookup_card
+    id_ask_card -->|"timeout"| id_ask_card
+    id_ask_card -->|"retry 2 reason=identity_failed"| operator
+    id_lookup_card -->|"ok"| id_done
+    id_lookup_card -->|"empty"| id_not_found
+    id_lookup_card -->|"many reason=ambiguous_identity"| operator
+    id_lookup_card -->|"error reason=crm_error"| operator
+    id_ask_phone -->|"ok"| id_lookup_phone
+    id_ask_phone -->|"timeout"| id_ask_phone
+    id_ask_phone -->|"retry 2 reason=identity_failed"| operator
+    id_lookup_phone -->|"ok"| id_done
+    id_lookup_phone -->|"many"| id_birth_for_phone
+    id_lookup_phone -->|"empty"| id_not_found
+    id_lookup_phone -->|"error reason=crm_error"| operator
+    id_birth_for_phone -->|"ok"| id_verify_birth_phone
+    id_birth_for_phone -->|"timeout"| id_birth_for_phone
+    id_birth_for_phone -->|"retry 2 reason=identity_failed"| operator
+    id_verify_birth_phone -->|"ok"| id_done
+    id_verify_birth_phone -->|"empty"| id_not_found
+    id_verify_birth_phone -->|"many reason=ambiguous_identity"| operator
+    id_verify_birth_phone -->|"error reason=crm_error"| operator
+    id_not_found -->|"loop 1 reason=patient_not_found"| operator
+    id_not_found --> id_ask_method
+    id_done -->|"case book"| book_entry
+    id_done -->|"case existing"| existing_start
+    id_done -->|"default reason=internal"| operator
+    book_entry -->|"case none"| book_start
+    book_entry -->|"default"| book_referral_check
+    book_start -->|"1"| book_set_1
+    book_start -->|"2"| book_set_2
+    book_start -->|"3"| book_set_3
+    book_start -->|"4"| book_set_4
+    book_start -->|"5"| book_set_5
+    book_start -->|"6"| book_ask_specialty
+    book_start -->|"0 reason=requested"| operator
+    book_start -->|"timeout 20s"| book_ask_specialty
+    book_start -->|"retry 2 reason=no_valid_input"| operator
+    book_set_1 --> book_referral_check
+    book_set_2 --> book_referral_check
+    book_set_3 --> book_referral_check
+    book_set_4 --> book_referral_check
+    book_set_5 --> book_referral_check
+    book_ask_specialty -->|"loop 2 reason=no_specialty"| operator
+    book_ask_specialty -->|"intent emergency|complaint|medical|operator reason=human_only"| operator
+    book_ask_specialty -->|"any"| book_specialty_from_speech
+    book_ask_specialty -->|"silence"| book_ask_specialty
+    book_ask_specialty -->|"timeout 8s"| book_ask_specialty
+    book_ask_specialty -->|"retry 2 reason=no_specialty"| operator
+    book_specialty_from_speech -->|"case none"| book_specialty_unknown
+    book_specialty_from_speech -->|"default"| book_referral_check
+    book_specialty_unknown -->|"case none"| book_ask_specialty
+    book_specialty_unknown -->|"default reason=specific_doctor"| operator
+    book_referral_check -->|"required"| book_ask_referral
+    book_referral_check -->|"not_required"| book_find_slot
+    book_referral_check -->|"error reason=crm_error"| operator
+    book_ask_referral -->|"1"| book_has_referral
+    book_ask_referral -->|"2"| book_set_1
+    book_ask_referral -->|"0 reason=referral_question"| operator
+    book_ask_referral -->|"yes"| book_has_referral
+    book_ask_referral -->|"no"| book_set_1
+    book_ask_referral -->|"timeout 20s"| book_ask_referral
+    book_ask_referral -->|"retry 2 reason=referral_unclear"| operator
+    book_has_referral --> book_find_slot
+    book_find_slot -->|"ok"| book_offer
+    book_find_slot -->|"relaxed"| book_offer_relaxed
+    book_find_slot -->|"empty reason=no_slots"| operator
+    book_find_slot -->|"error reason=crm_error"| operator
+    book_offer_relaxed --> book_offer
+    book_offer -->|"1"| book_do
+    book_offer -->|"2"| book_next_day
+    book_offer -->|"0 reason=requested"| operator
+    book_offer -->|"intent emergency|complaint|medical|operator reason=human_only"| operator
+    book_offer -->|"date"| book_check_day
+    book_offer -->|"daypart"| book_part_from_offer
+    book_offer -->|"yes"| book_do
+    book_offer -->|"no"| book_next_day
+    book_offer -->|"silence"| book_offer
+    book_offer -->|"timeout 15s"| book_offer
+    book_offer -->|"retry 2 reason=no_valid_input"| operator
+    book_next_day -->|"ok"| book_offer
+    book_next_day -->|"too_many reason=no_suitable_day"| operator
+    book_next_day -->|"empty reason=no_slots"| operator
+    book_next_day -->|"error reason=crm_error"| operator
+    book_check_day -->|"ok"| book_offer
+    book_check_day -->|"other_day"| book_offer_other_day
+    book_check_day -->|"past"| book_offer
+    book_check_day -->|"empty reason=no_slots"| operator
+    book_check_day -->|"error reason=crm_error"| operator
+    book_offer_other_day --> book_offer
+    book_part_from_offer -->|"ok"| book_offer
+    book_part_from_offer -->|"empty reason=no_slots"| operator
+    book_part_from_offer -->|"error reason=crm_error"| operator
+    book_do -->|"ok"| book_done
+    book_do -->|"taken"| book_taken
+    book_do -->|"error reason=crm_error"| operator
+    book_taken --> book_find_slot
+    existing_start -->|"ok"| existing_route
+    existing_start -->|"empty"| existing_none
+    existing_start -->|"error reason=crm_error"| operator
+    existing_route -->|"case cancel"| cancel_confirm
+    existing_route -->|"case reschedule"| reschedule_rs_start
+    existing_route -->|"default"| existing_menu
+    existing_none -->|"1"| book_start
+    existing_none -->|"0"| goodbye
+    existing_none -->|"yes"| book_start
+    existing_none -->|"no"| goodbye
+    existing_none -->|"timeout 15s"| existing_none
+    existing_none -->|"retry 2"| goodbye
+    existing_menu -->|"1"| confirm_do
+    existing_menu -->|"0"| cancel_confirm
+    existing_menu -->|"2"| reschedule_rs_start
+    existing_menu -->|"9 reason=requested"| operator
+    existing_menu -->|"intent emergency|complaint|medical|operator reason=human_only"| operator
+    existing_menu -->|"intent confirm"| confirm_do
+    existing_menu -->|"intent cancel"| cancel_confirm
+    existing_menu -->|"intent reschedule"| reschedule_rs_start
+    existing_menu -->|"yes"| confirm_do
+    existing_menu -->|"silence"| existing_menu
+    existing_menu -->|"timeout 20s"| existing_menu
+    existing_menu -->|"retry 2 reason=no_valid_input"| operator
+    cancel_confirm -->|"1"| cancel_do
+    cancel_confirm -->|"2"| existing_menu
+    cancel_confirm -->|"yes"| cancel_do
+    cancel_confirm -->|"no"| existing_menu
+    cancel_confirm -->|"silence"| cancel_confirm
+    cancel_confirm -->|"timeout 15s"| cancel_confirm
+    cancel_confirm -->|"retry 2 reason=no_valid_input"| operator
+    cancel_do -->|"ok"| cancel_done
+    cancel_do -->|"error reason=crm_error"| operator
+    confirm_do -->|"ok"| confirm_done
+    confirm_do -->|"error reason=crm_error"| operator
+    classDef entry fill:#dfd,stroke:#393;
+    class welcome entry;

@@ -1,0 +1,74 @@
+name: containers-and-sbom
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  functional:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: pip install -r requirements/asr.txt
+      - run: python tools/download_models.py --tts --asr
+        env: {HF_HUB_DISABLE_TELEMETRY: '1'}
+      - run: mkdir -p debug/runs/containers debug/runs/security
+      - run: docker compose build
+      - run: docker compose up -d --wait
+        env: {APP_MODE: demo, CRM_NOW: '2026-10-15T11:00:00+04:00'}
+      - name: Independent real tone, speech and combined acceptance
+        run: |
+          python debug/run_dtmf_commands.py --output debug/runs/containers/dtmf-only/commands.json
+          python debug/run_speech_commands.py --output debug/runs/containers/speech-only/commands.json
+          python debug/run_speech_commands.py --mode combined --output debug/runs/containers/combined/commands.json
+          python debug/run_unverified_recipient.py --orchestrator http://127.0.0.1:8080 --tts-url http://127.0.0.1:8080
+      - name: Container logs
+        if: always()
+        run: docker compose logs --no-color > debug/runs/containers/container-logs.txt
+      - uses: anchore/sbom-action@v0
+        with:
+          image: clinic-voice-orchestrator:latest
+          format: cyclonedx-json
+          output-file: debug/runs/security/rust-container.cdx.json
+          upload-artifact: false
+      - uses: anchore/sbom-action@v0
+        with:
+          image: clinic-voice-crm:latest
+          format: cyclonedx-json
+          output-file: debug/runs/security/python-container.cdx.json
+          upload-artifact: false
+      - name: SBOM for every module image
+        run: |
+          for module in nlu sms operator tts asr; do
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock anchore/syft:latest clinic-voice-$module:latest -o cyclonedx-json > debug/runs/security/$module.cdx.json
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: containers-and-sbom
+          path: |
+            debug/runs/
+      - run: docker compose down
+        if: always()
+  telephony-contract:
+    runs-on: ubuntu-latest
+    env:
+      ARI_PASSWORD: clinic-contract-ari-2026
+      SIP_PHONE_PASSWORD: clinic-contract-phone-2026
+      SIP_OPERATOR_PASSWORD: clinic-contract-operator-2026
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: pip install -r requirements/base.txt
+      - run: mkdir -p debug/runs/containers
+      - run: docker compose --profile telephony build telephony
+      - run: docker compose --profile telephony up -d --no-deps --wait telephony
+      - run: python debug/run_asterisk_contract.py
+      - run: docker compose --profile telephony logs --no-color telephony > debug/runs/containers/asterisk.log
+        if: always()
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: {name: telephony-contract, path: debug/runs/containers/}
+      - run: docker compose --profile telephony down
+        if: always()

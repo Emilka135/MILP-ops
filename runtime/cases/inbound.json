@@ -1,0 +1,251 @@
+{
+  "description": "Входящие звонки: вход = действия звонящего (клавиши DTMF / речь / тишина), выход = записи, которые должны появиться в стенде через API (и статус звонка). today = 2026-10-14 (среда), демо-расписание seed_demo, пациент 1 = Иванов И.И. (тел. 79035551234, ДР 12.05.1980, СНИЛС 12345678901, карта 1001), пациент 3 = Петрова М.С. (тел. 79165550000, карта 1003).",
+  "cases": [
+    {
+      "id": "inbound_book_dtmf",
+      "title": "Запись к терапевту клавишами: номер известен, подтверждение датой рождения",
+      "flow": "inbound", "caller_phone": "79035551234",
+      "steps": [
+        {"wait": "inbound.welcome", "dtmf": "1"},
+        {"wait": "inbound.id_self_or_other", "dtmf": "1"},
+        {"wait": "inbound.id_birth_check", "digits": "12051980"},
+        {"wait": "inbound.book_start", "dtmf": "1"},
+        {"wait": "inbound.book_offer", "dtmf": "1"}
+      ],
+      "expect": {
+        "status": "booked", "transfer": false, "sms_contains": "Иван Иванович",
+        "vars": {"specialty": "терапевт"},
+        "stand": [{"method": "POST", "path": "/api/v1/appointments", "status": 201, "body": {"patient_id": 1, "source": "voice-bot", "call_id": "case-inbound_book_dtmf"}}]
+      }
+    },
+    {
+      "id": "inbound_book_speech_surgeon_friday",
+      "title": "60 с без нажатий → речь: «к хирургу в пятницу после обеда», согласие голосом",
+      "flow": "inbound", "caller_phone": "79035551234",
+      "steps": [
+        {"wait": "inbound.welcome", "timeout": true},
+        {"wait": "inbound.listen_free", "say": "запишите меня к хирургу в пятницу после обеда"},
+        {"wait": "inbound.id_self_or_other", "dtmf": "1"},
+        {"wait": "inbound.id_birth_check", "digits": "12051980"},
+        {"wait": "inbound.book_offer", "say": "да, подходит"}
+      ],
+      "expect": {
+        "status": "booked", "transfer": false,
+        "vars": {"specialty": "хирург", "slot_date": "2026-10-16"},
+        "stand": [{"method": "POST", "path": "/api/v1/appointments", "body": {"patient_id": 1, "starts_at": "~^2026-10-16T1[4-9]"}}]
+      }
+    },
+    {
+      "id": "inbound_book_other_person_by_card",
+      "title": "Запись другого человека: идентификация номером карты (1003#), SMS с именем записанного",
+      "flow": "inbound", "caller_phone": "79035551234",
+      "steps": [
+        {"wait": "inbound.welcome", "dtmf": "1"},
+        {"wait": "inbound.id_self_or_other", "dtmf": "2"},
+        {"wait": "inbound.id_ask_method", "dtmf": "2"},
+        {"wait": "inbound.id_ask_card", "digits": "1003#"},
+        {"wait": "inbound.book_start", "dtmf": "2"},
+        {"wait": "inbound.book_offer", "dtmf": "1"}
+      ],
+      "expect": {
+        "status": "booked", "transfer": false, "sms_contains": "Мария Сергеевна",
+        "vars": {"specialty": "педиатр", "patient_id": 3},
+        "stand": [{"method": "POST", "path": "/api/v1/appointments", "body": {"patient_id": 3}}]
+      }
+    },
+    {
+      "id": "inbound_book_unknown_phone_snils",
+      "title": "Номер неизвестен → СНИЛС (11 цифр)",
+      "flow": "inbound", "caller_phone": "79990001122",
+      "steps": [
+        {"wait": "inbound.welcome", "dtmf": "1"},
+        {"wait": "inbound.id_ask_method", "dtmf": "1"},
+        {"wait": "inbound.id_ask_snils", "digits": "32345678901"},
+        {"wait": "inbound.book_start", "dtmf": "4"},
+        {"wait": "inbound.book_offer", "dtmf": "1"}
+      ],
+      "expect": {
+        "status": "booked", "transfer": false,
+        "vars": {"specialty": "офтальмолог", "patient_id": 3},
+        "stand": [{"method": "POST", "path": "/api/v1/appointments", "body": {"patient_id": 3}}]
+      }
+    },
+    {
+      "id": "inbound_book_referral_missing",
+      "title": "Узкий специалист без направления → запись к терапевту (не к кардиологу)",
+      "flow": "inbound", "caller_phone": "79035551234",
+      "steps": [
+        {"wait": "inbound.welcome", "dtmf": "1"},
+        {"wait": "inbound.id_self_or_other", "dtmf": "1"},
+        {"wait": "inbound.id_birth_check", "digits": "12051980"},
+        {"wait": "inbound.book_start", "dtmf": "6"},
+        {"wait": "inbound.book_ask_specialty", "say": "к кардиологу"},
+        {"wait": "inbound.book_ask_referral", "dtmf": "2"},
+        {"wait": "inbound.book_offer", "dtmf": "1"}
+      ],
+      "expect": {
+        "status": "booked", "transfer": false,
+        "vars": {"specialty": "терапевт"},
+        "stand": [{"method": "POST", "path": "/api/v1/appointments", "body": {"patient_id": 1, "doctor_id": "~^[12]$"}}]
+      }
+    },
+    {
+      "id": "inbound_book_referral_present",
+      "title": "Кардиолог с направлением (получено не раньше месяца назад) → запись к кардиологу",
+      "flow": "inbound", "caller_phone": "79035551234",
+      "steps": [
+        {"wait": "inbound.welcome", "dtmf": "1"},
+        {"wait": "inbound.id_self_or_other", "dtmf": "1"},
+        {"wait": "inbound.id_birth_check", "digits": "12051980"},
+        {"wait": "inbound.book_start", "dtmf": "6"},
+        {"wait": "inbound.book_ask_specialty", "say": "к кардиологу"},
+        {"wait": "inbound.book_ask_referral", "dtmf": "1"},
+        {"wait": "inbound.book_offer", "dtmf": "1"}
+      ],
+      "expect": {
+        "status": "booked", "transfer": false,
+        "vars": {"specialty": "кардиолог", "has_referral": true},
+        "stand": [{"method": "POST", "path": "/api/v1/appointments", "body": {"patient_id": 1, "doctor_id": 5}}]
+      }
+    },
+    {
+      "id": "inbound_cancel_existing",
+      "title": "Отмена существующей записи (сделанной регистратором, id стенда APT-100)",
+      "flow": "inbound", "caller_phone": "79035551234",
+      "setup": {"bookings": [{"remote_id": "APT-100", "patient_id": 1, "doctor": 2, "starts_at": "2026-10-15T15:00"}]},
+      "steps": [
+        {"wait": "inbound.welcome", "dtmf": "2"},
+        {"wait": "inbound.id_self_or_other", "dtmf": "1"},
+        {"wait": "inbound.id_birth_check", "digits": "12051980"},
+        {"wait": "inbound.existing_menu", "dtmf": "0"},
+        {"wait": "inbound.cancel_confirm", "dtmf": "1"}
+      ],
+      "expect": {
+        "status": "cancelled", "transfer": false, "sms_contains": "Иван Иванович",
+        "stand": [{"method": "DELETE", "path": "/api/v1/appointments/APT-100", "status": 200}],
+        "mirror": {"APT-100": "cancelled"}
+      }
+    },
+    {
+      "id": "inbound_cancel_declined",
+      "title": "Передумал отменять (2 — оставить запись), затем подтвердил (1) → confirm, без отмены",
+      "flow": "inbound", "caller_phone": "79035551234",
+      "setup": {"bookings": [{"remote_id": "APT-101", "patient_id": 1, "doctor": 2, "starts_at": "2026-10-15T15:15"}]},
+      "steps": [
+        {"wait": "inbound.welcome", "dtmf": "2"},
+        {"wait": "inbound.id_self_or_other", "dtmf": "1"},
+        {"wait": "inbound.id_birth_check", "digits": "12051980"},
+        {"wait": "inbound.existing_menu", "dtmf": "0"},
+        {"wait": "inbound.cancel_confirm", "dtmf": "2"},
+        {"wait": "inbound.existing_menu", "dtmf": "1"}
+      ],
+      "expect": {
+        "status": "confirmed", "transfer": false,
+        "stand": [{"method": "POST", "path": "/api/v1/appointments/APT-101/confirm", "status": 200}],
+        "mirror": {"APT-101": "booked"}
+      }
+    },
+    {
+      "id": "inbound_reschedule_existing",
+      "title": "Перенос существующей записи: ближайший день → да → до обеда → ближайшее время → да",
+      "flow": "inbound", "caller_phone": "79035551234",
+      "setup": {"bookings": [{"remote_id": "APT-102", "patient_id": 1, "doctor": 2, "starts_at": "2026-10-15T15:30"}]},
+      "steps": [
+        {"wait": "inbound.welcome", "dtmf": "2"},
+        {"wait": "inbound.id_self_or_other", "dtmf": "1"},
+        {"wait": "inbound.id_birth_check", "digits": "12051980"},
+        {"wait": "inbound.existing_menu", "dtmf": "2"},
+        {"wait": "reschedule.rs_offer_day", "dtmf": "1"},
+        {"wait": "reschedule.rs_ask_part", "dtmf": "1"},
+        {"wait": "reschedule.rs_offer_time", "dtmf": "1"}
+      ],
+      "expect": {
+        "status": "rescheduled", "transfer": false, "sms_contains": "Иван Иванович",
+        "stand": [{"method": "PATCH", "path": "/api/v1/appointments/APT-102", "status": 200, "body": {"starts_at": "~T(0[89]|1[0-3]):"}}],
+        "mirror": {"APT-102": "booked"}
+      }
+    },
+    {
+      "id": "inbound_info_schedule_no_writes",
+      "title": "Справка о режиме работы: ничего не пишем в стенд",
+      "flow": "inbound", "caller_phone": "79035551234",
+      "steps": [
+        {"wait": "inbound.welcome", "dtmf": "3"},
+        {"wait": "inbound.info_menu", "dtmf": "1"},
+        {"wait": "inbound.info_say", "dtmf": "0"}
+      ],
+      "expect": {"status": "done", "transfer": false, "stand": []}
+    },
+    {
+      "id": "inbound_operator_requested",
+      "title": "0 в меню → перевод на оператора = запрос в стенд",
+      "flow": "inbound", "caller_phone": "79035551234",
+      "steps": [{"wait": "inbound.welcome", "dtmf": "0"}],
+      "expect": {
+        "status": "transfer", "transfer": "requested",
+        "stand": [{"method": "POST", "path": "/api/v1/operator-requests", "status": 201, "body": {"reason": "requested", "call_id": "case-inbound_operator_requested"}}]
+      }
+    },
+    {
+      "id": "inbound_pain_speech_to_operator",
+      "title": "Острая боль в речи → только человек (без уточняющих вопросов)",
+      "flow": "inbound", "caller_phone": "79165550000",
+      "steps": [
+        {"wait": "inbound.welcome", "timeout": true},
+        {"wait": "inbound.listen_free", "say": "у меня очень сильная боль в груди, мне плохо"}
+      ],
+      "expect": {
+        "status": "transfer", "transfer": "human_only",
+        "stand": [{"method": "POST", "path": "/api/v1/operator-requests", "body": {"reason": "human_only"}}]
+      }
+    },
+    {
+      "id": "inbound_complaint_speech_to_operator",
+      "title": "Жалоба на врача → оператор",
+      "flow": "inbound", "caller_phone": "79165550000",
+      "steps": [
+        {"wait": "inbound.welcome", "timeout": true},
+        {"wait": "inbound.listen_free", "say": "хочу пожаловаться на врача, он нагрубил"}
+      ],
+      "expect": {"status": "transfer", "transfer": "human_only", "stand": [{"method": "POST", "path": "/api/v1/operator-requests", "body": {"reason": "human_only"}}]}
+    },
+    {
+      "id": "inbound_specific_doctor_to_operator",
+      "title": "Запись к конкретному врачу по фамилии → автомат не рискует, оператор со всеми данными",
+      "flow": "inbound", "caller_phone": "79035551234",
+      "steps": [
+        {"wait": "inbound.welcome", "dtmf": "1"},
+        {"wait": "inbound.id_self_or_other", "dtmf": "1"},
+        {"wait": "inbound.id_birth_check", "digits": "12051980"},
+        {"wait": "inbound.book_start", "dtmf": "6"},
+        {"wait": "inbound.book_ask_specialty", "say": "запишите меня к доктору Кузнецову"}
+      ],
+      "expect": {"status": "transfer", "transfer": "specific_doctor", "stand": [{"method": "POST", "path": "/api/v1/operator-requests", "body": {"reason": "specific_doctor", "patient_id": 1}}]}
+    },
+    {
+      "id": "inbound_wrong_birth_date_then_snils",
+      "title": "Дата рождения не совпала → выбор способа → СНИЛС → запись",
+      "flow": "inbound", "caller_phone": "79035551234",
+      "steps": [
+        {"wait": "inbound.welcome", "dtmf": "1"},
+        {"wait": "inbound.id_self_or_other", "dtmf": "1"},
+        {"wait": "inbound.id_birth_check", "digits": "01011999"},
+        {"wait": "inbound.id_ask_method", "dtmf": "1"},
+        {"wait": "inbound.id_ask_snils", "digits": "12345678901"},
+        {"wait": "inbound.book_start", "dtmf": "1"},
+        {"wait": "inbound.book_offer", "dtmf": "1"}
+      ],
+      "expect": {"status": "booked", "transfer": false, "stand": [{"method": "POST", "path": "/api/v1/appointments", "body": {"patient_id": 1}}]}
+    },
+    {
+      "id": "inbound_silence_no_writes",
+      "title": "Тишина: 60 с без нажатий, ничего не сказано → вежливое завершение, записей нет",
+      "flow": "inbound", "caller_phone": "79035551234",
+      "steps": [
+        {"wait": "inbound.welcome", "timeout": true},
+        {"wait": "inbound.listen_free", "silence": true}
+      ],
+      "expect": {"status": "no_input", "transfer": false, "stand": []}
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+.git
+target
+.venv*
+var
+modules
+*.zip
+reports
+**/__pycache__
+**/.pytest_cache
+
+debug

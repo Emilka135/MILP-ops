@@ -1,0 +1,81 @@
+# Исходящее напоминание за день до приёма.
+# Политика дозвона (calls.outbound.policy): только 10:00–22:00 местного времени, не более 6 звонков за сутки
+# (3 повода × 2 попытки). Вход: patient_id, patient_name, booking_id, specialty, specialty_dative, doctor,
+# slot_date, slot_time, slot_date_spoken, slot_time_spoken, cabinet, clinic_name, clinic_phone_spoken, today.
+flow reminder
+  rate 1.4
+  entry identity
+
+# Answering a telephone does not identify the patient. No appointment details
+# are spoken until the entered card number matches the intended patient.
+state identity
+  say "Здравствуйте! Это автоматический помощник поликлиники. Чтобы перейти к вашей записи, введите номер карты поликлиники и нажмите решётку. Можно назвать номер по одной цифре. Если вы не ожидаете звонка, положите трубку. Мы не просим банковские данные и коды из СМС."
+  ask card_no digits 3-10 timeout 25s terminator "#"
+  listen 25s
+  ok -> verify_identity
+  timeout -> no_verified_contact
+  retry 2 -> no_verified_contact
+
+state verify_identity
+  call crm.verify_card patient_id=$patient_id card_no=$card_no booking_id=$booking_id
+  ok -> start
+  mismatch -> no_verified_contact
+  error -> no_verified_contact
+
+state no_verified_contact
+  say "Личность получателя не подтверждена. Для вопросов о записи позвоните по официальному номеру поликлиники. Всего доброго."
+  end no_verified_contact
+
+state start
+  say "Здравствуйте! Это автоматический звонок из {clinic_name}. Напоминаем: {patient_name} записан на приём к {specialty_dative} {slot_date_spoken}, в {slot_time_spoken}, кабинет {cabinet}. Если вы придёте, нажмите 1. Чтобы отменить запись, нажмите 0. Чтобы перенести — нажмите 2. Мы никогда не просим коды из СМС и данные банковских карт; наш номер указан на сайте поликлиники."
+  dtmf 1 -> confirm_do
+  dtmf 0 -> cancel_confirm
+  dtmf 2 -> reschedule.rs_start
+  intent emergency|complaint|medical|operator -> operator reason=human_only
+  intent confirm -> confirm_do
+  intent cancel -> cancel_confirm
+  intent reschedule -> reschedule.rs_start
+  yes -> confirm_do
+  no -> cancel_confirm
+  silence -> start
+  timeout 20s -> start
+  retry 2 -> no_answer
+
+state cancel_confirm
+  say "Вы хотите отменить запись {slot_date_spoken} в {slot_time_spoken}? Нажмите 1 — да, отменить. 2 — нет, оставить запись."
+  dtmf 1 -> cancel_do
+  dtmf 2 -> start
+  yes -> cancel_do
+  no -> start
+  silence -> cancel_confirm
+  timeout 15s -> cancel_confirm
+  retry 2 -> operator reason=no_valid_input
+
+state cancel_do
+  call crm.cancel booking_id=$booking_id
+  ok -> cancel_done
+  error -> operator reason=crm_error
+
+state cancel_done
+  say "Запись пациента {patient_name} к {specialty_dative} {slot_date_spoken} отменена. Мы отправим СМС. Чтобы записаться снова, позвоните в поликлинику. Всего доброго!"
+  sms cancelled
+  end cancelled
+
+state confirm_do
+  call crm.confirm booking_id=$booking_id
+  ok -> confirm_done
+  error -> operator reason=crm_error
+
+state confirm_done
+  say "Спасибо! Запись пациента {patient_name} к {specialty_dative} {slot_date_spoken} в {slot_time_spoken} подтверждена. Ждём вас, возьмите паспорт и полис. Всего доброго!"
+  sms confirmed
+  end confirmed
+
+state no_answer
+  say "Мы не получили ответа. Запись сохраняется. Если планы изменятся, позвоните в поликлинику. Всего доброго!"
+  end no_answer
+
+state operator
+  say "Перевожу на оператора. Все данные разговора сохранены, повторять ничего не придётся."
+  transfer reason=$reason
+  end transfer

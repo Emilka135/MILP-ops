@@ -1,0 +1,8 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Проверка голоса и тонов</title>
+<style>body{font:17px system-ui;max-width:760px;margin:40px auto;padding:0 20px;background:#f5f7fa;color:#182b3b}section{background:white;padding:20px;margin:16px 0;border-radius:12px}audio{width:100%}#keys{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}button{font:22px system-ui;padding:15px;border:1px solid #bbc7d4;border-radius:8px;background:#e9f2fa;cursor:pointer}a{color:#1454a0}</style>
+<h1>Голос и тональные клавиши</h1><p>Настоящий Silero v5.5, голос xenia, скорость ×1,5. WAV сохраняются в debug/runs/. Страница воспроизводит образцы; сквозные операции проверяют отдельные скрипты.</p>
+<section><h2>Приветствие из рабочего сценария</h2><audio controls src="runs/speech-only/audio/welcome.wav"></audio></section>
+<section><h2>Запись</h2><audio controls src="runs/speech-only/audio/book.wav"></audio><h2>Перенос</h2><audio controls src="runs/speech-only/audio/move.wav"></audio><h2>Отмена</h2><audio controls src="runs/speech-only/audio/cancel.wav"></audio></section>
+<section><h2>Прослушать DTMF</h2><p>Реальные пары частот из отдельного тонального прогона.</p><div id="keys"></div><audio id="tone" controls></audio></section>
+<p><a href="README.md">Команды проверок и расположение результатов</a></p>
+<script>for(const key of '123A456B789C*0#D'){const b=document.createElement('button');b.textContent=key;b.onclick=()=>{const a=document.querySelector('#tone');a.src='runs/dtmf-only/audio/lin-'+(key==='*'?'star':key==='#'?'hash':key)+'.wav';a.play()};document.querySelector('#keys').append(b)}</script></html>

@@ -1,0 +1,34 @@
+flowchart TD
+    start["start\nASR"]
+    cancel_confirm["cancel_confirm\nASR"]
+    cancel_do[["cancel_do\ncrm.cancel"]]
+    cancel_done(("cancel_done"))
+    confirm_do[["confirm_do\ncrm.confirm"]]
+    confirm_done(("confirm_done"))
+    no_answer(("no_answer"))
+    operator{{"operator\nоператор"}}
+    start -->|"1"| confirm_do
+    start -->|"0"| cancel_confirm
+    start -->|"2"| reschedule_rs_start
+    start -->|"intent emergency|complaint|medical|operator reason=human_only"| operator
+    start -->|"intent confirm"| confirm_do
+    start -->|"intent cancel"| cancel_confirm
+    start -->|"intent reschedule"| reschedule_rs_start
+    start -->|"yes"| confirm_do
+    start -->|"no"| cancel_confirm
+    start -->|"silence"| start
+    start -->|"timeout 20s"| start
+    start -->|"retry 2"| no_answer
+    cancel_confirm -->|"1"| cancel_do
+    cancel_confirm -->|"2"| start
+    cancel_confirm -->|"yes"| cancel_do
+    cancel_confirm -->|"no"| start
+    cancel_confirm -->|"silence"| cancel_confirm
+    cancel_confirm -->|"timeout 15s"| cancel_confirm
+    cancel_confirm -->|"retry 2 reason=no_valid_input"| operator
+    cancel_do -->|"ok"| cancel_done
+    cancel_do -->|"error reason=crm_error"| operator
+    confirm_do -->|"ok"| confirm_done
+    confirm_do -->|"error reason=crm_error"| operator
+    classDef entry fill:#dfd,stroke:#393;
+    class start entry;

@@ -1,0 +1,109 @@
+flowchart TD
+    rs_start[["rs_start\ncrm.next_day"]]
+    rs_offer_day["rs_offer_day\nASR"]
+    rs_next_day[["rs_next_day\ncrm.next_day"]]
+    rs_check_day[["rs_check_day\ncrm.check_day"]]
+    rs_offer_other_day["rs_offer_other_day"]
+    rs_day_parts[["rs_day_parts\ncrm.day_parts"]]
+    rs_ask_part["rs_ask_part\nASR"]
+    rs_part_morning["rs_part_morning"]
+    rs_part_afternoon["rs_part_afternoon"]
+    rs_offer_time_single["rs_offer_time_single"]
+    rs_nearest_in_part[["rs_nearest_in_part\ncrm.nearest_in_day_part"]]
+    rs_offer_time["rs_offer_time\nASR"]
+    rs_list_slots[["rs_list_slots\ncrm.list_slots"]]
+    rs_say_slots["rs_say_slots\nASR"]
+    rs_pick_time[["rs_pick_time\ncrm.pick_time"]]
+    rs_part_other_day[["rs_part_other_day\ncrm.nearest_in_part"]]
+    rs_offer_datetime["rs_offer_datetime\nASR"]
+    rs_do[["rs_do\ncrm.reschedule"]]
+    rs_taken["rs_taken"]
+    rs_done(("rs_done"))
+    operator{{"operator\nоператор"}}
+    rs_start -->|"ok"| rs_offer_day
+    rs_start -->|"too_many reason=no_suitable_day"| operator
+    rs_start -->|"empty reason=no_slots"| operator
+    rs_start -->|"error reason=crm_error"| operator
+    rs_offer_day -->|"1"| rs_day_parts
+    rs_offer_day -->|"2"| rs_next_day
+    rs_offer_day -->|"0 reason=requested"| operator
+    rs_offer_day -->|"intent emergency|complaint|medical|operator reason=human_only"| operator
+    rs_offer_day -->|"date"| rs_check_day
+    rs_offer_day -->|"yes"| rs_day_parts
+    rs_offer_day -->|"no"| rs_next_day
+    rs_offer_day -->|"any reason=not_a_date"| operator
+    rs_offer_day -->|"silence"| rs_offer_day
+    rs_offer_day -->|"timeout 8s"| rs_offer_day
+    rs_offer_day -->|"retry 2 reason=no_valid_input"| operator
+    rs_next_day -->|"ok"| rs_offer_day
+    rs_next_day -->|"too_many reason=no_suitable_day"| operator
+    rs_next_day -->|"empty reason=no_slots"| operator
+    rs_next_day -->|"error reason=crm_error"| operator
+    rs_check_day -->|"ok"| rs_day_parts
+    rs_check_day -->|"other_day"| rs_offer_other_day
+    rs_check_day -->|"past"| rs_offer_day
+    rs_check_day -->|"empty reason=no_slots"| operator
+    rs_check_day -->|"error reason=crm_error"| operator
+    rs_offer_other_day --> rs_offer_day
+    rs_day_parts -->|"both"| rs_ask_part
+    rs_day_parts -->|"single"| rs_offer_time_single
+    rs_day_parts -->|"empty"| rs_next_day
+    rs_day_parts -->|"error reason=crm_error"| operator
+    rs_ask_part -->|"1"| rs_part_morning
+    rs_ask_part -->|"2"| rs_part_afternoon
+    rs_ask_part -->|"intent emergency|complaint|medical|operator reason=human_only"| operator
+    rs_ask_part -->|"daypart"| rs_nearest_in_part
+    rs_ask_part -->|"time"| rs_pick_time
+    rs_ask_part -->|"any reason=not_a_daypart"| operator
+    rs_ask_part -->|"silence"| rs_ask_part
+    rs_ask_part -->|"timeout 8s"| rs_ask_part
+    rs_ask_part -->|"retry 2 reason=no_valid_input"| operator
+    rs_part_morning --> rs_nearest_in_part
+    rs_part_afternoon --> rs_nearest_in_part
+    rs_offer_time_single --> rs_offer_time
+    rs_nearest_in_part -->|"ok"| rs_offer_time
+    rs_nearest_in_part -->|"empty"| rs_next_day
+    rs_nearest_in_part -->|"error reason=crm_error"| operator
+    rs_offer_time -->|"1"| rs_do
+    rs_offer_time -->|"2"| rs_list_slots
+    rs_offer_time -->|"intent emergency|complaint|medical|operator reason=human_only"| operator
+    rs_offer_time -->|"time"| rs_pick_time
+    rs_offer_time -->|"yes"| rs_do
+    rs_offer_time -->|"no"| rs_list_slots
+    rs_offer_time -->|"any reason=unclear"| operator
+    rs_offer_time -->|"silence"| rs_offer_time
+    rs_offer_time -->|"timeout 8s"| rs_offer_time
+    rs_offer_time -->|"retry 2 reason=no_valid_input"| operator
+    rs_list_slots -->|"ok"| rs_say_slots
+    rs_list_slots -->|"empty"| rs_next_day
+    rs_list_slots -->|"error reason=crm_error"| operator
+    rs_say_slots -->|"intent emergency|complaint|medical|operator reason=human_only"| operator
+    rs_say_slots -->|"time"| rs_pick_time
+    rs_say_slots -->|"daypart"| rs_part_other_day
+    rs_say_slots -->|"no reason=none_suitable"| operator
+    rs_say_slots -->|"any reason=unclear"| operator
+    rs_say_slots -->|"silence"| rs_say_slots
+    rs_say_slots -->|"timeout 10s"| rs_say_slots
+    rs_say_slots -->|"retry 2 reason=no_valid_input"| operator
+    rs_pick_time -->|"ok"| rs_do
+    rs_pick_time -->|"near"| rs_offer_time
+    rs_pick_time -->|"empty"| rs_say_slots
+    rs_pick_time -->|"error reason=crm_error"| operator
+    rs_part_other_day -->|"ok"| rs_offer_datetime
+    rs_part_other_day -->|"empty reason=no_slots"| operator
+    rs_part_other_day -->|"error reason=crm_error"| operator
+    rs_offer_datetime -->|"1"| rs_do
+    rs_offer_datetime -->|"2 reason=none_suitable"| operator
+    rs_offer_datetime -->|"intent emergency|complaint|medical|operator reason=human_only"| operator
+    rs_offer_datetime -->|"yes"| rs_do
+    rs_offer_datetime -->|"no reason=none_suitable"| operator
+    rs_offer_datetime -->|"any reason=unclear"| operator
+    rs_offer_datetime -->|"silence"| rs_offer_datetime
+    rs_offer_datetime -->|"timeout 8s"| rs_offer_datetime
+    rs_offer_datetime -->|"retry 2 reason=no_valid_input"| operator
+    rs_do -->|"ok"| rs_done
+    rs_do -->|"taken"| rs_taken
+    rs_do -->|"error reason=crm_error"| operator
+    rs_taken --> rs_start
+    classDef entry fill:#dfd,stroke:#393;
+    class rs_start entry;

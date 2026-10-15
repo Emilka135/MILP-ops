@@ -1,0 +1,26 @@
+name: tests
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ['3.12', '3.14']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '${{ matrix.python }}'}
+      - uses: dtolnay/rust-toolchain@1.98.0
+        with: {components: 'rustfmt,clippy'}
+      - run: pip install -r requirements/dev.txt
+      - run: pip install --index-url https://download.pytorch.org/whl/cpu torch==2.14.1
+      - run: pip install -r requirements/asr.txt omegaconf==2.3.0
+      - run: python tools/download_models.py --tts --asr
+        env: {HF_HUB_DISABLE_TELEMETRY: '1'}
+      - run: python debug/run_checks.py
+      - run: python tools/capacity.py --output debug/runs/capacity/estimate.md
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: {name: 'test-results-python-${{ matrix.python }}', path: debug/runs/}

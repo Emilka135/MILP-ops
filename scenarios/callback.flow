@@ -1,0 +1,41 @@
+flow callback
+  rate 1.5
+  entry prepare
+
+state prepare
+  set said_date = ""
+  set said_time = ""
+  goto ask
+
+state ask
+  say "Сейчас оператор недоступен. В какой день и в какое время вам удобно перезвонить по этому вопросу? Обратные звонки доступны {callback_hours}. Можно сказать: завтра в три часа дня."
+  listen 20s
+  loop 3 -> save_unscheduled
+  intent emergency -> operator reason=emergency
+  any -> save
+  timeout 20s -> save_unscheduled
+  silence -> save_unscheduled
+
+state save
+  call crm.callback_request call_id=$call_id phone=$caller_phone reason=$reason preferred_date=$said_date preferred_time=$said_time
+  ok -> done
+  invalid -> ask
+  error -> save_unscheduled
+
+state save_unscheduled
+  call crm.callback_request call_id=$call_id phone=$caller_phone reason=$reason unscheduled=true
+  ok -> done
+  error -> failed
+
+state done
+  say "Заявка на обратный звонок сохранена. Предпочтительное время: {callback_at}. Оператор увидит ваш вопрос в рабочее время. Всего доброго!"
+  end callback_requested
+
+state failed
+  say "Не удалось сохранить заявку. Пожалуйста, позвоните по официальному номеру поликлиники в рабочее время."
+  end callback_failed
+
+state operator
+  say "Перевожу экстренное обращение на оператора."
+  transfer reason=$reason
+  end transfer

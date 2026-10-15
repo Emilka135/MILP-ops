@@ -1,0 +1,345 @@
+{
+  "description": "Исходящие напоминания за день до приёма (flow reminder; звонок строится из существующей записи стенда через reminder_for). 1 — приду (confirm), 0 — отменить, 2 — перенести; речь не про дату → человек.",
+  "cases": [
+    {
+      "id": "reminder_confirm",
+      "title": "Напоминание: 1 — приду → подтверждение в стенде",
+      "flow": "reminder",
+      "caller_phone": "79035551234",
+      "setup": {
+        "bookings": [
+          {
+            "remote_id": "APT-200",
+            "patient_id": 1,
+            "doctor": 2,
+            "starts_at": "2026-10-15T16:00"
+          }
+        ]
+      },
+      "reminder_for": "APT-200",
+      "steps": [
+        {
+          "wait": "reminder.start",
+          "dtmf": "1"
+        }
+      ],
+      "expect": {
+        "status": "confirmed",
+        "transfer": false,
+        "sms_contains": "Иван Иванович",
+        "stand": [
+          {
+            "method": "POST",
+            "path": "/api/v1/appointments/APT-200/confirm",
+            "status": 200
+          }
+        ]
+      }
+    },
+    {
+      "id": "reminder_cancel",
+      "title": "Напоминание: 0 → подтверждение отмены 1 → DELETE в стенде",
+      "flow": "reminder",
+      "caller_phone": "79035551234",
+      "setup": {
+        "bookings": [
+          {
+            "remote_id": "APT-201",
+            "patient_id": 1,
+            "doctor": 2,
+            "starts_at": "2026-10-15T16:15"
+          }
+        ]
+      },
+      "reminder_for": "APT-201",
+      "steps": [
+        {
+          "wait": "reminder.start",
+          "dtmf": "0"
+        },
+        {
+          "wait": "reminder.cancel_confirm",
+          "dtmf": "1"
+        }
+      ],
+      "expect": {
+        "status": "cancelled",
+        "transfer": false,
+        "stand": [
+          {
+            "method": "DELETE",
+            "path": "/api/v1/appointments/APT-201",
+            "status": 200
+          }
+        ],
+        "mirror": {
+          "APT-201": "cancelled"
+        }
+      }
+    },
+    {
+      "id": "reminder_cancel_by_voice",
+      "title": "Напоминание голосом: «нет, не приду» → «да, отменяйте» → DELETE",
+      "flow": "reminder",
+      "caller_phone": "79035551234",
+      "setup": {
+        "bookings": [
+          {
+            "remote_id": "APT-202",
+            "patient_id": 1,
+            "doctor": 2,
+            "starts_at": "2026-10-15T16:30"
+          }
+        ]
+      },
+      "reminder_for": "APT-202",
+      "steps": [
+        {
+          "wait": "reminder.start",
+          "say": "нет, не приду"
+        },
+        {
+          "wait": "reminder.cancel_confirm",
+          "say": "да, отменяйте"
+        }
+      ],
+      "expect": {
+        "status": "cancelled",
+        "transfer": false,
+        "stand": [
+          {
+            "method": "DELETE",
+            "path": "/api/v1/appointments/APT-202"
+          }
+        ],
+        "mirror": {
+          "APT-202": "cancelled"
+        }
+      }
+    },
+    {
+      "id": "reminder_reschedule_next_day_afternoon",
+      "title": "Напоминание: 2 — перенести → предложенный день не подходит (2) → следующий день (1) → после обеда (2) → ближайшее время (1)",
+      "flow": "reminder",
+      "caller_phone": "79035551234",
+      "setup": {
+        "bookings": [
+          {
+            "remote_id": "APT-203",
+            "patient_id": 1,
+            "doctor": 2,
+            "starts_at": "2026-10-15T16:45"
+          }
+        ]
+      },
+      "reminder_for": "APT-203",
+      "steps": [
+        {
+          "wait": "reminder.start",
+          "dtmf": "2"
+        },
+        {
+          "wait": "reschedule.rs_offer_day",
+          "dtmf": "2"
+        },
+        {
+          "wait": "reschedule.rs_offer_day",
+          "dtmf": "1"
+        },
+        {
+          "wait": "reschedule.rs_ask_part",
+          "dtmf": "2"
+        },
+        {
+          "wait": "reschedule.rs_offer_time",
+          "dtmf": "1"
+        }
+      ],
+      "expect": {
+        "status": "rescheduled",
+        "transfer": false,
+        "stand": [
+          {
+            "method": "PATCH",
+            "path": "/api/v1/appointments/APT-203",
+            "status": 200,
+            "body": {
+              "starts_at": "~T(1[3-9]):"
+            }
+          }
+        ],
+        "mirror": {
+          "APT-203": "booked"
+        }
+      }
+    },
+    {
+      "id": "reminder_reschedule_spoken_day_and_time",
+      "title": "Перенос голосом: «в понедельник» → «после обеда» → согласие",
+      "flow": "reminder",
+      "caller_phone": "79035551234",
+      "setup": {
+        "bookings": [
+          {
+            "remote_id": "APT-204",
+            "patient_id": 1,
+            "doctor": 2,
+            "starts_at": "2026-10-15T17:00"
+          }
+        ]
+      },
+      "reminder_for": "APT-204",
+      "steps": [
+        {
+          "wait": "reminder.start",
+          "say": "хочу перенести"
+        },
+        {
+          "wait": "reschedule.rs_offer_day",
+          "say": "в понедельник"
+        },
+        {
+          "wait": "reschedule.rs_ask_part",
+          "say": "после обеда"
+        },
+        {
+          "wait": "reschedule.rs_offer_time",
+          "say": "да"
+        }
+      ],
+      "expect": {
+        "status": "rescheduled",
+        "transfer": false,
+        "stand": [
+          {
+            "method": "PATCH",
+            "path": "/api/v1/appointments/APT-204",
+            "body": {
+              "starts_at": "~^2026-10-19T1[3-9]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "reminder_not_a_date_to_operator",
+      "title": "На вопрос о дне отвечают не датой → человек (данные сохранены), запрос оператору в стенде",
+      "flow": "reminder",
+      "caller_phone": "79035551234",
+      "setup": {
+        "bookings": [
+          {
+            "remote_id": "APT-205",
+            "patient_id": 1,
+            "doctor": 2,
+            "starts_at": "2026-10-15T17:15"
+          }
+        ]
+      },
+      "reminder_for": "APT-205",
+      "steps": [
+        {
+          "wait": "reminder.start",
+          "dtmf": "2"
+        },
+        {
+          "wait": "reschedule.rs_offer_day",
+          "say": "мне надо сначала с мужем посоветоваться"
+        }
+      ],
+      "expect": {
+        "status": "transfer",
+        "transfer": "not_a_date",
+        "stand": [
+          {
+            "method": "POST",
+            "path": "/api/v1/operator-requests",
+            "body": {
+              "reason": "not_a_date",
+              "patient_id": 1,
+              "booking_id": "APT-205"
+            }
+          }
+        ],
+        "mirror": {
+          "APT-205": "booked"
+        }
+      }
+    },
+    {
+      "id": "reminder_no_answer_keeps_booking",
+      "title": "Нет ответа (три таймаута) → запись сохраняется, в стенд ничего не пишем",
+      "flow": "reminder",
+      "caller_phone": "79035551234",
+      "setup": {
+        "bookings": [
+          {
+            "remote_id": "APT-206",
+            "patient_id": 1,
+            "doctor": 2,
+            "starts_at": "2026-10-15T17:30"
+          }
+        ]
+      },
+      "reminder_for": "APT-206",
+      "steps": [
+        {
+          "wait": "reminder.start",
+          "timeout": true
+        },
+        {
+          "wait": "reminder.start",
+          "timeout": true
+        },
+        {
+          "wait": "reminder.start",
+          "timeout": true
+        }
+      ],
+      "expect": {
+        "status": "no_answer",
+        "transfer": false,
+        "stand": [],
+        "mirror": {
+          "APT-206": "booked"
+        }
+      }
+    },
+    {
+      "id": "reminder_medical_question_to_operator",
+      "title": "Медицинский вопрос во время напоминания → оператор",
+      "flow": "reminder",
+      "caller_phone": "79035551234",
+      "setup": {
+        "bookings": [
+          {
+            "remote_id": "APT-207",
+            "patient_id": 1,
+            "doctor": 2,
+            "starts_at": "2026-10-15T17:45"
+          }
+        ]
+      },
+      "reminder_for": "APT-207",
+      "steps": [
+        {
+          "wait": "reminder.start",
+          "say": "а какие таблетки мне принимать перед приёмом"
+        }
+      ],
+      "expect": {
+        "status": "transfer",
+        "transfer": "human_only",
+        "stand": [
+          {
+            "method": "POST",
+            "path": "/api/v1/operator-requests",
+            "body": {
+              "reason": "human_only"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

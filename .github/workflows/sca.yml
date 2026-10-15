@@ -1,0 +1,36 @@
+name: security-and-licenses
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: dtolnay/rust-toolchain@1.98.0
+      - run: pip install pip-audit bandit
+      - run: mkdir -p debug/runs/security
+      - run: pip-audit -r requirements/base.txt --format json --output debug/runs/security/python-base-audit.json
+      - run: bandit -r runtime/src/clinic src tools/compile_rust.py tools/dev.py -ll
+      - run: cargo install cargo-audit --locked
+      - run: cargo audit --json > debug/runs/security/rust-audit.json
+      - run: cargo install cargo-deny --locked
+      - run: cargo deny check licenses
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: {name: dependency-audits, path: 'debug/runs/security/'}
+  speech-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: pip install --index-url https://download.pytorch.org/whl/cpu torch==2.14.1
+      - run: pip install -r requirements/asr.txt -r requirements/tts.txt pip-audit
+      - run: mkdir -p debug/runs/security
+      - run: pip-audit --format json --output debug/runs/security/speech-python-audit.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: {name: speech-dependency-audits, path: debug/runs/security/}

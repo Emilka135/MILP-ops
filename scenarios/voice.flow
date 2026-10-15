@@ -1,0 +1,25 @@
+# Optional explicit speech channel. The default inbound flow remains DTMF first.
+flow voice
+  rate 1.5
+  entry identity
+
+state identity
+  say "Здравствуйте! Это голосовой помощник поликлиники. Для записи на приём назовите номер карты поликлиники по одной цифре. Для связи с оператором скажите оператор."
+  set intent = book
+  ask card_no digits 3-10 timeout 30s terminator "#"
+  listen 30s
+  ok -> lookup
+  timeout -> identity
+  retry 2 -> operator reason=identity_failed
+
+state lookup
+  call crm.find_patient card_no=$card_no
+  ok -> inbound.book_ask_specialty
+  empty -> operator reason=patient_not_found
+  many -> operator reason=ambiguous_identity
+  error -> operator reason=crm_error
+
+state operator
+  say "Перевожу на оператора."
+  transfer reason=$reason
+  end transfer

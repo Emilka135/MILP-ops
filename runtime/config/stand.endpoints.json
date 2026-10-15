@@ -1,0 +1,66 @@
+{
+  "_comment": "Mapping of our 5 write operations (+3 optional reads) onto the stand's OpenAPI. Edit paths/bodies to match the organisers' spec and point STAND_ENDPOINTS at this file. {placeholders} are filled from the write payload: patient_id, doctor_id, slot_id, starts_at (ISO-8601), booking_id (ours), remote_id (the stand's id), call_id, reason, constraints, user_state, summary, request_id. A template value that is exactly one placeholder keeps its type; unresolved placeholders are dropped.",
+  "book": {
+    "method": "POST",
+    "path": "/api/v1/appointments",
+    "body": {
+      "patient_id": "{patient_id}",
+      "doctor_id": "{doctor_id}",
+      "slot_id": "{slot_id}",
+      "starts_at": "{starts_at}",
+      "source": "voice-bot",
+      "call_id": "{call_id}"
+    }
+  },
+  "cancel": {
+    "method": "DELETE",
+    "path": "/api/v1/appointments/{remote_id}"
+  },
+  "reschedule": {
+    "method": "PATCH",
+    "path": "/api/v1/appointments/{remote_id}",
+    "body": {
+      "doctor_id": "{doctor_id}",
+      "slot_id": "{slot_id}",
+      "starts_at": "{starts_at}",
+      "source": "voice-bot",
+      "call_id": "{call_id}"
+    }
+  },
+  "confirm": {
+    "method": "POST",
+    "path": "/api/v1/appointments/{remote_id}/confirm",
+    "body": {
+      "confirmed": true,
+      "source": "voice-bot",
+      "call_id": "{call_id}"
+    }
+  },
+  "operator": {
+    "method": "POST",
+    "path": "/api/v1/operator-requests",
+    "body": {
+      "call_id": "{call_id}",
+      "reason": "{reason}",
+      "patient_id": "{patient_id}",
+      "booking_id": "{remote_id}",
+      "constraints": "{constraints}",
+      "user_state": "{user_state}",
+      "summary": "{summary}"
+    }
+  },
+  "list_bookings": {
+    "method": "GET",
+    "path": "/api/v1/appointments?date={date}"
+  },
+  "list_patients": {
+    "method": "GET",
+    "path": "/api/v1/patients"
+  },
+  "list_doctors": {
+    "method": "GET",
+    "path": "/api/v1/doctors"
+  },
+  "id_field": "id",
+  "items_field": "items"
+}

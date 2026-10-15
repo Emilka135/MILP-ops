@@ -1,0 +1,717 @@
+"""Single owner of the clinic mirror and the team's 10 RPM budget.
+
+The dialogue only receives 'ok' after a definitive stand acknowledgement.
+An uncertain network result quarantines its slot for manual reconciliation.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import html
+import json
+import os
+import threading
+import urllib.parse
+from datetime import datetime, timedelta, timezone
+
+from calls.crm.module import CrmModule, slot_payload
+from calls.crm.operator import OperatorTicket, build_ticket
+from calls.crm.registry import MockRegistry, RegistryError
+from calls.crm.remote import TokenBucket
+from calls.notify.sms import render
+from calls.tts.verbalize import date_to_words, time_to_words
+
+from app.mis.client import MisClient
+from app.types import MisError
+
+CLINIC_TZ = timezone(timedelta(hours=4))
+
+
+def now():
+    frozen = os.environ.get("CRM_NOW")
+    if frozen:
+        value = datetime.fromisoformat(frozen)
+        return (
+            value.replace(tzinfo=CLINIC_TZ)
+            if value.tzinfo is None
+            else value.astimezone(CLINIC_TZ)
+        )
+    return datetime.now(CLINIC_TZ)
+
+
+class StrictStand:
+    """Reuse MILP's HTTP/error contracts, with no automatic mock fallback or POST retry."""
+
+    def __init__(self, url: str, token: str, rpm=10):
+        if not token:
+            raise ValueError("STAND_TOKEN required")
+        if (
+            not url.startswith("https://")
+            and not os.environ.get("ALLOW_LOCAL_STAND") == "1"
+        ):
+            raise ValueError("live stand requires HTTPS")
+        self.client = MisClient(base_url=url.rstrip("/"), token=token)
+        self.bucket = TokenBucket(rate=min(int(rpm), 10))
+        self.lock = threading.Lock()
+
+    def request(self, method, path, body=None, query=None):
+        with self.lock:
+            if not self.bucket.acquire(timeout=60):
+                raise MisError("Лимит МИС: повторите позже", 429, "ПРЕВЫШЕН_ЛИМИТ")
+            url = self.client.base_url + path
+            if query:
+                url += "?" + urllib.parse.urlencode(query)
+            payload = (
+                json.dumps(body, ensure_ascii=False).encode()
+                if body is not None
+                else None
+            )
+            status, headers, raw = self.client._send(method, url, payload, 5, path)
+            if status >= 400:
+                raise MisError(
+                    "МИС отклонила запрос",
+                    status,
+                    "STAND_ERROR",
+                    retry_after=self.client._retry_after(headers),
+                )
+            return json.loads(raw) if raw else {}
+
+    def pages(self, path):
+        result = []
+        for offset in range(0, 100001, 50):
+            page = self.request("GET", path, query={"limit": 50, "offset": offset})
+            if not isinstance(page, list):
+                raise TypeError("stand must return an array")
+            result.extend(page)
+            if len(page) < 50:
+                return result
+        raise ValueError("pagination limit exceeded")
+
+
+EXTRA_SCHEMA = """
+CREATE TABLE IF NOT EXISTS operations (
+ key TEXT PRIMARY KEY, op TEXT NOT NULL, fingerprint TEXT NOT NULL, state TEXT NOT NULL,
+ args TEXT NOT NULL, result TEXT, remote_id INTEGER, created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS remote_clients (patient_id INTEGER PRIMARY KEY, remote_id INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS sms_outbox (
+ id INTEGER PRIMARY KEY, key TEXT UNIQUE, phone TEXT NOT NULL, text TEXT NOT NULL,
+ state TEXT NOT NULL DEFAULT 'pending', provider_id TEXT, attempts INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS dial_attempts (
+ id INTEGER PRIMARY KEY, phone TEXT NOT NULL, booking_id INTEGER NOT NULL, at TEXT NOT NULL, outcome TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS callbacks (
+ call_id TEXT PRIMARY KEY, phone TEXT NOT NULL, requested_at TEXT NOT NULL,
+ preferred_at TEXT, reason TEXT NOT NULL, state TEXT NOT NULL DEFAULT 'pending');
+"""
+
+
+class ClinicCrm:
+    def __init__(self, reg: MockRegistry, stand=None):
+        self.reg, self.stand = reg, stand
+        self.module = CrmModule(reg, today=lambda: now().date())
+        self.mutations = threading.Lock()
+        self.reg._conn.executescript(EXTRA_SCHEMA)
+        self.clinic = {
+            "clinic_name": os.environ.get(
+                "CLINIC_NAME", "Демонстрационная поликлиника"
+            ),
+            "clinic_phone": os.environ.get("CLINIC_PHONE", "+7 (000) 000-00-00"),
+        }
+
+    def handle(self, op, args):
+        try:
+            if op == "meta":
+                return "ok", {
+                    **self.clinic,
+                    "today": now().date().isoformat(),
+                    "timezone": "Etc/GMT-4",
+                    "stand_mode": "live" if self.stand else "demo",
+                    "operator_available": os.environ.get("OPERATOR_AVAILABLE", "1")
+                    == "1"
+                    and int(os.environ.get("OPERATOR_OPEN_HOUR", "10"))
+                    <= now().hour
+                    < int(os.environ.get("OPERATOR_CLOSE_HOUR", "22")),
+                    "callback_hours": f"с {os.environ.get('OPERATOR_OPEN_HOUR', '10')} до {os.environ.get('OPERATOR_CLOSE_HOUR', '22')} часов по времени поликлиники",
+                }
+            if op == "callback_request":
+                preferred = None
+                if not args.get("unscheduled"):
+                    if not args.get("preferred_time"):
+                        return "invalid", {}
+                    day = args.get("preferred_date") or now().date().isoformat()
+                    preferred = datetime.fromisoformat(
+                        f"{day}T{args['preferred_time']}"
+                    ).replace(tzinfo=CLINIC_TZ)
+                    if not args.get("preferred_date") and preferred <= now():
+                        preferred += timedelta(days=1)
+                    if (
+                        preferred <= now()
+                        or preferred > now() + timedelta(days=365)
+                        or not int(os.environ.get("OPERATOR_OPEN_HOUR", "10"))
+                        <= preferred.hour
+                        < int(os.environ.get("OPERATOR_CLOSE_HOUR", "22"))
+                    ):
+                        return "invalid", {}
+                self.reg._x(
+                    "INSERT OR IGNORE INTO callbacks(call_id,phone,requested_at,preferred_at,reason) VALUES(?,?,?,?,?)",
+                    (
+                        str(args["call_id"]),
+                        str(args.get("phone") or ""),
+                        now().isoformat(),
+                        preferred.isoformat() if preferred else None,
+                        str(args.get("reason") or "requested"),
+                    ),
+                )
+                context = args.get("context", {})
+                variables = context.get("vars", {})
+                ticket = build_ticket(
+                    self.reg,
+                    str(args["call_id"]),
+                    "callback",
+                    variables,
+                    context.get("history", []),
+                    [str(variables.get("callback_question", ""))],
+                )
+                ticket.notes.append(
+                    "Обратный звонок: "
+                    + (preferred.isoformat() if preferred else "уточнить время")
+                )
+                ticket.notes.append(
+                    "Телефон: " + str(args.get("phone") or "не определён")
+                )
+                self.reg.record_operator_request(
+                    str(args["call_id"]), "callback", ticket.to_json()
+                )
+                return "ok", {
+                    "callback_at": (
+                        date_to_words(preferred.date())
+                        + ", "
+                        + time_to_words(preferred.time())
+                    )
+                    if preferred
+                    else "в рабочее время"
+                }
+            if op == "callback_list":
+                return "ok", {
+                    "requests": self.reg.execute(
+                        "SELECT * FROM callbacks ORDER BY preferred_at,requested_at"
+                    )
+                }
+            if op == "verify_card":
+                patient = self.reg.patient_by_id(int(args["patient_id"]))
+                supplied = str(args.get("card_no", ""))
+                if patient is None or not supplied or supplied != str(patient.card_no):
+                    return "mismatch", {}
+                self.reg._x(
+                    "UPDATE dial_attempts SET outcome='verified' WHERE booking_id=? AND outcome IN ('dialing','answered')",
+                    (int(args.get("booking_id", 0)),),
+                )
+                return "ok", {}
+            if op in ("book", "cancel", "reschedule", "confirm"):
+                with self.mutations:
+                    return self.mutate(op, args)
+            if op == "stand.status":
+                rows = self.reg.execute(
+                    "SELECT key,op,state,remote_id,created_at FROM operations ORDER BY created_at DESC LIMIT 100"
+                )
+                return "ok", {
+                    "mode": "live" if self.stand else "demo",
+                    "operations": rows,
+                    "mirror": self.reg.sync_report(),
+                }
+            if op == "operator_transfer":
+                vars = args.get("vars", {})
+                ticket = build_ticket(
+                    self.reg,
+                    args.get("call_id", ""),
+                    args.get("reason") or "unknown",
+                    vars,
+                    args.get("history", []),
+                    [vars.get("last_utterance", "")],
+                )
+                return "ok", {
+                    "ticket_id": ticket.request_id,
+                    "html": ticket.to_html(),
+                    "ticket": json.loads(ticket.to_json()),
+                }
+            if op == "operator_list":
+                rows = self.reg.execute(
+                    "SELECT payload,id FROM operator_requests ORDER BY id DESC LIMIT 30"
+                )
+                sections = []
+                for row in rows:
+                    data = json.loads(row["payload"])
+                    if "highlight_sql" in data:
+                        t = OperatorTicket(**data)
+                        sections.append(
+                            "<h2>Звонок "
+                            + html.escape(t.call_id)
+                            + "</h2>"
+                            + t.to_html().split("<body>", 1)[1].split("</body>", 1)[0]
+                        )
+                    else:
+                        sections.append(
+                            "<pre>"
+                            + html.escape(json.dumps(data, ensure_ascii=False))
+                            + "</pre>"
+                        )
+                return "ok", {
+                    "html": "<!doctype html><html lang='ru'><meta charset='utf-8'><meta http-equiv='refresh' content='5'><title>Регистратура</title><body><h1>Заявки оператору</h1>"
+                    + "<hr>".join(sections)
+                    + "</body></html>"
+                }
+            if op == "sms_enqueue":
+                v = args.get("vars", {})
+                p = self.reg.patient_by_id(int(v.get("patient_id", 0)))
+                if p is None or not p.phone:
+                    return "error", {"error": "phone is missing"}
+                message = render(args["template"], v, self.clinic)
+                key = f"{args.get('call_id')}:{args['template']}:{v.get('booking_id')}"
+                self.reg._x(
+                    "INSERT OR IGNORE INTO sms_outbox(key,phone,text) VALUES(?,?,?)",
+                    (key, p.phone, message),
+                )
+                row = self.reg._q(
+                    "SELECT id,state,provider_id FROM sms_outbox WHERE key=?", (key,)
+                )[0]
+                return "ok", {**dict(row), "text": message, "delivery": row["state"]}
+            if op == "sms_pending":
+                return "ok", {
+                    "messages": self.reg.execute(
+                        "SELECT * FROM sms_outbox WHERE state='pending' ORDER BY id LIMIT 20"
+                    )
+                }
+            if op == "sms_ack":
+                self.reg._x(
+                    "UPDATE sms_outbox SET state=?,provider_id=?,attempts=attempts+1 WHERE id=?",
+                    (args["state"], args.get("provider_id"), int(args["id"])),
+                )
+                return "ok", {}
+            if op == "snapshot":
+                return "ok", {
+                    "bookings": self.reg.execute(
+                        "SELECT id,patient_id,slot_id,status,confirmed,remote_id,sync_state FROM bookings"
+                    )
+                }
+            if op == "plan_lookup":
+                allowed = {
+                    "SELECT id, starts_at, status FROM bookings WHERE patient_id=:patient_id AND status='booked' ORDER BY starts_at",
+                    "SELECT s.id, s.starts_at FROM slots s JOIN doctors d ON d.id=s.doctor_id WHERE s.status='free' AND d.active=1 AND d.specialty=:specialty ORDER BY s.starts_at LIMIT 50",
+                    "SELECT 1 WHERE 0",
+                }
+                if args.get("sql") not in allowed:
+                    return "error", {"error": "SQL template not allowed"}
+                return "ok", {
+                    "rows": self.reg.execute(args["sql"], args.get("params", {}))
+                }
+            if op == "sync_pull":
+                return self.pull()
+            if op == "dial_due":
+                return "ok", {"items": self.dial_due()}
+            if op == "dial_reserve":
+                return self.dial_reserve(args)
+            if op == "dial_result":
+                self.reg._x(
+                    "UPDATE dial_attempts SET outcome=? WHERE id=? AND outcome!='verified'",
+                    (args["outcome"], int(args["attempt_id"])),
+                )
+                return "ok", {}
+            # Optional private fields added by the bus are not DSL arguments.
+            return self.module.handle(op, args)
+        except (RegistryError, ValueError, TypeError, KeyError) as exc:
+            return "error", {"error": type(exc).__name__}
+
+    def mutate(self, op, args):
+        key = str(args.get("operation_key") or "")
+        if not key:
+            return "error", {"error": "operation_key required"}
+        clean = {
+            k: args[k]
+            for k in ("patient_id", "booking_id", "slot_id")
+            if args.get(k) is not None
+        }
+        digest = hashlib.sha256(
+            json.dumps([op, clean], sort_keys=True).encode()
+        ).hexdigest()
+        rows = self.reg._q("SELECT * FROM operations WHERE key=?", (key,))
+        if rows:
+            row = rows[0]
+            if row["fingerprint"] != digest:
+                return "error", {
+                    "error": "idempotency key reused with different arguments"
+                }
+            if row["state"] == "done":
+                return "ok", json.loads(row["result"])
+            return "error", {
+                "error": "operation requires reconciliation",
+                "operation_state": row["state"],
+            }
+        bid = int(clean.get("booking_id", 0))
+        old = self.reg.booking(bid) if bid else None
+        slot = (
+            self.reg.slot(int(clean["slot_id"]))
+            if op in ("book", "reschedule")
+            else None
+        )
+        if op != "book" and (old is None or old.status != "booked"):
+            return "error", {"error": "booking is not mutable"}
+        if op in ("book", "reschedule") and slot is None:
+            return "error", {"error": "slot not found"}
+        if slot:
+            doctor = self.reg._q(
+                "SELECT active FROM doctors WHERE id=?", (slot.doctor_id,)
+            )[0]
+            if not doctor["active"] or slot.starts_at <= now().replace(tzinfo=None):
+                return "error", {"error": "doctor inactive or slot in past"}
+        pid = int(clean.get("patient_id") or old.patient_id)
+        p = self.reg.patient_by_id(pid)
+        if p is None:
+            return "error", {"error": "patient not found"}
+        # Persist intent and reserve the target BEFORE contacting the remote API.
+        with self.reg._lock:
+            conn = self.reg._conn
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                if slot:
+                    cur = conn.execute(
+                        "UPDATE slots SET status='reserved' WHERE id=? AND status='free'",
+                        (slot.id,),
+                    )
+                    if cur.rowcount != 1:
+                        conn.execute("ROLLBACK")
+                        return "taken", {}
+                conn.execute(
+                    "INSERT INTO operations(key,op,fingerprint,state,args,created_at) VALUES(?,?,?,'pending',?,?)",
+                    (key, op, digest, json.dumps(clean), now().isoformat()),
+                )
+                conn.execute("COMMIT")
+            except Exception:
+                conn.execute("ROLLBACK")
+                raise
+        remote = None
+        visit_mutation_started = False
+        try:
+            if self.stand and op != "confirm":
+                if op == "book":
+                    mapping = self.reg._q(
+                        "SELECT remote_id FROM remote_clients WHERE patient_id=?",
+                        (pid,),
+                    )
+                    if mapping:
+                        remote_pid = int(mapping[0]["remote_id"])
+                    else:
+                        if p.birth_date is None:
+                            raise ValueError(
+                                "patient birth_date missing in local export"
+                            )
+                        # The stand explicitly makes creation idempotent by name+birth date.
+                        client = self.stand.request(
+                            "POST",
+                            "/clients",
+                            {
+                                "last_name": p.last_name,
+                                "first_name": p.first_name,
+                                "middle_name": p.middle_name or None,
+                                "birth_date": p.birth_date.strftime("%d.%m.%Y"),
+                            },
+                        )
+                        remote_pid = int(client["id"])
+                        self.reg._x(
+                            "INSERT INTO remote_clients VALUES(?,?)", (pid, remote_pid)
+                        )
+                    visit_mutation_started = True
+                    remote = self.stand.request(
+                        "POST",
+                        "/visits",
+                        {
+                            "client_id": remote_pid,
+                            "doctor_id": slot.doctor_id,
+                            "scheduled_at": slot.starts_at.strftime("%d.%m.%Y %H:%M"),
+                        },
+                    )
+                else:
+                    remote_id = self.reg.remote_id_of(bid)
+                    if remote_id is None:
+                        raise ValueError(
+                            "stand id missing; import/sync the booking first"
+                        )
+                    body = (
+                        {"status": "Отменена"}
+                        if op == "cancel"
+                        else {
+                            "doctor_id": slot.doctor_id,
+                            "scheduled_at": slot.starts_at.strftime("%d.%m.%Y %H:%M"),
+                        }
+                    )
+                    visit_mutation_started = True
+                    remote = self.stand.request(
+                        "PATCH", f"/visits/{int(remote_id)}", body
+                    )
+                if not isinstance(remote, dict) or not isinstance(
+                    remote.get("id"), int
+                ):
+                    raise ValueError("invalid acknowledgement")
+                if op == "cancel":
+                    if remote.get("status") != "Отменена":
+                        raise ValueError("cancellation not acknowledged")
+                elif (
+                    remote.get("status") != "Запланирована"
+                    or remote.get("scheduled_at")
+                    != slot.starts_at.strftime("%d.%m.%Y %H:%M")
+                    or remote.get("doctor", {}).get("id") != slot.doctor_id
+                ):
+                    raise ValueError("stand acknowledged another appointment")
+            with self.reg._lock:
+                conn = self.reg._conn
+                conn.execute("BEGIN IMMEDIATE")
+                try:
+                    stamp = now().replace(tzinfo=None).isoformat(timespec="minutes")
+                    if op == "book":
+                        cur = conn.execute(
+                            "INSERT INTO bookings(patient_id,slot_id,doctor_id,starts_at,status,remote_id,sync_state,created_at,updated_at) VALUES(?,?,?,?,'booked',?,'synced',?,?)",
+                            (
+                                pid,
+                                slot.id,
+                                slot.doctor_id,
+                                slot.starts_at.isoformat(timespec="minutes"),
+                                str(remote["id"]) if remote else None,
+                                stamp,
+                                stamp,
+                            ),
+                        )
+                        bid = cur.lastrowid
+                    elif op == "cancel":
+                        conn.execute(
+                            "UPDATE bookings SET status='cancelled',sync_state='synced',updated_at=? WHERE id=?",
+                            (stamp, bid),
+                        )
+                        conn.execute(
+                            "UPDATE slots SET status='free',booking_id=NULL WHERE id=?",
+                            (old.slot_id,),
+                        )
+                    elif op == "reschedule":
+                        # Preserve the original stand and local booking identifiers.
+                        conn.execute(
+                            "UPDATE bookings SET slot_id=?,doctor_id=?,starts_at=?,confirmed=0,sync_state='synced',updated_at=? WHERE id=?",
+                            (
+                                slot.id,
+                                slot.doctor_id,
+                                slot.starts_at.isoformat(timespec="minutes"),
+                                stamp,
+                                bid,
+                            ),
+                        )
+                        conn.execute(
+                            "UPDATE slots SET status='free',booking_id=NULL WHERE id=?",
+                            (old.slot_id,),
+                        )
+                    else:
+                        conn.execute(
+                            "UPDATE bookings SET confirmed=1,updated_at=? WHERE id=?",
+                            (stamp, bid),
+                        )
+                    if slot:
+                        conn.execute(
+                            "UPDATE slots SET status='booked',booking_id=? WHERE id=?",
+                            (bid, slot.id),
+                        )
+                    result = {
+                        "booking_id": bid,
+                        "confirmed": op == "confirm",
+                        "booking_status": "cancelled" if op == "cancel" else "booked",
+                        "stand_acknowledged": bool(remote),
+                        "confirmation_scope": "local"
+                        if op == "confirm"
+                        else "stand"
+                        if self.stand
+                        else "demo",
+                    }
+                    if slot:
+                        result.update(slot_payload(slot))
+                    conn.execute(
+                        "UPDATE operations SET state='done',result=?,remote_id=? WHERE key=?",
+                        (
+                            json.dumps(result, ensure_ascii=False),
+                            int(remote["id"]) if remote else None,
+                            key,
+                        ),
+                    )
+                    conn.execute("COMMIT")
+                except Exception:
+                    conn.execute("ROLLBACK")
+                    raise
+            return "ok", result
+        except Exception as exc:  # noqa: BLE001 -- every failure after a remote write must quarantine its slot
+            # A timeout/5xx after a write may mean it was committed remotely.
+            definite = isinstance(exc, (ValueError, KeyError)) or (
+                isinstance(exc, MisError) and 400 <= exc.status < 500
+            )
+            uncertain = visit_mutation_started and (not definite or remote is not None)
+            state = "uncertain" if uncertain else "failed"
+            self.reg._x("UPDATE operations SET state=? WHERE key=?", (state, key))
+            if slot and not uncertain:
+                self.reg._x(
+                    "UPDATE slots SET status='free' WHERE id=? AND status='reserved'",
+                    (slot.id,),
+                )
+            self.reg.record_operator_request(
+                args.get("call_id", ""),
+                "stand_reconciliation",
+                json.dumps({"operation_key": key, "state": state}),
+            )
+            return "error", {
+                "error": "МИС не подтвердила изменение; передаю оператору",
+                "operation_state": state,
+            }
+
+    def pull(self):
+        if not self.stand:
+            return "error", {"error": "stand not configured"}
+        # Cache all pages once; use explicit local/remote patient mapping.
+        doctors = self.stand.pages("/doctors")
+        for d in doctors:
+            self.reg._x(
+                "INSERT INTO doctors(id,last_name,full_name,specialty,active) VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET full_name=excluded.full_name,specialty=excluded.specialty,active=excluded.active",
+                (
+                    d["id"],
+                    d["full_name"].split()[0],
+                    d["full_name"],
+                    d["specialty"],
+                    int(d["is_active"]),
+                ),
+            )
+        visits = self.stand.pages("/visits")
+        with self.mutations, self.reg._lock:
+            conn = self.reg._conn
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                for visit in visits:
+                    self.ingest_visit(visit)
+                conn.execute("COMMIT")
+            except Exception:
+                conn.execute("ROLLBACK")
+                raise
+        return "ok", {"visits": len(visits), "doctors": len(doctors)}
+
+    def ingest_visit(self, v):
+        """Unknown patients still occupy time; manual moves preserve the original booking id."""
+        b = self.reg.booking_by_remote_id(str(v["id"]))
+        did = int(v["doctor"]["id"])
+        starts = datetime.strptime(v["scheduled_at"], "%d.%m.%Y %H:%M")
+        ts = starts.isoformat(timespec="minutes")
+        if v["status"] != "Запланирована":
+            if b and b.status == "booked":
+                self.reg._x(
+                    "UPDATE bookings SET status=?,sync_state='synced' WHERE id=?",
+                    ("cancelled" if v["status"] == "Отменена" else "completed", b.id),
+                )
+                self.reg._x(
+                    "UPDATE slots SET status='free',booking_id=NULL WHERE id=? AND booking_id=?",
+                    (b.slot_id, b.id),
+                )
+            else:
+                self.reg._x(
+                    "UPDATE slots SET status='free' WHERE doctor_id=? AND starts_at=? AND status='external'",
+                    (did, ts),
+                )
+            return
+        self.reg._x(
+            "INSERT OR IGNORE INTO slots(doctor_id,starts_at,status) VALUES(?,?,'free')",
+            (did, ts),
+        )
+        target = self.reg._q(
+            "SELECT * FROM slots WHERE doctor_id=? AND starts_at=?", (did, ts)
+        )[0]
+        if target["status"] not in ("free", "external") and (
+            b is None or target["booking_id"] != b.id
+        ):
+            self.reg._x("UPDATE slots SET status='blocked' WHERE id=?", (target["id"],))
+            self.reg.record_operator_request(
+                "sync",
+                "slot_conflict",
+                json.dumps({"remote_id": v["id"], "slot_id": target["id"]}),
+            )
+            return
+        maps = self.reg._q(
+            "SELECT patient_id FROM remote_clients WHERE remote_id=?", (v["client_id"],)
+        )
+        if not maps:
+            self.reg._x(
+                "UPDATE slots SET status='external' WHERE id=?", (target["id"],)
+            )
+            return
+        pid = int(maps[0]["patient_id"])
+        if b is None:
+            self.reg.import_booking(str(v["id"]), pid, did, starts)
+        elif b.patient_id != pid or b.status != "booked":
+            self.reg._x("UPDATE slots SET status='blocked' WHERE id=?", (target["id"],))
+            self.reg.record_operator_request(
+                "sync",
+                "identity_or_status_conflict",
+                json.dumps({"remote_id": v["id"]}),
+            )
+        elif b.slot_id != target["id"]:
+            self.reg._x(
+                "UPDATE slots SET status='free',booking_id=NULL WHERE id=? AND booking_id=?",
+                (b.slot_id, b.id),
+            )
+            self.reg._x(
+                "UPDATE bookings SET slot_id=?,doctor_id=?,starts_at=?,confirmed=0,sync_state='synced' WHERE id=?",
+                (target["id"], did, ts, b.id),
+            )
+            self.reg._x(
+                "UPDATE slots SET status='booked',booking_id=? WHERE id=?",
+                (b.id, target["id"]),
+            )
+
+    def dial_due(self):
+        tomorrow = now().date() + timedelta(days=1)
+        result = []
+        for b in self.reg.bookings_on(tomorrow):
+            p = self.reg.patient_by_id(b.patient_id)
+            if not b.confirmed and p and p.phone:
+                result.append({"booking_id": b.id, "phone": p.phone})
+        return result
+
+    def dial_reserve(self, args):
+        # One process owns the persistent, per-PHONE rolling budget, shared across bookings.
+        with self.mutations:
+            at = now()
+            if not 10 <= at.hour < 22:
+                return "blocked", {"reason": "outside 10:00–22:00 GMT+4"}
+            bid = int(args["booking_id"])
+            b = self.reg.booking(bid)
+            if (
+                b is None
+                or b.status != "booked"
+                or b.confirmed
+                or b.starts_at.date() != at.date() + timedelta(days=1)
+            ):
+                return "blocked", {"reason": "booking not due"}
+            p = self.reg.patient_by_id(b.patient_id)
+            if not p or not p.phone:
+                return "blocked", {"reason": "phone missing"}
+            rows = self.reg._q(
+                "SELECT at,outcome,booking_id FROM dial_attempts WHERE phone=? AND at>? ORDER BY at",
+                (p.phone, (at - timedelta(hours=24)).isoformat()),
+            )
+            if len(rows) >= 6 or any(
+                r["outcome"] == "dialing"
+                or (r["outcome"] == "verified" and r["booking_id"] == bid)
+                for r in rows
+            ):
+                return "blocked", {
+                    "reason": "daily budget or contact already active/completed"
+                }
+            # 3 occasions of 2 calls; second attempt >=20 min, next occasion >=3h.
+            if rows:
+                gap = at - datetime.fromisoformat(rows[-1]["at"])
+                required = (
+                    timedelta(minutes=20) if len(rows) % 2 else timedelta(hours=3)
+                )
+                if gap < required:
+                    return "blocked", {"reason": "retry gap"}
+            attempt = self.reg._x(
+                "INSERT INTO dial_attempts(phone,booking_id,at,outcome) VALUES(?,?,?,'dialing')",
+                (p.phone, bid, at.isoformat()),
+            )
+            return "ok", {"attempt_id": attempt, "phone": p.phone, "booking_id": bid}
