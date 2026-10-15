@@ -1,6 +1,7 @@
 """Resumable, bounded HTTP range download with upstream LFS SHA256 verification."""
 from concurrent.futures import ThreadPoolExecutor
 import hashlib
+import shutil
 from pathlib import Path
 import time
 import urllib.request
@@ -51,3 +52,4 @@ def fetch(url, target, size, expected_sha, workers=8):
         temporary.unlink()
         raise ValueError('model SHA256 mismatch')
     temporary.replace(target)
+    shutil.rmtree(parts)
