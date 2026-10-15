@@ -26,6 +26,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 from pathlib import Path
 from typing import Iterable, Optional
+from collections.abc import Mapping, Sequence
 
 DAYPART_WINDOWS: dict[str, tuple[str, str]] = {
     "morning": ("08:00", "12:00"),
@@ -171,11 +172,20 @@ class MockRegistry:
             cur = self._conn.execute(sql, params)
             return cur.lastrowid or cur.rowcount
 
-    def execute(self, sql: str, params: Optional[dict] = None) -> list[dict]:
-        """Run a parameterised statement from the text→SQL automaton (named params)."""
+    def execute(self, sql: str, params: Mapping | Sequence | None = None) -> list[dict]:
+        """Execute a fixed SQL template with named or positional bound values."""
+        if params is None:
+            bound = {}
+        elif isinstance(params, Mapping):
+            bound = dict(params)
+        elif isinstance(params, Sequence) and not isinstance(params, (str, bytes, bytearray)):
+            bound = tuple(params)
+        else:
+            raise TypeError("SQL parameters must be a mapping or a sequence")
         with self._lock:
-            self._log(sql, tuple(sorted((params or {}).items())))
-            cur = self._conn.execute(sql, params or {})
+            logged = tuple(sorted(bound.items())) if isinstance(bound, dict) else bound
+            self._log(sql, logged)
+            cur = self._conn.execute(sql, bound)
             if cur.description is None:
                 return [{"rowcount": cur.rowcount}]
             cols = [c[0] for c in cur.description]
