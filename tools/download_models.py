@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 import sys
 import urllib.request
+from check_space import require_space
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -17,6 +18,7 @@ def main():
     p.add_argument("--asr", action="store_true")
     p.add_argument("--quantization", default="int8", choices=["int8", "none"])
     ns = p.parse_args()
+    require_space(ROOT / "modules", 2 * 1024**3)
     evidence = {}
     if ns.tts:
         url = "https://models.silero.ai/models/tts/ru/v5_5_ru.pt"
@@ -29,6 +31,7 @@ def main():
                 temp.open("wb") as f,
             ):
                 while data := response.read(1024 * 1024):
+                    require_space(path.parent, len(data))
                     f.write(data)
             temp.replace(path)
         evidence["tts"] = {

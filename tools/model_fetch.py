@@ -4,12 +4,14 @@ import hashlib
 from pathlib import Path
 import time
 import urllib.request
+from check_space import require_space
 
 
 def fetch(url, target, size, expected_sha, workers=8):
     target=Path(target)
     if target.exists() and target.stat().st_size==size and hashlib.sha256(target.read_bytes()).hexdigest()==expected_sha:
         return
+    require_space(target.parent, size * 2)
     parts=target.parent/'.cache'/'ranges'/target.name
     parts.mkdir(parents=True,exist_ok=True)
     chunk_size=8*1024*1024
@@ -28,6 +30,7 @@ def fetch(url, target, size, expected_sha, workers=8):
                     data=response.read(end-start+2)
                 if len(data)!=end-start+1:
                     raise ValueError('truncated model range')
+                require_space(path.parent, len(data))
                 path.write_bytes(data)
                 print(f'{target.name}: chunk {i+1}/{(size+chunk_size-1)//chunk_size}',flush=True)
                 return path
@@ -38,6 +41,7 @@ def fetch(url, target, size, expected_sha, workers=8):
 
     with ThreadPoolExecutor(max_workers=workers) as pool:
         paths=list(pool.map(part,range((size+chunk_size-1)//chunk_size)))
+    require_space(target.parent, size)
     temporary=target.with_suffix(target.suffix+'.download')
     digest=hashlib.sha256()
     with temporary.open('wb') as output:
