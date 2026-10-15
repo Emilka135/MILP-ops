@@ -64,7 +64,9 @@ services:
       TTS_MODEL: /models/silero-v5_5_ru.pt
       TTS_SPEAKER: ${TTS_SPEAKER:-xenia}
       TTS_STRESS: "off"
-    volumes: ["./modules/tts/models:/models:ro"]
+      SCENARIO_DIR: /scenarios
+      PROMPT_DIR: /audio
+    volumes: ["./modules/tts/models:/models:ro", "./scenarios:/scenarios:ro", "audio-bank:/audio"]
     deploy:
       resources:
         limits: {memory: 3G}
@@ -119,6 +121,8 @@ services:
       EDITOR_PORT: 8090
       EDITOR_DATA: /data
       EDITOR_ALLOW_BUILD: "1"
+      AUDIO_BANK_DIR: /audio
+      TTS_URL: http://tts:8080
     ports: ["127.0.0.1:${EDITOR_PORT:-8090}:8090"]
     volumes: ["./scenarios:/workspace/scenarios", "editor-data:/data", "editor-cargo:/workspace/target", "audio-bank:/audio:ro"]
     healthcheck:

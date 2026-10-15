@@ -231,6 +231,12 @@ class Speech:
                 stress=os.environ.get("TTS_STRESS", "off"),
             )
             self.module = TtsModule(synth, cache_size=64)
+            from .audio_bank import PromptBank
+
+            self.bank = PromptBank(
+                os.environ.get("PROMPT_DIR", "data/audio/prompts"), synth, self.module
+            )
+            self.bank.warm(os.environ.get("SCENARIO_DIR", "scenarios"))
         else:
             from calls.asr.onnx_gateway import OnnxAsrModule
 
@@ -239,5 +245,13 @@ class Speech:
 
     def handle(self, op, args):
         if self.kind == "tts":
-            return self.module.handle("synth" if op == "say" else op, args)
+            if op == "bank.refresh":
+                self.bank.warm(os.environ.get("SCENARIO_DIR", "scenarios"))
+                return "ok", {"prompts": len(self.bank.manifest), "generated": self.bank.generated}
+            if op == "bank.replace":
+                import base64
+                return "ok", self.bank.replace_recording(str(args['key']), base64.b64decode(args['wav_b64'], validate=True))
+            if op in ("say", "synth"):
+                return self.bank.render(str(args["text"]), float(args.get("rate", 1.5)))
+            return self.module.handle(op, args)
         return self.module.handle(op, args)

@@ -1,0 +1,11 @@
+import React,{useEffect,useState} from 'react';
+
+export default function AudioPanel({api}){
+ const [data,setData]=useState(null),[query,setQuery]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false);
+ async function load(){try{setData(await api('audio'));setError('')}catch(e){setError(e.message)}}
+ useEffect(()=>{load()},[]);
+ async function refresh(){setBusy(true);try{await api('audio/refresh',{});await load()}catch(e){setError(e.message)}finally{setBusy(false)}}
+ async function upload(key,file){if(!file)return;setBusy(true);try{if(file.size>2*1024*1024)throw Error('Файл должен быть меньше 2 MiB');const wav_b64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result.split(',')[1]);reader.onerror=reject;reader.readAsDataURL(file)});await api('audio/replace',{key,wav_b64});await load()}catch(e){setError(e.message)}finally{setBusy(false)}}
+ const rows=data?.prompts.filter(p=>(p.text+' '+p.source).toLowerCase().includes(query.toLowerCase()))||[];
+ return <div className="audio-panel"><p className="muted">Постоянные фразы читаются из банка. Переменные данные пациента синтезируются отдельно. После изменения сценария обновите записи.</p><div className="module-toolbar"><input aria-label="Поиск аудиофраз" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Найти фразу…"/><button className="secondary" disabled={busy} onClick={refresh}>{busy?'Обновляем…':'Обновить записи из сценариев'}</button></div>{error&&<p role="alert" className="module-error">{error}</p>}<p className="muted">{rows.length} фраз · {data?.format||'Загрузка…'}</p><div className="audio-list">{rows.map(p=><article key={p.key}><strong>{p.text}</strong><small>{p.source} · ×{p.rate} · {(p.duration_ms/1000).toFixed(1)} с {p.recording_type==='admin_upload'?'· запись администратора':''}</small><audio controls preload="none" src={'/api/audio/file/'+p.key}/><label className="audio-upload">Заменить своей записью <input disabled={busy} type="file" accept="audio/wav,.wav" onChange={e=>upload(p.key,e.target.files[0])}/></label></article>)}</div></div>
+}

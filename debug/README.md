@@ -11,6 +11,8 @@
 | ИИ-автоответчик / чужой человек | `python debug/run_unverified_recipient.py --orchestrator http://127.0.0.1:8080 --tts-url http://127.0.0.1:8080` | `runs/answering-machine/` |
 | Оператор недоступен / экстренный сигнал | `python debug/run_callback.py` | `runs/callback/` |
 | Сравнение двух NLU | `python debug/run_nlu_benchmark.py` | `runs/nlu/benchmark.json`, 5 повторов |
+| Реальный банк постоянных фраз | `TTS_MODEL=modules/tts/models/silero-v5_5_ru.pt python debug/run_audio_bank.py` | `runs/audio-bank/result.json`, два слышимых WAV |
+| Браузер конструктора и аудиобанк | `TEST_AUDIO_BANK=1 node debug/run_editor_browser.mjs` | `runs/editor-browser/`, 6 скриншотов |
 | Все автоматические проверки | `python debug/run_checks.py` | `runs/checks/`, `runs/integration/`, `runs/legacy/` |
 | Фактический ARI / AudioSocket | `ARI_PASSWORD=… python debug/run_asterisk_contract.py` | `runs/containers/asterisk-contract.json`; PBX должен работать |
 | Сохранённые MILP-проверки | `python debug/run_legacy_milp.py` | вывод / runner `run_checks.py` |

@@ -460,6 +460,23 @@ def make_server(repo, static, host="127.0.0.1", port=8090, token=""):
                     if post and route == "/api/logout":
                         auth.logout(self.headers)
                         return self.send_json(200, {"authenticated": False})
+                    if not post and route.startswith('/api/audio/file/'):
+                        from .admin_audio import recording
+                        raw = recording(repo.root, route.rsplit('/', 1)[1])
+                        self.send_response(200)
+                        self.send_header('Content-Type', 'audio/wav')
+                        self.send_header('Content-Length', str(len(raw)))
+                        self.send_header('Cache-Control', 'no-store')
+                        self.end_headers()
+                        self.wfile.write(raw)
+                        return
+                    if not post and route == '/api/audio':
+                        from .admin_audio import listing
+                        return self.send_json(200, listing(repo.root))
+                    if post and route in {'/api/audio/refresh', '/api/audio/replace'}:
+                        from .admin_rpc import module_call
+                        op = 'bank.refresh' if route.endswith('/refresh') else 'bank.replace'
+                        return self.send_json(200, module_call('tts', op, data))
                     if not post and route == "/api/project":
                         result = repo.read()
                     elif not post and route == "/api/search":
