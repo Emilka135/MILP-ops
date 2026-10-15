@@ -1,0 +1,5 @@
+#!/bin/sh
+# Human-facing launcher; all paths are resolved relative to this checkout.
+set -eu
+CLINIC_PROJECT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+exec python3 "$CLINIC_PROJECT_DIR/tools/clinicctl.py" "$@"
