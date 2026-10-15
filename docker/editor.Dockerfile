@@ -2,7 +2,7 @@
 FROM node:26-bookworm-slim AS ui
 WORKDIR /ui
 COPY scenario-editor/package*.json ./
-RUN --mount=type=cache,target=/root/.npm npm ci --prefer-offline --no-audit --no-fund
+RUN --mount=type=cache,target=/root/.npm npm ci --prefer-offline --no-audit --no-fund --fetch-retries=1 --fetch-timeout=20000 --fetch-retry-mintimeout=1000 --fetch-retry-maxtimeout=3000
 COPY scenario-editor/index.html scenario-editor/vite.config.js ./
 COPY scenario-editor/src ./src
 RUN npm run build

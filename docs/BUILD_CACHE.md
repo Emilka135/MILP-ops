@@ -24,3 +24,14 @@ EDITOR_ALLOW_BUILD=1 docker compose --profile builder up --build -d scenario-bui
 На этой машине DNS/маршрут обычной сети Docker не достигал Debian/npm; локальный `compose.override.yaml` задаёт build network `host`. Это настройка окружения, не зависимость проекта от сети хоста при работе. На нормальной сети override не нужен.
 
 Фактический замер: `python debug/run_editor_cache.py`. Отчёт и полные логи двух сборок/запусков лежат в `debug/runs/editor-cache/`. Размеры и времена — локальные измерения, а не гарантия для другой машины.
+
+Ошибка `EAI_AGAIN registry.npmjs.org` означает сбой DNS во время сборки. Для Linux с таким окружением можно создать локальный `compose.override.yaml`:
+
+```yaml
+services:
+  scenario-editor:
+    build:
+      network: host
+```
+
+Compose автоматически подхватит его при обычной команде без `-f`. В образе npm использует локальный кэш, таймаут одного сетевого запроса 20 секунд и не больше одного повтора; прежние многоминутные повторы DNS не сохраняются. Если архив пакета уже есть в кэше, npm использует его через `--prefer-offline`.
