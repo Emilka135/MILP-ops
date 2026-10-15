@@ -1,9 +1,13 @@
 name: visual-editor
 on: [push, pull_request]
 permissions: {contents: read}
+concurrency:
+  group: visual-editor-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   browser:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

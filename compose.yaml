@@ -125,14 +125,15 @@ services:
         limits: {memory: 512M}
   scenario-editor:
     restart: unless-stopped
-    build: {context: ., dockerfile: docker/editor.Dockerfile}
+    build: {context: ., dockerfile: docker/editor.Dockerfile, target: editor}
     networks: [clinic]
     environment:
       APP_MODE: ${APP_MODE:-demo}
       EDITOR_HOST: 0.0.0.0
       EDITOR_PORT: 8090
       EDITOR_DATA: /data
-      EDITOR_ALLOW_BUILD: "1"
+      EDITOR_ALLOW_BUILD: ${EDITOR_ALLOW_BUILD:-0}
+      EDITOR_BUILD_QUEUE: "1"
       AUDIO_BANK_DIR: /audio
       TTS_URL: http://tts:8080
     ports: ["127.0.0.1:${EDITOR_PORT:-8090}:8090"]
@@ -142,6 +143,15 @@ services:
       interval: 5s
       timeout: 3s
       retries: 12
+  scenario-builder:
+    profiles: [builder]
+    restart: unless-stopped
+    build: {context: ., dockerfile: docker/editor.Dockerfile, target: compiler}
+    network_mode: none
+    volumes: ["editor-data:/data", "editor-cargo:/cargo-target"]
+    environment:
+      EDITOR_DATA: /data
+      CARGO_BUILD_JOBS: "2"
   stand:
     <<: *module
     profiles: [contract]

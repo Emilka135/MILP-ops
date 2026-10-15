@@ -181,6 +181,10 @@ class Repository:
         self.db.executescript("""CREATE TABLE IF NOT EXISTS history(revision TEXT PRIMARY KEY, created REAL NOT NULL, project TEXT NOT NULL);
         CREATE VIRTUAL TABLE IF NOT EXISTS search USING fts5(key UNINDEXED, flow UNINDEXED, name, label, content, tokenize='unicode61', prefix='2 3 4');""")
         self.job = {"status": "idle"}
+        if os.environ.get('EDITOR_BUILD_QUEUE') == '1':
+            pending = list((self.data / 'build-jobs').glob('*.request.json')) + list((self.data / 'build-jobs').glob('*.running.json'))
+            if pending:
+                self.job = json.loads(max(pending, key=lambda p:p.stat().st_mtime).read_text())['job']
         with self.lock:
             self.reindex(self.read())
 
@@ -312,11 +316,35 @@ class Repository:
                 raise ValueError("Версия не найдена")
             return self.save(json.loads(row[0]), expected)
 
+    def build_status(self):
+        if self.job.get('status') == 'running' and self.job.get('queued'):
+            path = self.data / 'build-jobs' / (self.job['id'] + '.result.json')
+            if path.exists():
+                self.job = json.loads(path.read_text())
+            elif time.time() - self.job['created'] > 600:
+                self.job.update(status='failed', error='Сборщик не завершил задание за 10 минут. Проверьте отдельный сервис сборки.')
+        return dict(self.job)
+
     def start_build(self, expected):
         if not self.allow_build:
             raise ValueError(
                 "Сборка в этом редакторе выключена. Доступен экспорт проекта."
             )
+        if os.environ.get('EDITOR_BUILD_QUEUE') == '1':
+            with self.lock:
+                if self.build_status().get('status') == 'running':
+                    raise Conflict('Сборка уже выполняется')
+                project = self.read()
+                if project['revision'] != expected:
+                    raise Conflict('Сначала сохраните и обновите проект')
+                job_id = uuid.uuid4().hex
+                self.job = {'id':job_id, 'status':'running', 'queued':True, 'revision':expected, 'created':time.time(), 'log':'Ожидаем отдельный сборщик сценариев…'}
+                jobs = self.data / 'build-jobs'
+                jobs.mkdir(exist_ok=True)
+                temp = jobs / (job_id + '.tmp')
+                temp.write_text(json.dumps({'job':self.job, 'project':project}, ensure_ascii=False))
+                os.replace(temp, jobs / (job_id + '.request.json'))
+                return dict(self.job)
         if not self.build_lock.acquire(blocking=False):
             raise Conflict("Сборка уже выполняется")
         if self.read()["revision"] != expected:
@@ -488,7 +516,7 @@ def make_server(repo, static, host="127.0.0.1", port=8090, token=""):
                     elif not post and route == "/api/history":
                         result = {"versions": repo.history()}
                     elif not post and route == "/api/build":
-                        result = dict(repo.job)
+                        result = repo.build_status()
                     elif post and route == "/api/validate":
                         result = repo.inspect(data["project"])
                     elif post and route == "/api/save":

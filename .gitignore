@@ -120,3 +120,6 @@ nul
 /secrets/
 /data/audio/prompts/*
 !/data/audio/prompts/README.md
+
+# Local Docker networking/host overrides
+/compose.override.yaml
