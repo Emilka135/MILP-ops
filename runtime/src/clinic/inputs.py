@@ -80,4 +80,30 @@ def load(reg, env):
                 )
     if env.get("CRM_BOOKINGS"):
         result["bookings"] = reg.load_bookings_rows(rows(env["CRM_BOOKINGS"]))
+    if env.get("CRM_SERVICE_HOURS"):
+        for r in rows(env["CRM_SERVICE_HOURS"]):
+            reg._x(
+                "INSERT OR REPLACE INTO service_hours VALUES(?,?,?,?,?,?)",
+                (
+                    r["service"],
+                    int(r["weekday"]),
+                    r.get("opens") or None,
+                    r.get("closes") or None,
+                    int(str(r.get("closed", "0")).lower() in {"1", "true"}),
+                    "clinic_import",
+                ),
+            )
+    if env.get("CRM_SERVICE_CALENDAR"):
+        for r in rows(env["CRM_SERVICE_CALENDAR"]):
+            reg._x(
+                "INSERT OR REPLACE INTO service_calendar VALUES(?,?,?,?,?,?)",
+                (
+                    r["service"],
+                    r["day"],
+                    r.get("opens") or None,
+                    r.get("closes") or None,
+                    int(str(r.get("closed", "0")).lower() in {"1", "true"}),
+                    "clinic_order",
+                ),
+            )
     return result

@@ -110,6 +110,10 @@ class ClinicCrm:
         self.module = CrmModule(reg, today=lambda: now().date())
         self.mutations = threading.Lock()
         self.reg._conn.executescript(EXTRA_SCHEMA)
+        from . import hours
+
+        hours.initialize(self.reg)
+        self.hours = hours
         self.clinic = {
             "clinic_name": os.environ.get(
                 "CLINIC_NAME", "Демонстрационная поликлиника"
@@ -119,6 +123,15 @@ class ClinicCrm:
 
     def handle(self, op, args):
         try:
+            if op == "schedule.service":
+                return "ok", {
+                    "schedule": self.hours.schedule(
+                        self.reg, now().date(), str(args.get("service", "registrar"))
+                    ),
+                    "open": self.hours.is_open(
+                        self.reg, now(), str(args.get("service", "registrar"))
+                    ),
+                }
             if op == "meta":
                 return "ok", {
                     **self.clinic,
@@ -127,10 +140,9 @@ class ClinicCrm:
                     "stand_mode": "live" if self.stand else "demo",
                     "operator_available": os.environ.get("OPERATOR_AVAILABLE", "1")
                     == "1"
-                    and int(os.environ.get("OPERATOR_OPEN_HOUR", "10"))
-                    <= now().hour
-                    < int(os.environ.get("OPERATOR_CLOSE_HOUR", "22")),
-                    "callback_hours": f"с {os.environ.get('OPERATOR_OPEN_HOUR', '10')} до {os.environ.get('OPERATOR_CLOSE_HOUR', '22')} часов по времени поликлиники",
+                    and self.hours.is_open(self.reg, now()),
+                    "callback_hours": self.hours.summary(self.reg),
+                    "hours_source": "service_hours / service_calendar",
                 }
             if op == "callback_request":
                 preferred = None
@@ -146,9 +158,7 @@ class ClinicCrm:
                     if (
                         preferred <= now()
                         or preferred > now() + timedelta(days=365)
-                        or not int(os.environ.get("OPERATOR_OPEN_HOUR", "10"))
-                        <= preferred.hour
-                        < int(os.environ.get("OPERATOR_CLOSE_HOUR", "22"))
+                        or not self.hours.is_open(self.reg, preferred)
                     ):
                         return "invalid", {}
                 self.reg._x(

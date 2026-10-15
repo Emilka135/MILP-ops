@@ -57,3 +57,7 @@
 ### Редактор и вход администратора (модули 2–3)
 
 `PYTHONPATH=runtime/src:. python -m pytest -q tests/integration/test_scenario_editor.py` — 8 passed (графы, импорт/экспорт, история, конфликт версий, ошибка записи, пароль/ограничение входа). `node debug/run_editor_browser.mjs` — 8 браузерных проверок passed, включая соединение мышью. Скриншоты `01-constructor.png`…`05-connected-blocks.png` в `debug/runs/editor-browser/` просмотрены визуально. Настоящий Chrome, без ошибок JS. Рабочая инструкция: `docs/EDITOR.md`. Подключение МИС и административные разделы аудио/отзывов — последующие модули.
+
+### Расписание (модуль 9)
+
+`PYTHONPATH=runtime/src:. python -m pytest -q tests/integration/test_service_hours.py tests/integration/test_crm.py` — 36 passed. Субботние часы, закрытое воскресенье, исключение конкретной даты, проверка перезвона и успешная автоматическая запись в 23:00. Источник часов — §2.2 исходного регламента, таблицы `service_hours`/`service_calendar` в общей БД. CSV-импорт задаётся `CRM_SERVICE_HOURS`/`CRM_SERVICE_CALENDAR`. Устаревшие отдельные часы оператора из env удалены. Ночная обработка использует этот же модуль после её подключения.
