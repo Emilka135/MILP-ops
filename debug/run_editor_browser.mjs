@@ -11,7 +11,7 @@ await mkdir(out,{recursive:true});
 const isolated=await mkdtemp(path.join(out,'project-'));
 await cp(path.join(root,'scenarios'),path.join(isolated,'scenarios'),{recursive:true});
 const port=Number(process.env.EDITOR_TEST_PORT||28390), base=`http://127.0.0.1:${port}`;
-const server=spawn(process.env.PYTHON||'python',['-m','clinic.scenario_editor','--root',isolated,'--data',path.join(isolated,'data'),'--static',path.join(root,'scenario-editor/dist'),'--port',String(port)],{cwd:root,env:{...process.env,PYTHONPATH:path.join(root,'runtime/src'),EDITOR_PASSWORD_FILE:path.join(isolated,'secrets/password.json'),EDITOR_BOOTSTRAP_PASSWORD:'admin'}});
+const server=spawn(process.env.PYTHON||'python',['-m','clinic.scenario_editor','--root',isolated,'--data',path.join(isolated,'data'),'--static',path.join(root,'scenario-editor/dist'),'--port',String(port)],{cwd:root,env:{...process.env,PYTHONPATH:path.join(root,'runtime/src'),EDITOR_PASSWORD_FILE:path.join(isolated,'secrets/password.json'),EDITOR_BOOTSTRAP_PASSWORD:'admin',AUDIO_BANK_DIR:path.join(root,'data/audio/prompts')}});
 let logs='';server.stdout.on('data',d=>logs+=d);server.stderr.on('data',d=>logs+=d);
 let browser;const errors=[];const checks=[];
 try{
@@ -37,16 +37,23 @@ try{
   await page.getByRole('button',{name:'Сохранить',exact:true}).click();await page.getByText('Проект сохранён',{exact:true}).waitFor();
   const after=await page.evaluate(async()=>await (await fetch('/api/project')).json());assert.deepEqual(after.flows.find(f=>f.name==='scenario_1').states.find(s=>s.name==='start').edges[0].values,['1','0']);checks.push('DTMF condition changed through keypad and persisted');
   await page.getByRole('button',{name:'Блоки',exact:true}).click();await page.locator('.palette-end').click();
-  await page.locator('.react-flow__controls-fitview').click();await page.waitForTimeout(400);
-  const source=await page.locator('[data-id="scenario_1.start"] [data-handleid="new"]').boundingBox();
-  const target=await page.locator('[data-id="scenario_1.end_1"] .react-flow__handle.target').boundingBox();
-  assert.ok(source&&target);await page.mouse.move(source.x+source.width/2,source.y+source.height/2);await page.mouse.down();await page.mouse.move(target.x+target.width/2,target.y+target.height/2,{steps:25});await page.mouse.up();
+  await page.getByRole('button',{name:'Упорядочить',exact:true}).click();await page.waitForTimeout(700);await page.locator('.react-flow__controls-fitview').click();await page.waitForTimeout(300);
+  const from=page.locator('[data-id="scenario_1.start"] [data-handleid="new"]');
+  const to=page.locator('[data-id="scenario_1.end_1"] .react-flow__handle.target');
+  await from.click();await to.click();
+  await page.locator('.port-any').waitFor();
   await page.getByRole('button',{name:'Сохранить',exact:true}).click();await page.getByText('Проект сохранён',{exact:true}).waitFor();
   const connected=await page.evaluate(async()=>await (await fetch('/api/project')).json());
   assert.ok(connected.flows.find(f=>f.name==='scenario_1').states.find(s=>s.name==='start').edges.some(e=>e.target==='end_1'));
-  await page.screenshot({path:path.join(out,'05-connected-blocks.png'),fullPage:true});checks.push('Added a palette block and connected it by dragging handles');
+  await page.screenshot({path:path.join(out,'05-connected-blocks.png'),fullPage:true});checks.push('Added a palette block and connected its handles with the mouse');
   await page.getByLabel('История версий').click();await page.getByRole('button',{name:'Восстановить',exact:true}).first().waitFor();assert.ok(await page.getByRole('button',{name:'Восстановить',exact:true}).count()>0);await page.screenshot({path:path.join(out,'04-history.png'),fullPage:true});
   await page.locator('.version button:not([disabled])').first().click();await page.getByText('Предыдущая версия восстановлена.').waitFor();checks.push('History restore button works');
+  if(process.env.TEST_AUDIO_BANK==='1'){
+    await page.getByRole('button',{name:'Аудиофразы',exact:true}).click();await page.getByLabel('Поиск аудиофраз').waitFor();
+    const audio=page.locator('.audio-list audio').first();await audio.waitFor();await audio.evaluate(el=>{el.load();el.play()});
+    await page.waitForFunction(()=>{const el=document.querySelector('.audio-list audio');return el&&!el.paused&&el.currentTime>0});
+    await page.screenshot({path:path.join(out,'06-audio-bank-playing.png'),fullPage:true});checks.push('Audio-bank panel plays a real prerecorded WAV');
+  }
   assert.deepEqual(errors,[]);checks.push('No browser JavaScript errors');
   await writeFile(path.join(out,'result.json'),JSON.stringify({status:'passed',checks,errors,base,isolated},null,2)+'\n');console.log(JSON.stringify({status:'passed',checks},null,2));
 }catch(error){await writeFile(path.join(out,'result.json'),JSON.stringify({status:'failed',checks,errors,error:String(error)},null,2));if(browser){const pages=browser.contexts().flatMap(c=>c.pages());if(pages[0])await pages[0].screenshot({path:path.join(out,'failure.png'),fullPage:true})}throw error}
