@@ -56,6 +56,16 @@ services:
   operator:
     <<: *module
     build: {context: ., dockerfile: docker/module.Dockerfile, args: {MODULE: operator}}
+  audio-init:
+    build: {context: ., dockerfile: docker/audio-init.Dockerfile}
+    network_mode: none
+    user: "0:0"
+    read_only: true
+    cap_drop: [ALL]
+    cap_add: [CHOWN, FOWNER]
+    command: ["python", "-c", "import os; os.chown('/audio',10001,10001); os.chmod('/audio',0o755)"]
+    volumes: ["audio-bank:/audio"]
+    restart: "no"
   tts:
     <<: *module
     build: {context: ., dockerfile: docker/module.Dockerfile, args: {MODULE: tts, WITH_ML: "${WITH_ML:-1}"}}
@@ -66,6 +76,8 @@ services:
       TTS_STRESS: "off"
       SCENARIO_DIR: /scenarios
       PROMPT_DIR: /audio
+    depends_on:
+      audio-init: {condition: service_completed_successfully}
     volumes: ["./modules/tts/models:/models:ro", "./scenarios:/scenarios:ro", "audio-bank:/audio"]
     deploy:
       resources:
