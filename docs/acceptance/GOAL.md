@@ -53,3 +53,7 @@
 ### Контроль диска (модуль 15)
 
 Резерв проверяется `python tools/check_space.py --write-path target --expected-gib 1`. Исходные ZIP и устаревшие ZIP/bundle/patch экспорты удалены: 6 файлов, 7 084 285 байт. Исходные DOCX/HTML/XLSX/CSV сохранены. `/mnt/docker_space` — отдельный ext4-раздел; Docker уже хранит там свои данные. Ручное вмешательство в каталоги Docker/containerd запрещено. Отчёты: `debug/runs/storage/`.
+
+### Редактор и вход администратора (модули 2–3)
+
+`PYTHONPATH=runtime/src:. python -m pytest -q tests/integration/test_scenario_editor.py` — 8 passed (графы, импорт/экспорт, история, конфликт версий, ошибка записи, пароль/ограничение входа). `node debug/run_editor_browser.mjs` — 8 браузерных проверок passed, включая соединение мышью. Скриншоты `01-constructor.png`…`05-connected-blocks.png` в `debug/runs/editor-browser/` просмотрены визуально. Настоящий Chrome, без ошибок JS. Рабочая инструкция: `docs/EDITOR.md`. Подключение МИС и административные разделы аудио/отзывов — последующие модули.

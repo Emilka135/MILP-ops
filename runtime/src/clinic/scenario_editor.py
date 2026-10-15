@@ -1,0 +1,552 @@
+"""Visual scenario repository: validated DSL, revision checks, history and FTS5 search.
+
+Only local project files are edited. Saving does not replace a running assistant;
+optional builds produce a versioned binary for a normal service deployment.
+"""
+
+from __future__ import annotations
+
+import argparse
+import dataclasses
+import hashlib
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import json
+import mimetypes
+import os
+from pathlib import Path
+import re
+import shutil
+import sqlite3
+import subprocess
+import threading
+import tempfile
+import time
+import uuid
+from urllib.parse import parse_qs, urlsplit
+
+from calls.scenario.dsl import FlowError, parse_flow, validate
+
+ROOT = Path(__file__).resolve().parents[3]
+IDENT = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+LIMIT = 3 * 1024 * 1024
+
+
+class Conflict(ValueError):
+    pass
+
+
+def identifier(value):
+    if not isinstance(value, str) or not IDENT.fullmatch(value):
+        raise ValueError(f"Недопустимый идентификатор: {value!r}")
+    return value
+
+
+def quote(value):
+    text = str(value).replace("\r", " ").replace("\n", " ")
+    return '"' + text.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def fields(args):
+    return " ".join(identifier(k) + "=" + quote(v) for k, v in args.items())
+
+
+def serialize(flow):
+    name = identifier(flow["name"])
+    rate = float(flow.get("rate", 1.5))
+    if not 1.3 <= rate <= 1.75:
+        raise ValueError("Скорость речи должна быть от 1,3 до 1,75")
+    lines = [
+        f"flow {name}",
+        f"  rate {rate:g}",
+        f"  entry {identifier(flow['entry'])}",
+        "",
+    ]
+    for node in flow["states"]:
+        lines.append("state " + identifier(node["name"]))
+        for statement in node.get("statements", []):
+            kind, args = statement["kind"], statement.get("args", {})
+            if kind == "say":
+                body = "say " + quote(statement.get("text", ""))
+                if args:
+                    body += " " + fields(args)
+            elif kind == "ask":
+                lower, upper = (
+                    int(args.get("min", 1)),
+                    int(args.get("max", args.get("min", 1))),
+                )
+                if not 1 <= lower <= upper <= 32:
+                    raise ValueError("Длина цифрового ответа должна быть от 1 до 32")
+                body = f"ask {identifier(args['var'])} digits {lower}-{upper} timeout {float(args.get('timeout', 25)):g}s"
+                if args.get("terminator"):
+                    body += " terminator " + quote(args["terminator"])
+            elif kind == "listen":
+                body = f"listen {float(args.get('timeout', 8)):g}s"
+            elif kind == "call":
+                body = f"call {identifier(args['module'])}.{target_name(args['op'])}"
+                parameters = {k[4:]: v for k, v in args.items() if k.startswith("arg:")}
+                if parameters:
+                    body += " " + fields(parameters)
+            elif kind == "set":
+                body = f"set {identifier(args['var'])} = {quote(args.get('value', ''))}"
+            elif kind == "sms":
+                body = "sms " + identifier(args["template"])
+            elif kind == "transfer":
+                body = "transfer " + fields(args)
+            elif kind == "end":
+                body = "end " + identifier(args.get("status", "done"))
+            elif kind in ("goto", "enter"):
+                target = target_name(args["target"])
+                body = kind + " " + target
+                if kind == "enter":
+                    body += " -> " + target_name(args["return"])
+            elif kind == "switch":
+                body = "switch " + identifier(args["var"])
+            elif kind == "return":
+                body = "return"
+            else:
+                raise ValueError(f"Неизвестное действие: {kind}")
+            lines.append("  " + body)
+        for edge in node.get("edges", []):
+            kind = identifier(edge["kind"])
+            values = edge.get("values", [])
+            body = kind
+            if kind in ("dtmf", "intent", "case"):
+                if not values or (kind == "case" and len(values) != 1):
+                    raise ValueError(f"У перехода {kind} не задано условие")
+                body += " " + quote("|".join(map(str, values)))
+            elif kind == "timeout" and edge.get("seconds") is not None:
+                body += f" {float(edge['seconds']):g}s"
+            elif kind in ("loop", "retry"):
+                body += f" {int(edge.get('count') or 1)}"
+            body += " -> " + target_name(edge["target"])
+            if edge.get("sets"):
+                body += " " + fields(edge["sets"])
+            lines.append("  " + body)
+        lines.append("")
+    return "\n".join(lines)
+
+
+def target_name(value):
+    return ".".join(identifier(part) for part in str(value).split("."))
+
+
+def clean_flow(text, source="import.flow"):
+    flow = parse_flow(text, source)
+    return {
+        "name": flow.name,
+        "entry": flow.entry,
+        "rate": flow.rate,
+        "states": [dataclasses.asdict(s) for s in flow.states.values()],
+    }
+
+
+def compile_project(project):
+    flows, sources, metadata = {}, {}, {}
+    items = project.get("flows")
+    if not isinstance(items, list) or not 1 <= len(items) <= 50:
+        raise ValueError("Проект должен содержать от 1 до 50 сценариев")
+    for item in items:
+        if len(item.get("states", [])) > 1000:
+            raise ValueError("В одном сценарии допускается не более 1000 блоков")
+        source = serialize(item)
+        name = item["name"]
+        if name in flows:
+            raise ValueError("Имена сценариев должны быть уникальными")
+        flows[name] = parse_flow(source, name + ".flow")
+        sources[name + ".flow"] = source
+        metadata[name] = {
+            "label": str(item.get("label", ""))[:200],
+            "description": str(item.get("description", ""))[:2000],
+            "states": {
+                s["name"]: {
+                    "label": str(s.get("label", ""))[:200],
+                    "description": str(s.get("description", ""))[:2000],
+                    "position": s.get("position"),
+                }
+                for s in item["states"]
+            },
+        }
+    return sources, metadata, validate(flows)
+
+
+class Repository:
+    def __init__(self, root, data, allow_build=False):
+        self.root, self.data = Path(root).resolve(), Path(data).resolve()
+        self.folder = self.root / "scenarios"
+        self.data.mkdir(parents=True, exist_ok=True)
+        self.lock = threading.RLock()
+        self.build_lock = threading.Lock()
+        self.allow_build = allow_build
+        self.db = sqlite3.connect(self.data / "editor.sqlite", check_same_thread=False)
+        self.db.executescript("""CREATE TABLE IF NOT EXISTS history(revision TEXT PRIMARY KEY, created REAL NOT NULL, project TEXT NOT NULL);
+        CREATE VIRTUAL TABLE IF NOT EXISTS search USING fts5(key UNINDEXED, flow UNINDEXED, name, label, content, tokenize='unicode61', prefix='2 3 4');""")
+        self.job = {"status": "idle"}
+        with self.lock:
+            self.reindex(self.read())
+
+    def read(self):
+        with self.lock:
+            files = {
+                p.name: p.read_text(encoding="utf-8")
+                for p in sorted(self.folder.glob("*.flow"))
+            }
+            layout_path = self.folder / "editor-layout.json"
+            layout_text = layout_path.read_text() if layout_path.exists() else "{}"
+            layout = json.loads(layout_text)
+            revision = hashlib.sha256(
+                json.dumps([files, layout_text], sort_keys=True).encode()
+            ).hexdigest()
+            flows = []
+            for filename, text in files.items():
+                flow = clean_flow(text, filename)
+                meta = layout.get(flow["name"], {})
+                flow.update({k: v for k, v in meta.items() if k != "states"})
+                for state in flow["states"]:
+                    state.update(meta.get("states", {}).get(state["name"], {}))
+                flows.append(flow)
+            return {
+                "flows": flows,
+                "revision": revision,
+                "build_enabled": self.allow_build,
+            }
+
+    def reindex(self, project):
+        self.db.execute("DELETE FROM search")
+        for flow in project["flows"]:
+            for state in flow["states"]:
+                content = json.dumps(state, ensure_ascii=False)
+                self.db.execute(
+                    "INSERT INTO search VALUES(?,?,?,?,?)",
+                    (
+                        flow["name"] + "." + state["name"],
+                        flow["name"],
+                        state["name"],
+                        state.get("label", ""),
+                        content,
+                    ),
+                )
+        self.db.commit()
+
+    def search(self, query):
+        terms = re.findall(r"[^\W_]+", query, re.UNICODE)[:12]
+        if not terms:
+            return []
+        match = " AND ".join('"' + t + '"*' for t in terms)
+        with self.lock:
+            rows = self.db.execute(
+                "SELECT key,flow,name,label,snippet(search,4,'‹','›','…',18) FROM search WHERE search MATCH ? ORDER BY rank LIMIT 50",
+                (match,),
+            ).fetchall()
+        return [
+            dict(zip(["key", "flow", "name", "label", "excerpt"], row)) for row in rows
+        ]
+
+    def inspect(self, project):
+        try:
+            sources, _, errors = compile_project(project)
+            return {"valid": not errors, "errors": errors, "files": sources}
+        except (FlowError, ValueError, KeyError, TypeError, OverflowError) as exc:
+            return {"valid": False, "errors": [str(exc)], "files": {}}
+
+    def save(self, project, expected):
+        sources, metadata, errors = compile_project(project)
+        if errors:
+            raise ValueError("\n".join(errors))
+        with self.lock:
+            before = self.read()
+            if before["revision"] != expected:
+                raise Conflict(
+                    "Проект изменён в другом окне. Сначала загрузите свежую версию."
+                )
+            self.db.execute(
+                "INSERT OR IGNORE INTO history VALUES(?,?,?)",
+                (
+                    before["revision"],
+                    time.time(),
+                    json.dumps(before, ensure_ascii=False),
+                ),
+            )
+            contents = {**sources, "editor-layout.json": json.dumps(metadata, ensure_ascii=False, indent=2) + "\n"}
+            originals = {p.name: p.read_bytes() for p in self.folder.iterdir() if p.suffix == ".flow" or p.name == "editor-layout.json"}
+            # Finish all writes before replacing any live source. Roll back failed installation.
+            with tempfile.TemporaryDirectory(prefix=".save-", dir=self.folder) as staging:
+                staged = Path(staging)
+                for name, text in contents.items():
+                    (staged / name).write_text(text, encoding="utf-8")
+                try:
+                    for name in contents:
+                        os.replace(staged / name, self.folder / name)
+                    for name in originals.keys() - contents.keys():
+                        (self.folder / name).unlink()
+                except OSError:
+                    for name, raw in originals.items():
+                        (self.folder / name).write_bytes(raw)
+                    for name in contents.keys() - originals.keys():
+                        (self.folder / name).unlink(missing_ok=True)
+                    self.db.rollback()
+                    raise
+            after = self.read()
+            self.db.execute(
+                "INSERT OR IGNORE INTO history VALUES(?,?,?)",
+                (after["revision"], time.time(), json.dumps(after, ensure_ascii=False)),
+            )
+            self.db.commit()
+            self.reindex(after)
+            return after
+
+    def history(self):
+        with self.lock:
+            return [
+                {"revision": r[0], "created": r[1]}
+                for r in self.db.execute(
+                    "SELECT revision,created FROM history ORDER BY created DESC LIMIT 50"
+                )
+            ]
+
+    def restore(self, revision, expected):
+        with self.lock:
+            row = self.db.execute(
+                "SELECT project FROM history WHERE revision=?", (revision,)
+            ).fetchone()
+            if row is None:
+                raise ValueError("Версия не найдена")
+            return self.save(json.loads(row[0]), expected)
+
+    def start_build(self, expected):
+        if not self.allow_build:
+            raise ValueError(
+                "Сборка в этом редакторе выключена. Доступен экспорт проекта."
+            )
+        if not self.build_lock.acquire(blocking=False):
+            raise Conflict("Сборка уже выполняется")
+        if self.read()["revision"] != expected:
+            self.build_lock.release()
+            raise Conflict("Сначала сохраните и обновите проект")
+        self.job = {
+            "id": uuid.uuid4().hex,
+            "status": "running",
+            "revision": expected,
+            "log": "",
+        }
+
+        def work():
+            job = self.job
+            try:
+                with self.lock:
+                    log_path = self.data / "build.log"
+                    env = {**os.environ, "CARGO_BUILD_JOBS": "2"}
+                    with log_path.open("w") as log:
+                        result = subprocess.run(
+                            ["cargo", "build", "--locked", "--bin", "clinic-voice"],
+                            cwd=self.root,
+                            env=env,
+                            stdout=log,
+                            stderr=subprocess.STDOUT,
+                            timeout=300,
+                            check=False,
+                        )
+                    job["log"] = log_path.read_text()[-20000:]
+                    if result.returncode:
+                        raise ValueError("Компилятор отклонил сборку")
+                    if self.read()["revision"] != expected:
+                        raise Conflict(
+                            "Файлы изменились во время сборки; версия не опубликована"
+                        )
+                    artifact = self.data / "artifacts" / job["id"]
+                    artifact.mkdir(parents=True)
+                    shutil.copy2(
+                        self.root / "target/debug/clinic-voice",
+                        artifact / "clinic-voice",
+                    )
+                    (artifact / "project.json").write_text(
+                        json.dumps(self.read(), ensure_ascii=False, indent=2)
+                    )
+                    job.update(
+                        status="succeeded",
+                        artifact=job["id"],
+                        message="Версия собрана. Активный помощник продолжает работать; установка версии выполняется при обновлении сервиса.",
+                    )
+            except (OSError, ValueError, subprocess.TimeoutExpired) as exc:
+                job.update(status="failed", error=str(exc))
+            finally:
+                self.build_lock.release()
+
+        threading.Thread(target=work, daemon=True).start()
+        return dict(self.job)
+
+
+def make_server(repo, static, host="127.0.0.1", port=8090, token=""):
+    from .editor_auth import EditorAuth
+
+    auth = EditorAuth(
+        os.environ.get(
+            "EDITOR_PASSWORD_FILE", str(repo.root / "secrets/admin-password.json")
+        ),
+        os.environ.get("EDITOR_API_TOKEN", ""),
+    )
+    static = Path(static).resolve()
+
+    class Handler(BaseHTTPRequestHandler):
+        def log_message(self, *_):
+            pass
+
+        def send_json(self, status, value):
+            body = json.dumps(value, ensure_ascii=False).encode()
+            self.send_response(status)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("X-Content-Type-Options", "nosniff")
+            self.end_headers()
+            self.wfile.write(body)
+
+        def do_GET(self):
+            self.handle_request(False)
+
+        def do_POST(self):
+            self.handle_request(True)
+
+        def handle_request(self, post):
+            parsed = urlsplit(self.path)
+            if parsed.path == "/health":
+                return self.send_json(200, {"status": "ok"})
+            if parsed.path.startswith("/api/"):
+                if parsed.path != "/api/login" and not auth.allowed(self.headers):
+                    return self.send_json(
+                        401, {"error": "Войдите с паролем администратора"}
+                    )
+                origin = self.headers.get("Origin")
+                if (
+                    post
+                    and origin
+                    and urlsplit(origin).netloc != self.headers.get("Host")
+                ):
+                    return self.send_json(
+                        403, {"error": "Запрос с другого сайта отклонён"}
+                    )
+                try:
+                    data = {}
+                    if post:
+                        length = int(self.headers.get("Content-Length", "0"))
+                        if not 0 < length <= LIMIT:
+                            return self.send_json(
+                                413, {"error": "Размер проекта превышает 3 MiB"}
+                            )
+                        data = json.loads(self.rfile.read(length))
+                        if not isinstance(data, dict):
+                            raise ValueError("Ожидается объект проекта")
+                    route = parsed.path
+                    if post and route == "/api/login":
+                        session = auth.login(
+                            data.get("password", ""), self.client_address[0]
+                        )
+                        self.send_response(200)
+                        self.send_header("Content-Type", "application/json")
+                        self.send_header("Cache-Control", "no-store")
+                        self.send_header(
+                            "Set-Cookie",
+                            "clinic_admin="
+                            + session
+                            + "; HttpOnly; SameSite=Strict; Path=/; Max-Age=28800"
+                            + (
+                                "; Secure"
+                                if os.environ.get("EDITOR_SECURE_COOKIE") == "1"
+                                else ""
+                            ),
+                        )
+                        self.end_headers()
+                        self.wfile.write(b'{"authenticated":true}')
+                        return
+                    if post and route == "/api/logout":
+                        auth.logout(self.headers)
+                        return self.send_json(200, {"authenticated": False})
+                    if not post and route == "/api/project":
+                        result = repo.read()
+                    elif not post and route == "/api/search":
+                        result = {
+                            "results": repo.search(
+                                parse_qs(parsed.query).get("q", [""])[0]
+                            )
+                        }
+                    elif not post and route == "/api/history":
+                        result = {"versions": repo.history()}
+                    elif not post and route == "/api/build":
+                        result = dict(repo.job)
+                    elif post and route == "/api/validate":
+                        result = repo.inspect(data["project"])
+                    elif post and route == "/api/save":
+                        result = repo.save(data["project"], data.get("revision"))
+                    elif post and route == "/api/restore":
+                        result = repo.restore(data["version"], data.get("revision"))
+                    elif post and route == "/api/import":
+                        source = str(data["text"])
+                        if len(source) > LIMIT:
+                            raise ValueError("Слишком большой сценарий")
+                        result = clean_flow(source)
+                    elif post and route == "/api/build":
+                        result = repo.start_build(data.get("revision"))
+                    else:
+                        return self.send_json(404, {"error": "Маршрут не найден"})
+                    return self.send_json(200, result)
+                except Conflict as exc:
+                    return self.send_json(409, {"error": str(exc)})
+                except (ValueError, KeyError, TypeError, FlowError) as exc:
+                    return self.send_json(400, {"error": str(exc)})
+                except (OSError, sqlite3.Error):
+                    return self.send_json(
+                        500,
+                        {
+                            "error": "Не удалось сохранить проект. Проверьте журнал редактора."
+                        },
+                    )
+            if post:
+                return self.send_json(404, {"error": "Маршрут не найден"})
+            relative = parsed.path.lstrip("/") or "index.html"
+            path = (static / relative).resolve()
+            if not path.is_relative_to(static) or not path.is_file():
+                return self.send_json(404, {"error": "Файл не найден"})
+            body = path.read_bytes()
+            self.send_response(200)
+            self.send_header(
+                "Content-Type",
+                mimetypes.guess_type(path)[0] or "application/octet-stream",
+            )
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("X-Content-Type-Options", "nosniff")
+            self.send_header("Referrer-Policy", "same-origin")
+            self.end_headers()
+            self.wfile.write(body)
+
+    return ThreadingHTTPServer((host, port), Handler)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--root", default=str(ROOT))
+    parser.add_argument(
+        "--data", default=os.environ.get("EDITOR_DATA", str(ROOT / "debug/runs/editor"))
+    )
+    parser.add_argument("--static", default=str(ROOT / "scenario-editor/dist"))
+    parser.add_argument("--host", default=os.environ.get("EDITOR_HOST", "127.0.0.1"))
+    parser.add_argument(
+        "--port", type=int, default=int(os.environ.get("EDITOR_PORT", "8090"))
+    )
+    parser.add_argument(
+        "--allow-build",
+        action="store_true",
+        default=os.environ.get("EDITOR_ALLOW_BUILD") == "1",
+    )
+    args = parser.parse_args()
+    repo = Repository(args.root, args.data, args.allow_build)
+    server = make_server(repo, args.static, args.host, args.port)
+    print(f"Scenario editor: http://{args.host}:{args.port}", flush=True)
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server.server_close()
+
+
+if __name__ == "__main__":
+    main()

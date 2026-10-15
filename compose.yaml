@@ -109,6 +109,23 @@ services:
     deploy:
       resources:
         limits: {memory: 512M}
+  scenario-editor:
+    restart: unless-stopped
+    build: {context: ., dockerfile: docker/editor.Dockerfile}
+    networks: [clinic]
+    environment:
+      APP_MODE: ${APP_MODE:-demo}
+      EDITOR_HOST: 0.0.0.0
+      EDITOR_PORT: 8090
+      EDITOR_DATA: /data
+      EDITOR_ALLOW_BUILD: "1"
+    ports: ["127.0.0.1:${EDITOR_PORT:-8090}:8090"]
+    volumes: ["./scenarios:/workspace/scenarios", "editor-data:/data", "editor-cargo:/workspace/target", "audio-bank:/audio:ro"]
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8090/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
   stand:
     <<: *module
     profiles: [contract]
@@ -168,3 +185,6 @@ networks:
 volumes:
   clinic-data:
   stand-data:
+  audio-bank:
+  editor-data:
+  editor-cargo:

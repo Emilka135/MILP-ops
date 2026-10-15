@@ -114,3 +114,9 @@ nul
 
 /imports/*
 !/imports/README.md
+
+**/node_modules/
+/scenario-editor/dist/
+/secrets/
+/data/audio/prompts/*
+!/data/audio/prompts/README.md

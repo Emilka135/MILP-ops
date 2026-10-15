@@ -9,3 +9,7 @@ reports
 **/.pytest_cache
 
 debug
+
+**/node_modules
+scenario-editor/dist
+secrets

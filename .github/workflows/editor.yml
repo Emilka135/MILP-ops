@@ -1,0 +1,23 @@
+name: visual-editor
+on: [push, pull_request]
+permissions: {contents: read}
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '26', cache: npm, cache-dependency-path: scenario-editor/package-lock.json}
+      - run: pip install pytest
+      - run: npm ci && npm run build
+        working-directory: scenario-editor
+      - run: PYTHONPATH=runtime/src:. python -m pytest -q tests/integration/test_scenario_editor.py
+      - run: npx playwright install --with-deps chromium
+        working-directory: scenario-editor
+      - run: node debug/run_editor_browser.mjs
+        env: {CHROME_PATH: ''}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: {name: visual-editor, path: debug/runs/editor-browser/}

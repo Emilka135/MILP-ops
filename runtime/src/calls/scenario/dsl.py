@@ -160,11 +160,23 @@ def _kv(tokens: Iterable[str], file: str, line: int) -> dict[str, str]:
 def _strip_comment(raw: str) -> str:
     """Remove a ``# comment`` that is outside double quotes."""
     out = []
-    in_q = False
+    quote = ""
+    escaped = False
     for ch in raw:
-        if ch == '"':
-            in_q = not in_q
-        if ch == "#" and not in_q:
+        if escaped:
+            out.append(ch)
+            escaped = False
+            continue
+        if ch == "\\":
+            out.append(ch)
+            escaped = True
+            continue
+        if ch in ('"', "'"):
+            if quote == ch:
+                quote = ""
+            elif not quote:
+                quote = ch
+        if ch == "#" and not quote:
             break
         out.append(ch)
     return "".join(out).rstrip()
