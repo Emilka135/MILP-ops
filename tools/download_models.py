@@ -21,8 +21,8 @@ def main():
     require_space(ROOT / "modules", 2 * 1024**3)
     evidence = {}
     if ns.tts:
-        url = "https://models.silero.ai/models/tts/ru/v5_5_ru.pt"
-        path = ROOT / "modules/tts/models/silero-v5_5_ru.pt"
+        url = "https://models.silero.ai/models/tts/ru/v5_cis_base.pt"
+        path = ROOT / "modules/tts/models/v5_cis_base.pt"
         path.parent.mkdir(parents=True, exist_ok=True)
         if not path.exists():
             temp = path.with_suffix(".download")
@@ -34,7 +34,12 @@ def main():
                     require_space(path.parent, len(data))
                     f.write(data)
             temp.replace(path)
+        expected = "ba41b18f6a707ad93605a162998865e7c087153d2e010a26dd02229dab0e672a"
+        if hashlib.file_digest(path.open("rb"), "sha256").hexdigest() != expected:
+            raise ValueError("TTS model SHA256 mismatch")
         evidence["tts"] = {
+            "license": "MIT",
+            "license_url": "https://github.com/snakers4/silero-models/blob/master/LICENSE_CIS",
             "url": url,
             "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
             "bytes": path.stat().st_size,

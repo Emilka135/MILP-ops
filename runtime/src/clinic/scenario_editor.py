@@ -330,6 +330,8 @@ class Repository:
             raise ValueError(
                 "Сборка в этом редакторе выключена. Доступен экспорт проекта."
             )
+        from .audio_release import require_audio_audit
+        require_audio_audit(self.read(), self.root)
         if os.environ.get('EDITOR_BUILD_QUEUE') == '1':
             with self.lock:
                 if self.build_status().get('status') == 'running':
@@ -498,12 +500,15 @@ def make_server(repo, static, host="127.0.0.1", port=8090, token=""):
                         self.end_headers()
                         self.wfile.write(raw)
                         return
+                    if post and route == '/api/audio/preview':
+                        from .admin_audio import preview
+                        return self.send_json(200,preview(data))
                     if not post and route == '/api/audio':
                         from .admin_audio import listing
                         return self.send_json(200, listing(repo.root))
-                    if post and route in {'/api/audio/refresh', '/api/audio/replace'}:
+                    if post and route in {'/api/audio/refresh', '/api/audio/replace', '/api/audio/audit'}:
                         from .admin_rpc import module_call
-                        op = 'bank.refresh' if route.endswith('/refresh') else 'bank.replace'
+                        op = 'bank.refresh' if route.endswith('/refresh') else 'bank.audit' if route.endswith('/audit') else 'bank.replace'
                         return self.send_json(200, module_call('tts', op, data))
                     if not post and route == "/api/project":
                         result = repo.read()

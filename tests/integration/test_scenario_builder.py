@@ -8,6 +8,8 @@ ROOT=Path(__file__).resolve().parents[2]
 
 
 def test_queue_compiles_a_validated_snapshot_and_publishes_artifact(tmp_path, monkeypatch):
+    # Audio certificate policy is tested separately; this test compiles a real Rust artifact.
+    monkeypatch.setattr('clinic.audio_release.require_audio_audit',lambda *_:{'scope':'compiler_dependency_fixture'})
     # Use actual cargo with cached dependencies, no fake success or executable.
     shutil.copytree(ROOT/'scenarios', tmp_path/'scenarios')
     monkeypatch.setenv('EDITOR_BUILD_QUEUE','1')

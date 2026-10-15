@@ -223,12 +223,12 @@ class Speech:
         if kind == "tts":
             from calls.tts.silero import SileroTTS, TtsModule
 
-            path = os.environ.get("TTS_MODEL", "modules/tts/models/silero-v5_5_ru.pt")
+            path = os.environ.get("TTS_MODEL", "modules/tts/models/v5_cis_base.pt")
             synth = SileroTTS(
                 path,
-                os.environ.get("TTS_SPEAKER", "xenia"),
+                os.environ.get("TTS_SPEAKER") or None,
                 device=os.environ.get("TTS_DEVICE", "cpu"),
-                stress=os.environ.get("TTS_STRESS", "off"),
+                stress=os.environ.get("TTS_STRESS", "dict"),
             )
             self.module = TtsModule(synth, cache_size=64)
             from .audio_bank import PromptBank
@@ -245,6 +245,16 @@ class Speech:
 
     def handle(self, op, args):
         if self.kind == "tts":
+            if op == "preview":
+                from calls.tts.silero import to_pcm16
+                rate = float(args.get('rate',1.5))
+                if not .5 <= rate <= 2:raise ValueError('Недопустимая скорость речи')
+                audio=self.module.synth.synth_quality(str(args['text']),rate)
+                pcm=to_pcm16(audio)
+                return 'ok',{'pcm':pcm,'sample_rate':48000,'format':'pcm16','duration_ms':len(audio)*1000//48000,'engine':self.module.synth.name}
+            if op == "bank.audit":
+                from .admin_rpc import module_call
+                return 'ok',self.bank.audit(os.environ.get('SCENARIO_DIR','scenarios'),lambda pcm:module_call('asr','transcribe',{'pcm_b64':__import__('base64').b64encode(pcm).decode(),'rate':8000})['text'])
             if op == "bank.refresh":
                 self.bank.warm(os.environ.get("SCENARIO_DIR", "scenarios"))
                 return "ok", {"prompts": len(self.bank.manifest), "generated": self.bank.generated}

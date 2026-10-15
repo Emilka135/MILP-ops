@@ -25,6 +25,8 @@ def build(request, data, root=ROOT):
     result=data/'build-jobs'/(job_id+'.result.json')
     work=data/'build-work'/job_id;work.mkdir(parents=True,exist_ok=True)
     try:
+        from .audio_release import require_audio_audit
+        job['audio_audit']=require_audio_audit(item['project'],root)
         sources,_,errors=compile_project(item['project'])
         if errors:raise ValueError('\n'.join(errors))
         for name in ['Cargo.toml','Cargo.lock','build.rs']:

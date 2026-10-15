@@ -76,7 +76,7 @@ python tools/dev.py --smoke
 python tools/dev.py
 ```
 
-Логи и тестовая БД: `debug/runs/local-stack/`. Ctrl-C останавливает дочерние процессы. Модель TTS — `modules/tts/models/silero-v5_5_ru.pt`. Веса исключены из Git; условия использования: [LICENSES.md](docs/LICENSES.md).
+Логи и тестовая БД: `debug/runs/local-stack/`. Ctrl-C останавливает дочерние процессы. Модель TTS — `modules/tts/models/v5_cis_base.pt` (MIT), голос `ru_ekaterina`. Произношение и проверка всех записей перед сборкой: [SPEECH_QUALITY.md](docs/SPEECH_QUALITY.md). Веса исключены из Git; условия использования: [LICENSES.md](docs/LICENSES.md).
 
 ```bash
 python debug/run_dtmf_commands.py

@@ -22,7 +22,7 @@ def main():
         "cancel": "Да, отмените мою запись.",
     }
     model = SileroTTS(
-        ROOT / "modules/tts/models/silero-v5_5_ru.pt", "xenia", stress="off"
+        ROOT / "modules/tts/models/v5_cis_base.pt", "ru_ekaterina", stress="dict"
     )
     for name, phrase in cases.items():
         with wave.open(str(output / (name + ".wav")), "wb") as wav:

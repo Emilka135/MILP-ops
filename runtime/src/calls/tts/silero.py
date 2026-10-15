@@ -1,16 +1,16 @@
 """Silero TTS wrapper (``torch.package`` models) with word stress, exact speed control and a prompt cache.
 
 * Default model: **``v5_cis_base.pt``** (MIT, ``LICENSE_CIS`` in snakers4/silero-models; speakers ``ru_*``,
-  8 kHz output supported directly).  It has no auto-stress, so prompts go through
+  synthesized at 48 kHz, anti-aliased conversion to 8 kHz for calls). It has no auto-stress, so prompts go through
   :mod:`calls.tts.stress` (built-in lexicon for the whole prompt vocabulary, optional
   ``silero-stress`` fallback for names from the Excel schedule).
 * ``silero-v5_5_ru.pt`` (speakers aidar/baya/kseniya/xenia/eugene) still works via ``TTS_MODEL``,
   but it is CC BY-NC-SA 4.0 – a commercial licence is needed outside the hackathon (docs/LICENSES.md).
-* Speed 1.3–1.75×: Silero SSML only has coarse presets (``fast``/``x-fast``), so the exact factor is
-  applied with :func:`wsola_stretch` – a pitch-preserving time-scale modification in NumPy.
+* Speed 1.3–1.75×: neutral model prosody, FFmpeg atempo at 48 kHz, then telephony conversion.
+  The legacy WSOLA helper remains for compatibility tests; live speech does not use it.
 * Prompts repeat heavily (menus, confirmations) → ``TtsModule`` keeps an LRU cache keyed by (text, rate).
-* No model in CI / sandbox → :class:`StubTTS` emits silence of the estimated duration, so the
-  orchestrator path is fully testable.
+* :class:`StubTTS` is only a unit-test dependency. Live ``clinic.Speech`` requires real weights
+  and fails at startup if they are absent; audio acceptance uses no silence fallback.
 """
 
 from __future__ import annotations
@@ -28,10 +28,12 @@ import numpy as np
 
 from .stress import Accentor, NoStress, load_accentor
 from .verbalize import rate_hint
+from .normalize import normalize_text, NORMALIZER_VERSION
+from .processing import process_audio, SOURCE_RATE, PROCESSING_VERSION
 
 SAMPLE_RATE = 8000
 DEFAULT_MODEL = "modules/tts/models/v5_cis_base.pt"
-DEFAULT_SPEAKER_CIS = "ru_zhadyra"  # Silero's own Russian example speaker for the CIS models; any ru_* works
+DEFAULT_SPEAKER_CIS = "ru_ekaterina"  # Selected by the real phrase/number regressions; retain ru_* voice IDs
 DEFAULT_SPEAKER_RU = "xenia"
 
 
@@ -115,12 +117,10 @@ def model_kind(model_path: str | Path) -> str:
 
 def build_ssml(text: str, rate: float, accentor: Accentor | None = None) -> tuple[str, str]:
     """Prompt text → (SSML for ``apply_tts``, prosody preset).  Pure function (no torch) so it is unit-testable."""
-    if _NUM_RE.search(text):
-        # defensive: prompts are verbalised upstream; digits here would be read unpredictably
-        text = re.sub(r"\d+", lambda m: " ".join(m.group(0)), text)
+    text = normalize_text(text)
     if accentor is not None:
         text = accentor(text)
-    preset = rate_hint(min(rate, 1.3))  # let SSML do a gentle part, WSOLA the exact remainder
+    preset = rate_hint(min(rate, 1.3))  # Legacy SSML helper; live synthesis requests neutral 1.0 here
     return f'<speak><prosody rate="{preset}">{_escape(text)}</prosody></speak>', preset
 
 
@@ -155,15 +155,22 @@ class SileroTTS:
         self.speaker = speaker or (DEFAULT_SPEAKER_CIS if self.kind == "cis" else DEFAULT_SPEAKER_RU)
         # the ru models stress text themselves; the CIS models need it from us
         self.accentor: Accentor = load_accentor(stress) if self.kind == "cis" else NoStress()
+        self.pipeline_version = NORMALIZER_VERSION + ":" + PROCESSING_VERSION + ":" + stress
         self._lock = threading.Lock()
 
-    def synth(self, text: str, rate: float) -> np.ndarray:
-        ssml, preset = build_ssml(text, rate, self.accentor)
-        with self._lock:
-            audio = self.model.apply_tts(ssml_text=ssml, speaker=self.speaker, sample_rate=SAMPLE_RATE)
+    def synth_quality(self, text: str, rate: float, output_rate: int = SOURCE_RATE) -> np.ndarray:
+        # Synthesize at native quality and neutral speed. Apply tempo exactly once.
+        ssml, _ = build_ssml(text, 1.0, self.accentor)
+        with self._lock, self._torch.random.fork_rng(devices=[]):
+            # The acoustic model samples noise. Make an unchanged phrase reproducible.
+            seed=int.from_bytes(hashlib.sha256((self.speaker+ssml).encode()).digest()[:8],'little')
+            self._torch.manual_seed(seed)
+            audio = self.model.apply_tts(ssml_text=ssml, speaker=self.speaker, sample_rate=SOURCE_RATE)
         x = np.asarray(audio.detach().cpu().numpy() if hasattr(audio, "detach") else audio, dtype=np.float32)
-        remaining = rate / (1.15 if preset == "fast" else 1.0)
-        return wsola_stretch(x, remaining) if abs(remaining - 1.0) > 0.03 else x
+        return process_audio(x, rate, output_rate)
+
+    def synth(self, text: str, rate: float) -> np.ndarray:
+        return self.synth_quality(text, rate, SAMPLE_RATE)
 
 
 def _escape(text: str) -> str:

@@ -1,6 +1,6 @@
 # Банк постоянных фраз
 
-`scenarios/*.flow` — источник текста. При старте TTS постоянные `say` без переменных один раз записываются настоящим Silero в WAV/PCM16 mono 8000 Hz. Следующий вызов читает файл. Ключ — SHA256 текста, скорости, голоса и SHA256 весов модели; замена версии Silero не использует старую запись по ошибке. В контейнерах банк хранится в томе `audio-bank`, локально — в игнорируемом `data/audio/prompts/`.
+`scenarios/*.flow` — источник текста. При старте TTS постоянные `say` без переменных один раз записываются настоящим Silero в WAV/PCM16 mono 8000 Hz. Следующий вызов читает файл. Ключ — SHA256 текста, скорости, голоса, обработки текста/звука и SHA256 весов модели; замена версии Silero не использует старую запись по ошибке. В контейнерах банк хранится в томе `audio-bank`, локально — в игнорируемом `data/audio/prompts/`.
 
 Фразы с переменными пациента синтезируются отдельно, не попадают в общий банк. Ответ TTS содержит `audio_source=prerecorded|dynamic_tts`, ключ и источник сценария. Изменение текста в редакторе создаёт другой ключ. Работающий звонок может использовать прежнюю версию фразы.
 
@@ -9,12 +9,14 @@
 ```bash
 docker compose up --build -d --wait orchestrator scenario-editor
 # Или отдельная подготовка локального банка в ML-окружении:
-TTS_MODEL=modules/tts/models/silero-v5_5_ru.pt python debug/build_audio_bank.py
+TTS_MODEL=modules/tts/models/v5_cis_base.pt python debug/build_audio_bank.py
 # Реальная проверка без заглушек:
-TTS_MODEL=modules/tts/models/silero-v5_5_ru.pt python debug/run_audio_bank.py
+TTS_MODEL=modules/tts/models/v5_cis_base.pt python debug/run_audio_bank.py
 TEST_AUDIO_BANK=1 node debug/run_editor_browser.mjs
 ```
 
 Результаты: `debug/runs/audio-bank/result.json`, `01-prerecorded-greeting.wav`, `02-dynamic-appointment.wav`. Проверка запрещает вызов синтезатора при чтении постоянной фразы, открывает новый экземпляр банка и сравнивает PCM; затем проверяет замену реальной записью с сохранением предыдущей версии. Нулевая/слишком короткая запись завершается ошибкой. Скриншот воспроизведения в браузере — `debug/runs/editor-browser/06-audio-bank-playing.png`.
 
 Модели из исходных репозиториев с тишиной вместо TTS в рабочем маршруте не используются. Веса имеют собственные условия использования: [LICENSES.md](LICENSES.md).
+
+Перед сборкой выполните «Проверить произношение»: новый/заменённый WAV и новая модель требуют актуального ASR-отчёта. Подробности и сравнение 48/8 кГц: [SPEECH_QUALITY.md](SPEECH_QUALITY.md).

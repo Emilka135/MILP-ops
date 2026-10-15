@@ -8,6 +8,7 @@ RUN pip install --no-cache-dir -r requirements/base.txt && \
       if [ "$MODULE" = "tts" ] || [ "$MODULE" = "nlu" ]; then pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu torch==2.14.1; fi; \
       pip install --no-cache-dir -r requirements/${MODULE}.txt; \
     fi
+RUN if [ "$MODULE" = "tts" ]; then apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/*; fi
 COPY app /app/app
 COPY runtime/src /app/runtime/src
 COPY data /app/data

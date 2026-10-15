@@ -287,7 +287,7 @@ state book_ask_referral
   retry 2 -> operator reason=referral_unclear
 
 state book_referral_date
-  say "Направление получено за последний месяц? Нажмите 1 — да, 2 — нет, 0 — оператор."
+  say "Направление получено за последний месяц? Если да, нажмите один. Если нет, нажмите два. Для оператора нажмите ноль."
   dtmf 1 -> book_has_referral
   dtmf 2 -> operator reason=referral_expired
   dtmf 0 -> operator reason=requested

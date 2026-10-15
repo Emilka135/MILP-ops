@@ -71,11 +71,12 @@ services:
     build: {context: ., dockerfile: docker/module.Dockerfile, args: {MODULE: tts, WITH_ML: "${WITH_ML:-1}"}}
     environment:
       <<: *environment
-      TTS_MODEL: /models/silero-v5_5_ru.pt
-      TTS_SPEAKER: ${TTS_SPEAKER:-xenia}
-      TTS_STRESS: "off"
+      TTS_MODEL: /models/v5_cis_base.pt
+      TTS_SPEAKER: ${TTS_SPEAKER:-ru_ekaterina}
+      TTS_STRESS: "dict"
       SCENARIO_DIR: /scenarios
       PROMPT_DIR: /audio
+      ASR_URL: http://asr:8080
     depends_on:
       audio-init: {condition: service_completed_successfully}
     volumes: ["./modules/tts/models:/models:ro", "./scenarios:/scenarios:ro", "audio-bank:/audio"]
@@ -109,6 +110,7 @@ services:
       BIND: 0.0.0.0:8080
     ports: ["127.0.0.1:${HTTP_PORT:-8080}:8080"]
     depends_on:
+      audio-check: {condition: service_completed_successfully}
       crm: {condition: service_healthy}
       nlu: {condition: service_healthy}
       sms: {condition: service_healthy}
@@ -123,6 +125,18 @@ services:
     deploy:
       resources:
         limits: {memory: 512M}
+  audio-check:
+    <<: *module
+    build: {context: ., dockerfile: docker/audio-check.Dockerfile}
+    command: ["python", "-m", "clinic.audio_check"]
+    restart: "no"
+    healthcheck: {disable: true}
+    environment:
+      <<: *environment
+      TTS_URL: http://tts:8080
+    depends_on:
+      tts: {condition: service_healthy}
+      asr: {condition: service_healthy}
   scenario-editor:
     restart: unless-stopped
     build: {context: ., dockerfile: docker/editor.Dockerfile, target: editor}
@@ -148,10 +162,11 @@ services:
     restart: unless-stopped
     build: {context: ., dockerfile: docker/editor.Dockerfile, target: compiler}
     network_mode: none
-    volumes: ["editor-data:/data", "editor-cargo:/cargo-target"]
+    volumes: ["editor-data:/data", "editor-cargo:/cargo-target", "audio-bank:/audio:ro"]
     environment:
       EDITOR_DATA: /data
       CARGO_BUILD_JOBS: "2"
+      AUDIO_BANK_DIR: /audio
   stand:
     <<: *module
     profiles: [contract]

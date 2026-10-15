@@ -31,7 +31,7 @@ def main():
     from clinic.modules import Nlu
 
     tts = SileroTTS(
-        ROOT / "modules/tts/models/silero-v5_5_ru.pt", "xenia", stress="off"
+        ROOT / "modules/tts/models/v5_cis_base.pt", "ru_ekaterina", stress="dict"
     )
     asr = OnnxAsrModule()
     nlu = Nlu()
@@ -89,7 +89,7 @@ def main():
         execute(ns.orchestrator, ns.orchestrator, mode="speech-only")
     report = {
         "mode": "real-audio",
-        "tts": "silero-v5_5_ru",
+        "tts": "silero-v5-cis-base",
         "asr": asr.model_name,
         "channel": "G.711 A-law, 8kHz",
         "rows": rows,

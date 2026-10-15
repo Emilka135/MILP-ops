@@ -23,11 +23,13 @@ MIT приложения не распространяется автомати�
 | GigaAM / веса v3 | MIT, [репозиторий авторов](https://github.com/salute-developers/GigaAM) | локальное распознавание |
 | T-one | Apache-2.0, [лицензия](https://github.com/voicekit-team/T-one/blob/main/LICENSE) | исследованная альтернатива |
 | deepvk/USER-bge-m3 | Apache-2.0, model card: [первичный источник](https://huggingface.co/deepvk/USER-bge-m3) | optional NLU на CPU, веса не включены |
-| **Silero v5_5_ru** | **CC BY-NC-SA 4.0**, [файл LICENSE](https://github.com/snakers4/silero-models/blob/master/LICENSE) | модель заказчика, скачивается отдельно |
-| Silero CIS base | MIT, [LICENSE_CIS](https://github.com/snakers4/silero-models/blob/master/LICENSE_CIS) | возможная замена через TTS_MODEL и голос ru_* |
+| **Silero v5_5_ru** | **CC BY-NC-SA 4.0**, [файл LICENSE](https://github.com/snakers4/silero-models/blob/master/LICENSE) | явная необязательная альтернатива; по умолчанию не скачивается |
+| **Silero CIS base** | MIT, [LICENSE_CIS](https://github.com/snakers4/silero-models/blob/master/LICENSE_CIS) | штатные веса v5_cis_base.pt, голос ru_ekaterina; SHA256 в SPEECH_QUALITY.md |
 | Deeray runtime | LGPL-3.0-or-later, [COPYING.LESSER](https://github.com/deeray-ltd/gigaam-v3-runtime/blob/main/COPYING.LESSER) | исследован; код/бинарник не встроен |
 | Asterisk | GPL-2.0, [лицензирование](https://www.asterisk.org/products/software/licensing/) | отдельный SIP-процесс |
 
 README Silero использует сокращённое описание условий; здесь приоритет отдаётся полному файлу LICENSE. Веса не публикуются вместе с кодом. Лицензии статей доступны на соответствующих страницах arXiv; в репозитории содержатся ссылки и собственные краткие описания, не полные тексты статей или сторонний неопубликованный код.
 
 CI проверяет лицензии Rust через cargo-deny; SCA и SBOM решают отдельные задачи и не заменяют проверку лицензии весов. Таблица — политика состава проекта, а не заключение о допустимости любого конкретного внедрения.
+
+FFmpeg устанавливается отдельным пакетом Debian и вызывается отдельным процессом для atempo и пересэмплирования. Его состав и лицензии определяются установленной сборкой; [официальное лицензирование](https://ffmpeg.org/legal.html). Код FFmpeg в исходники приложения не копируется.

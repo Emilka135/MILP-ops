@@ -39,7 +39,7 @@ def main():
         "STAND_URL": ns.stand_url,
         "SMS_GATEWAY_URL": "",
         "API_TOKEN": "",
-        "TTS_MODEL": str(ROOT / "modules/tts/models/silero-v5_5_ru.pt"),
+        "TTS_MODEL": str(ROOT / "modules/tts/models/v5_cis_base.pt"),
         "ASR_MODEL_PATH": str(ROOT / "modules/asr/models"),
         "ASR_QUANTIZATION": os.environ.get("ASR_QUANTIZATION", "int8"),
     }

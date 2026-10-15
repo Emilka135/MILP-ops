@@ -105,7 +105,7 @@ def test_vocab_tool_check_passes():
 
 def test_build_ssml_applies_stress_and_rate(acc):
     ssml, preset = build_ssml("Нажмите 1, чтобы записаться", 1.5, acc)
-    assert ssml == '<speak><prosody rate="fast">Нажм+ите 1, чт+обы запис+аться</prosody></speak>'
+    assert ssml == '<speak><prosody rate="fast">Нажм+ите од+ин, чт+обы запис+аться</prosody></speak>'
     assert preset == "fast"
     ssml_plain, preset_plain = build_ssml("Нажмите 1", 1.0, NoStress())
     assert "+" not in ssml_plain
