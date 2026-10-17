@@ -47,13 +47,10 @@ def main():
             demo = os.environ.get("APP_MODE", "demo") == "demo"
             if not loaded.get("slots") and demo:
                 seed_demo(reg, now().date() + __import__("datetime").timedelta(days=1))
-            stand = None
-            if os.environ.get("STAND_URL"):
-                stand = StrictStand(
-                    os.environ["STAND_URL"], os.environ.get("STAND_TOKEN", "")
-                )
-            if not demo and stand is None:
-                raise ValueError("STAND_URL and STAND_TOKEN required in live mode")
+            from .stand_config import settings
+
+            connection = settings(os.environ)
+            stand = StrictStand(*connection) if connection else None
             service.stand = stand
         else:
             from .modules import Nlu, Operator, Sms, Speech

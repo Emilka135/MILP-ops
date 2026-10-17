@@ -28,7 +28,7 @@ services:
       <<: *environment
       CRM_DB: /data/clinic.sqlite
       STAND_URL: ${STAND_URL:-}
-      STAND_TOKEN: ${STAND_TOKEN:-}
+      STAND_TOKEN: ${STAND_TOKEN:-${DBI_API_TOKEN:-}}
       CRM_SCHEDULE: ${CRM_SCHEDULE:-}
       CRM_PATIENTS: ${CRM_PATIENTS:-}
       CRM_BOOKINGS: ${CRM_BOOKINGS:-}
