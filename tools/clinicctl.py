@@ -7,11 +7,17 @@ import sys
 from datetime import datetime, timezone
 
 ROOT=Path(__file__).resolve().parents[1]
+GPU_ENABLED=False
 TARGETS={'all':['orchestrator','scenario-editor'],'editor':['scenario-editor'],'voice':['orchestrator']}
 
 
 def docker(arguments,capture=False):
-    return subprocess.run(['docker','compose',*arguments],cwd=ROOT,text=True,
+    files=[]
+    if GPU_ENABLED:
+        files=['-f','compose.yaml']
+        if (ROOT/'compose.override.yaml').exists():files+=['-f','compose.override.yaml']
+        files+=['-f','compose.gpu.yaml']
+    return subprocess.run(['docker','compose',*files,*arguments],cwd=ROOT,text=True,
         stdout=subprocess.PIPE if capture else None,stderr=subprocess.PIPE if capture else None,check=False)
 
 
@@ -50,12 +56,15 @@ def backup_placeholder(target):
 
 
 def main():
+    global GPU_ENABLED
     parser=argparse.ArgumentParser(description='Запуск и остановка регистратуры')
     parser.add_argument('command',choices=['start','stop','status'])
     parser.add_argument('target',nargs='?',choices=TARGETS,default='all')
     parser.add_argument('--backup',action='store_true',help='пока заглушка; данные при остановке сохраняются')
     parser.add_argument('--no-build',action='store_true',help='запустить уже собранную версию')
+    parser.add_argument('--gpu',action='store_true',help='локальный ASR на NVIDIA GPU (Compose CUDA overlay)')
     args=parser.parse_args()
+    GPU_ENABLED=args.gpu
     if args.command=='start':
         from check_space import require_space
         require_space()

@@ -1,0 +1,17 @@
+# GPU ASR with the installed NVIDIA runtime; does not use stale CDI graphics specs.
+services:
+  asr:
+    image: clinic-voice-asr-gpu
+    build:
+      context: .
+      dockerfile: docker/asr-gpu.Dockerfile
+    runtime: nvidia
+    environment:
+      NVIDIA_VISIBLE_DEVICES: ${CLINIC_GPU_DEVICE:-0}
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+      ASR_PROVIDER: CUDAExecutionProvider
+      ASR_GPU_MEM_LIMIT_MIB: ${ASR_GPU_MEM_LIMIT_MIB:-1024}
+      ASR_QUANTIZATION: ${ASR_GPU_QUANTIZATION:-none}
+      ASR_PROFILE_DIR: /debug/profiles
+    volumes:
+      - ./debug/runs/local-gpu:/debug

@@ -13,3 +13,7 @@ debug
 **/node_modules
 scenario-editor/dist
 secrets
+
+.env
+.env.*
+!.env.example

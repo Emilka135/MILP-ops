@@ -1,12 +1,16 @@
+# syntax=docker/dockerfile:1
 FROM python:3.12-slim-bookworm AS runtime
+WORKDIR /app
+ENV PIP_DEFAULT_TIMEOUT=20 PIP_RETRIES=1
+COPY requirements/base.txt /app/requirements/base.txt
+RUN --mount=type=cache,id=clinic-voice-pip-base,sharing=locked,target=/root/.cache/pip pip install -r requirements/base.txt
+COPY requirements/asr.txt requirements/tts.txt requirements/nlu.txt /app/requirements/
 ARG MODULE=crm
 ARG WITH_ML=0
-WORKDIR /app
-COPY requirements /app/requirements
-RUN pip install --no-cache-dir -r requirements/base.txt && \
+RUN --mount=type=cache,id=clinic-voice-pip-modules,sharing=locked,target=/root/.cache/pip \
     if [ "$WITH_ML" = "1" ]; then \
-      if [ "$MODULE" = "tts" ] || [ "$MODULE" = "nlu" ]; then pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu torch==2.14.1; fi; \
-      pip install --no-cache-dir -r requirements/${MODULE}.txt; \
+      if [ "$MODULE" = "tts" ] || [ "$MODULE" = "nlu" ]; then pip install --index-url https://download.pytorch.org/whl/cpu torch==2.14.1; fi; \
+      pip install -r requirements/${MODULE}.txt; \
     fi
 RUN if [ "$MODULE" = "tts" ]; then apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/*; fi
 COPY app /app/app
