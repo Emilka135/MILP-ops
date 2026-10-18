@@ -1,0 +1,4 @@
+interface:
+  display_name: "Сдача модулей регистратуры"
+  short_description: "Приёмка модулей, доказательства и остановка по секретам"
+  default_prompt: "Use $clinic-module-delivery to finish and publish the next verified clinic module."
