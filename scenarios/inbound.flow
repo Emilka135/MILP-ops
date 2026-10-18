@@ -7,7 +7,7 @@ flow inbound
 
 # ---------------------------------------------------------------- 0. приветствие (только DTMF)
 state welcome
-  say "Здравствуйте! Это голосовой помощник поликлиники.  Чтобы записаться к врачу, нажмите 1. Если запись уже есть и вы хотите её подтвердить, перенести или отменить — нажмите 2. Режим работы и праздничные дни — нажмите 3. Для связи с оператором нажмите ноль или звёздочку в любой момент."
+  say "Здравствуйте. Записаться — один. Изменить запись — два. Часы работы — три. Регистратор — ноль."
   dtmf 1 -> intent_book
   dtmf 2 -> intent_existing
   dtmf 3 -> info_menu
@@ -83,8 +83,19 @@ state id_start
   call crm.lookup_phone phone=$caller_phone
   ok -> id_self_or_other
   many -> id_self_or_other
-  empty -> id_ask_method
+  empty -> id_first_visit
   error -> operator reason=crm_error
+
+state id_first_visit
+  say "Вы у нас впервые? Если да, нажмите один. Если уже обращались — ноль. Для оператора — два. Можно ответить голосом."
+  listen 20s
+  dtmf 1 -> operator reason=first_visit_registration
+  dtmf 0 -> id_ask_method
+  dtmf 2 -> operator reason=requested
+  yes -> operator reason=first_visit_registration
+  no -> id_ask_method
+  timeout 20s -> id_ask_method
+  retry 2 -> operator reason=identity_failed
 
 state id_self_or_other
   say "Вы обращаетесь по поводу себя или другого человека? Нажмите 1 — себя, 2 — другого. Оператор — ноль."
@@ -218,35 +229,29 @@ state book_entry
   default -> book_referral_check
 
 state book_start
-  say "К кому вы хотите записаться? Терапевт — нажмите 1. Педиатр — 2. Хирург — 3. Офтальмолог — 4. Отоларинголог — 5. Другой специалист — 6."
+  say "Куда вас записать? Участковый терапевт — один. Узкий специалист — два. Исследование или анализы — три. Можно назвать голосом."
+  listen 8s
   dtmf 1 -> book_set_1
-  dtmf 2 -> book_set_2
-  dtmf 3 -> book_set_3
-  dtmf 4 -> book_set_4
-  dtmf 5 -> book_set_5
-  dtmf 6 -> book_ask_specialty
+  dtmf 2 -> book_ask_specialty
+  dtmf 3 -> book_diagnostic
   dtmf 0 -> operator reason=requested
+  intent operator -> operator reason=requested
+  any -> book_specialty_from_speech
+  silence -> book_start
   timeout 20s -> book_ask_specialty
   retry 2 -> operator reason=no_valid_input
 
+state book_diagnostic
+  say "Какое исследование или анализ вам назначили?"
+  listen 8s
+  dtmf 0 -> operator reason=requested
+  any -> operator reason=diagnostic_schedule_required
+  silence -> book_diagnostic
+  timeout 8s -> book_diagnostic
+  retry 2 -> operator reason=no_diagnostic
+
 state book_set_1
   set specialty = терапевт
-  goto book_referral_check
-
-state book_set_2
-  set specialty = педиатр
-  goto book_referral_check
-
-state book_set_3
-  set specialty = хирург
-  goto book_referral_check
-
-state book_set_4
-  set specialty = офтальмолог
-  goto book_referral_check
-
-state book_set_5
-  set specialty = отоларинголог
   goto book_referral_check
 
 state book_ask_specialty
@@ -435,6 +440,6 @@ state confirm_done
 
 # ---------------------------------------------------------------- 5. оператор
 state operator
-  say "Перевожу на оператора. Все данные разговора сохранены, повторять ничего не придётся."
+  say "Перевожу на регистратора."
   transfer reason=$reason
   end transfer

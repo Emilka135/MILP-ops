@@ -17,8 +17,9 @@ Three layers, cheapest first:
    when a new prompt word is not covered, so the dictionary stays complete.
 3. **Fallback** – optional ``silero-stress`` (MIT, ~50 MB, ~0.5 ms/word) for
    out-of-vocabulary words such as doctor surnames imported from the Excel
-   schedule.  Without it, OOV words are passed through unstressed and counted
-   in :attr:`DictAccentor.unknown` so they can be added to the lexicon.
+   schedule. Unknown words are counted in :attr:`DictAccentor.unknown` for
+   diagnostics. The production CIS synth requires complete stress coverage
+   and rejects them before calling the acoustic model.
 
 The accentor is idempotent: text that is already stressed is returned as is.
 """
@@ -26,6 +27,10 @@ The accentor is idempotent: text that is already stressed is returned as is.
 from __future__ import annotations
 
 import re
+import hashlib
+import importlib.metadata
+import json
+from pathlib import Path
 from collections import Counter
 from collections.abc import Callable
 from typing import Protocol
@@ -35,7 +40,7 @@ VOWELS = "аеёиоуыэюя"
 #: Unstressed function words (proclitics/enclitics): no ``+`` on purpose.
 CLITICS = frozenset(
     "а и но да ли же бы б не ни в во к ко с со на за по до из у о об от при для без над под про через без "
-    "же ль то".split()
+    "же ль то нибудь".split()
 )
 
 #: Abbreviations read letter by letter or as a word; applied before the lexicon lookup (case-insensitive).
@@ -85,6 +90,23 @@ _LEXICON_TEXT = """
 шест+ого шестьдес+ят шестьс+от эндокрин+олог эндокрин+ологу +это +этот январ+я
 з+аписью свободн+ы х+очется н+апротив зап+исаны п+ервый втор+ой тр+етий ут+очните м+есто
 мин+ут мин+ута мин+уты п+олдень с+утки приним+ает приним+ают нед+еля нед+ели кабин+ета кабин+ете этаж+е эт+аж
+б+анковские вари+анте в+аше в+ашей в+ашему вопр+осов вперв+ые в+ыполнена г+олосом д+аты ег+о
+запис+ать за+явку звонк+а испр+авить ист+ория как+ому л+ичность люб+ой мн+ению мом+ент нев+ерны
+н+омеру обращ+ались обращ+ение одн+ой ожид+аете отв+етить офици+альному перед+ам переда+ю перейт+и
+подр+обности подтверд+ите полож+ите получ+ателя пол+учено пом+ощника п+омощь попрощ+аться посл+едний
+предлож+ение прид+ут пр+осто раб+очее регистр+атору сотр+уднику сохранен+а сохран+ить специал+исту
+т+акже теп+ерь т+естовом тр+убку удал+ось ц+ифре +экстренное
+подр+обностями обяз+ательное медиц+инское страхов+ание ультразвуков+ое иссл+едование электрокардиогр+амма
+фам+илия +имя +отчество добров+ольное фиброгастродуоденоскоп+ия эзофагогастродуоденоскоп+ия
+магн+итно резон+ансная томогр+афия компь+ютерная проц+ентов запят+ая пл+юс кр+аткое м+ягкий
+отк+аз регистр+атор з+автра хоч+у
+направл+ения снач+ала обрат+итесь уч+астковому в+ыбрать уч+асткового в+ыбрано прод+олжить д+етский
+оториноларинг+олог лаборат+орные ан+ализы уч+астковый состо+яние р+езко ух+удшилось звон+ите нужн+а
+регистр+атора куд+а п+омощи получ+илось ув+еренно отв+ет повтор+ите подход+ящую кл+авишу пр+обный
+двухт+ысячного сороков+ого пятидес+ятого шестидес+ятого семидес+ятого восьмидес+ятого девян+остого
+ан+ализ вопр+ос дост+упны зад+ачей за+явка звонк+и измен+ить как+ое когд+а колл+ег назн+ачили
+обр+атные обр+атный предпочт+ительное прин+ять соедин+ю спр+авиться ув+идит уд+обно +узкий час+ы +этой
+отмен+ите запиш+ите мен+я мо+ю перенес+ите подтвержд+аю прид+у +острая груд+и позов+ите кон+ечно
 """
 
 LEXICON: dict[str, str] = {w.replace("+", ""): w for w in _LEXICON_TEXT.split()}
@@ -146,8 +168,18 @@ class DictAccentor:
 
     def stress_word(self, word: str) -> tuple[str, bool]:
         """→ (stressed word, known). Hyphenated words are stressed part by part."""
+        if "-" in word:
+            parts = [self.stress_word(p) for p in word.split("-")]
+            # Preserve an already-accented compound byte-for-byte, but still
+            # verify coverage of every part (including an unmarked OOV part).
+            result = word if "+" in word else "-".join(p for p, _ in parts)
+            return result, all(k for _, k in parts)
         if "+" in word:
-            return word, True
+            # A stray or duplicate '+' is not proof of an explicitly supplied
+            # pronunciation. Each compound part is checked independently.
+            valid = word.count("+") == 1 and word.index("+") + 1 < len(word)
+            valid = valid and word[word.index("+") + 1].lower() in VOWELS
+            return word, bool(valid)
         low = word.lower()
         if low in ABBREVIATIONS:
             rep = ABBREVIATIONS[low]
@@ -156,9 +188,6 @@ class DictAccentor:
             return word, True
         if low in self.lexicon:
             return _apply_template(word, self.lexicon[low]), True
-        if "-" in word:
-            parts = [self.stress_word(p) for p in word.split("-")]
-            return "-".join(p for p, _ in parts), all(k for _, k in parts)
         rule = auto_stress(word)
         if rule is not None:
             return rule, True
@@ -180,6 +209,22 @@ class DictAccentor:
             if not known:
                 missing.append(m.group(0).lower())
         return missing
+
+
+def require_stress_marks(text: str) -> None:
+    """Reject unresolved words in already-accented CIS input before synthesis.
+
+    Only explicit valid marks, ё, one-vowel words and known neutral clitics
+    count here. A fallback returning an unmarked word cannot bypass the gate.
+    This checks coverage, not the linguistic correctness of a chosen accent.
+    """
+    missing = sorted(set(DictAccentor(lexicon={}).coverage(text)))
+    if missing:
+        raise ValueError(
+            "Не задано проверенное ударение: " + ", ".join(missing[:12])
+            + ". Укажите '+' перед ударной гласной (например, фам+илия) "
+            "или добавьте проверенное произношение в словарь."
+        )
 
 
 class SileroStressAccentor:
@@ -225,3 +270,49 @@ def load_accentor(mode: str = "auto") -> Accentor:
     if mode == "silero" and silero is not None:
         return silero
     return DictAccentor(fallback=silero.word if silero is not None else None)
+
+
+def accentor_fingerprint(accentor: Accentor) -> str:
+    """Hash the selected implementation and actual dictionary/fallback, not a mode name.
+
+    ``auto`` with a model installed and ``auto`` without one must use different banks.
+    Package bytes/version also invalidate a fallback upgraded in place.
+    """
+    payload = {'class': type(accentor).__module__ + '.' + type(accentor).__qualname__,
+               'implementation': hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
+    if isinstance(accentor, DictAccentor):
+        payload.update(lexicon=accentor.lexicon, clitics=sorted(accentor.clitics),
+                       abbreviations=ABBREVIATIONS)
+        fallback = accentor.fallback
+        owner = getattr(fallback, '__self__', None)
+        if owner is not None:
+            payload['fallback'] = accentor_fingerprint(owner)
+        elif fallback is not None:
+            # A custom callable needs an explicit stable fingerprint or Python code.
+            code = getattr(fallback, '__code__', None)
+            payload['fallback'] = getattr(fallback, 'fingerprint', None) or {
+                'name': getattr(fallback, '__module__', '') + '.' + getattr(fallback, '__qualname__', type(fallback).__qualname__),
+                'code': hashlib.sha256(code.co_code + repr(code.co_consts).encode()).hexdigest() if code else str(type(fallback)),
+            }
+        else:
+            payload['fallback'] = None
+    if isinstance(accentor, SileroStressAccentor):
+        import silero_stress
+        root = Path(silero_stress.__file__).parent
+        payload['package'] = {
+            str(path.relative_to(root)): hashlib.sha256(path.read_bytes()).hexdigest()
+            for path in sorted(root.rglob('*'))
+            if path.is_file() and path.suffix in {'.py', '.pt', '.pth', '.onnx', '.json', '.bin'}
+        }
+        try:
+            payload['package_version'] = importlib.metadata.version('silero-stress')
+        except importlib.metadata.PackageNotFoundError:
+            payload['package_version'] = 'unpackaged'
+        # External cached model weights, when exposed by the loaded module.
+        state = getattr(accentor._accentor, 'state_dict', None)
+        if callable(state):
+            payload['weights'] = {
+                name: hashlib.sha256(value.detach().cpu().contiguous().numpy().tobytes()).hexdigest()
+                for name, value in state().items()
+            }
+    return hashlib.sha256(json.dumps(payload, sort_keys=True, ensure_ascii=False).encode()).hexdigest()

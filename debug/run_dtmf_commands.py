@@ -14,7 +14,7 @@ from clinic.telephony import Bridge, Context
 from run_speech_commands import request
 
 
-def execute(base, output_dir="debug/runs/dtmf-only"):
+def execute(base, output_dir="debug/runs/dtmf-only", *, operator_available=True):
     folder = Path(output_dir)
     (folder / "audio").mkdir(parents=True, exist_ok=True)
     bridge = Bridge(ari=object(), client=object())
@@ -99,10 +99,17 @@ def execute(base, output_dir="debug/runs/dtmf-only"):
         # Star must interrupt identity, and OOB/inband duplicate must not repeat input.
         call = prefix + "-operator"
         post("call.start", call_id=call)
-        assert tone(call, "*")["status"] == "transfer"
+        state = tone(call, "*")
+        if operator_available:
+            assert state["status"] == "transfer", state
+        else:
+            assert state["state"] == "callback.ask", state
+            assert state["vars"]["operator_available"] is False, state
+            assert state["transfer"] is None and not state["finished"] and not state["errors"], state
     return {
         "mode": "dtmf-only",
         "asr_inputs": 0,
+        "operator_available_expected": operator_available,
         "codecs": ["lin", "alaw", "ulaw"],
         "results": {
             k: "passed"
@@ -123,8 +130,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--orchestrator", default="http://127.0.0.1:8080")
     parser.add_argument("--output", default="debug/runs/dtmf-only/commands.json")
+    parser.add_argument("--operator-unavailable", action="store_true",
+                        help="Require the exact off-hours callback route instead of immediate transfer")
     ns = parser.parse_args()
-    report = execute(ns.orchestrator, Path(ns.output).parent)
+    report = execute(ns.orchestrator, Path(ns.output).parent, operator_available=not ns.operator_unavailable)
     Path(ns.output).write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n")
     print(json.dumps(report["results"], ensure_ascii=False))
 

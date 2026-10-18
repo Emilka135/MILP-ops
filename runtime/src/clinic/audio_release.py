@@ -3,6 +3,7 @@ from pathlib import Path
 import hashlib
 import json
 from .admin_audio import folder,manifest
+from calls.tts.quality import QUALITY_POLICY_VERSION
 
 
 def require_audio_audit(project,root):
@@ -10,6 +11,8 @@ def require_audio_audit(project,root):
     if not path.is_file():raise ValueError('Сначала проверьте все записи: Аудиофразы → Проверить произношение')
     report=json.loads(path.read_text())
     if report.get('status')!='passed':raise ValueError('Аудиобанк не прошёл проверку. Откройте отчёт произношения')
+    if report.get('quality_policy_version') != QUALITY_POLICY_VERSION:
+        raise ValueError('Правила проверки произношения изменились. Повторите проверку аудиобанка')
     current=bank/'current.json'
     if not current.is_file() or json.loads(current.read_text()).get('voice')!=report.get('voice'):
         raise ValueError('Модель или обработка звука изменились после проверки')

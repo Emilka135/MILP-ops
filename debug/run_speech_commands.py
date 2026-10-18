@@ -96,7 +96,7 @@ def execute(base, tts_url, rate=1.5, mode="speech-only", output_dir=None):
     if mode == "speech-only":
         state = say(call, "Один ноль ноль три.")
     else:
-        for digit in "11231119926":
+        for digit in "11231119922":
             state = post("call.dtmf", call_id=call, digit=digit)
     assert state["state"] == "inbound.book_ask_specialty", state["state"]
     state = say(call, "Запишите меня к терапевту.")

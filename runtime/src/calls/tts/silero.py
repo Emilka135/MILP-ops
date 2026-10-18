@@ -26,7 +26,7 @@ from typing import Protocol
 
 import numpy as np
 
-from .stress import Accentor, NoStress, load_accentor
+from .stress import Accentor, NoStress, load_accentor, accentor_fingerprint, require_stress_marks
 from .verbalize import rate_hint
 from .normalize import normalize_text, NORMALIZER_VERSION
 from .processing import process_audio, SOURCE_RATE, PROCESSING_VERSION
@@ -115,11 +115,13 @@ def model_kind(model_path: str | Path) -> str:
     return "cis" if "cis" in Path(model_path).name.lower() else "ru"
 
 
-def build_ssml(text: str, rate: float, accentor: Accentor | None = None) -> tuple[str, str]:
+def build_ssml(text: str, rate: float, accentor: Accentor | None = None, *, require_stress: bool = False) -> tuple[str, str]:
     """Prompt text → (SSML for ``apply_tts``, prosody preset).  Pure function (no torch) so it is unit-testable."""
     text = normalize_text(text)
     if accentor is not None:
         text = accentor(text)
+    if require_stress:
+        require_stress_marks(text)
     preset = rate_hint(min(rate, 1.3))  # Legacy SSML helper; live synthesis requests neutral 1.0 here
     return f'<speak><prosody rate="{preset}">{_escape(text)}</prosody></speak>', preset
 
@@ -155,12 +157,12 @@ class SileroTTS:
         self.speaker = speaker or (DEFAULT_SPEAKER_CIS if self.kind == "cis" else DEFAULT_SPEAKER_RU)
         # the ru models stress text themselves; the CIS models need it from us
         self.accentor: Accentor = load_accentor(stress) if self.kind == "cis" else NoStress()
-        self.pipeline_version = NORMALIZER_VERSION + ":" + PROCESSING_VERSION + ":" + stress
+        self.pipeline_version = NORMALIZER_VERSION + ":" + PROCESSING_VERSION + ":" + accentor_fingerprint(self.accentor)
         self._lock = threading.Lock()
 
     def synth_quality(self, text: str, rate: float, output_rate: int = SOURCE_RATE) -> np.ndarray:
         # Synthesize at native quality and neutral speed. Apply tempo exactly once.
-        ssml, _ = build_ssml(text, 1.0, self.accentor)
+        ssml, _ = build_ssml(text, 1.0, self.accentor, require_stress=self.kind == "cis")
         with self._lock, self._torch.random.fork_rng(devices=[]):
             # The acoustic model samples noise. Make an unchanged phrase reproducible.
             seed=int.from_bytes(hashlib.sha256((self.speaker+ssml).encode()).digest()[:8],'little')

@@ -34,16 +34,17 @@ class PromptBank:
         ).hexdigest()
 
     def warm(self, scenarios):
+        current_keys=set()
         for flow in load_flows(scenarios).values():
             for state in flow.states.values():
                 for s in state.statements:
                     if s.kind == "say" and "{" not in s.text:
                         rate = float(s.args.get("rate", flow.rate))
-                        self.record(s.text, rate, f"{flow.name}.{state.name}")
+                        current_keys.add(self.record(s.text, rate, f"{flow.name}.{state.name}"))
 
         with self.lock:
             active=self.folder/'current.tmp'
-            active.write_text(json.dumps({'voice':self.voice,'model_sha256':self.model_sha256,'pipeline_version':self.synth.pipeline_version}))
+            active.write_text(json.dumps({'voice':self.voice,'model_sha256':self.model_sha256,'pipeline_version':self.synth.pipeline_version,'keys':sorted(current_keys)}))
             os.replace(active,self.folder/'current.json')
 
     def record(self, text, rate, source):
@@ -142,10 +143,10 @@ class PromptBank:
     def audit(self, scenarios, transcribe):
         """Every current static WAV is decoded and recognized. Never trust stale cache metadata."""
         from calls.tts.normalize import normalize_text
-        from calls.tts.quality import compare
+        from calls.tts.quality import compare, QUALITY_POLICY_VERSION
         import numpy as np
         self.warm(scenarios)
-        report={'status':'running','model_sha256':self.model_sha256,'voice':self.voice,'phrases':[],
+        report={'status':'running','quality_policy_version':QUALITY_POLICY_VERSION,'model_sha256':self.model_sha256,'voice':self.voice,'phrases':[],
                 'method':'real_asr_and_signal_checks','naturalness':'requires_listening'}
         keys=set()
         for flow in load_flows(scenarios).values():

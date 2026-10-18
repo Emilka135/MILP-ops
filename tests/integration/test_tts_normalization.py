@@ -34,3 +34,30 @@ def test_tempo_preserves_pitch_and_headroom_at_native_rate():
     assert abs(peak-440)<3
     assert .3<float(np.sqrt(np.mean(y*y)))<.4
     assert float(np.abs(y).max())<.9
+
+
+@pytest.mark.parametrize(('source','expected'),[
+    ('Приём 16.10 в 14:30', 'Приём шестнадцатого октября в четырнадцать тридцать'),
+    ('Приём 16.10.', 'Приём шестнадцатого октября.'),
+    ('Дата:16.10', 'Дата:шестнадцатого октября'),
+    ('Дата 29.02', 'Дата двадцать девятого февраля'),
+    ('Температура -5 градусов', 'Температура минус пять градусов'),
+    ('Число −0,05', 'Число минус ноль запятая ноль пять'),
+    ('Поправка +5', 'Поправка плюс пять'),
+])
+def test_dates_without_year_and_signed_values_preserve_meaning(source, expected):
+    assert normalize_text(source) == expected
+    assert normalize_text(expected) == expected
+
+
+@pytest.mark.parametrize('text', ['Значение 16.10', 'Значение 16.10.', 'Приём 31.02', 'Дата 30.13'])
+def test_ambiguous_short_date_requires_explicit_input(text):
+    with pytest.raises(ValueError):
+        normalize_text(text)
+
+
+@pytest.mark.parametrize('source', ['Диапазон 5–10', 'Диапазон 5—10', 'Диапазон 5-10'])
+def test_range_separator_is_never_a_negative_sign(source):
+    spoken = normalize_text(source)
+    assert 'минус' not in spoken
+    assert 'пять' in spoken and 'десять' in spoken

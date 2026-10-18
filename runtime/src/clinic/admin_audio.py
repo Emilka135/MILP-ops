@@ -16,8 +16,9 @@ def manifest(root):
 
 def active_manifest(root):
     current=folder(root)/'current.json'
-    voice=json.loads(current.read_text()).get('voice') if current.is_file() else None
-    return {key:entry for key,entry in manifest(root).items() if not voice or entry.get('voice')==voice}
+    active=json.loads(current.read_text()) if current.is_file() else {}
+    voice=active.get('voice');keys=active.get('keys')
+    return {key:entry for key,entry in manifest(root).items() if (not voice or entry.get('voice')==voice) and (keys is None or key in keys)}
 
 
 def listing(root):

@@ -20,12 +20,13 @@ def execute(base, tts_url, folder="debug/runs/answering-machine"):
     assert state["status"] == "booked", state
     bid = state["vars"]["booking_id"]
     records = []
+    # Explicit fixture pronunciation is required for words outside the clinic lexicon.
     for i, phrase in enumerate(
         [
-            "Здравствуйте. Я виртуальный помощник Т Банка. Оставьте сообщение после сигнала.",
+            "Здравствуйте. Я вирту+альный помощник Т Б+анка. Ост+авьте сообщ+ение после сигн+ала.",
             "Да, подтверждаю.",
             "Да, отмените.",
-            "Нет, вы ошиблись номером.",
+            "Нет, вы ош+иблись н+омером.",
         ]
     ):
         call = f"{prefix}-{i}"
@@ -66,7 +67,7 @@ def execute(base, tts_url, folder="debug/runs/answering-machine"):
         ), state["prompts"]
         records.append(
             {
-                "source": phrase,
+                "source": phrase.replace("+", ""),
                 "state": state["state"],
                 "status": state["status"],
                 "intent": state["vars"].get("last_intent"),

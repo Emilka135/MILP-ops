@@ -3,7 +3,7 @@ from datetime import date, time
 import re
 from .verbalize import date_to_words, time_to_words, number_to_words, digits_to_words, phone_to_words
 
-NORMALIZER_VERSION = 'ru-clinic-3'
+NORMALIZER_VERSION = 'ru-clinic-4'
 ABBREVIATIONS = {
     'смс': 'эс эм эс', 'sms': 'эс эм эс', 'фио': 'фамилия имя и отчество',
     'омс': 'обязательное медицинское страхование', 'дмс': 'добровольное медицинское страхование',
@@ -51,7 +51,24 @@ def normalize_text(text):
     month_pattern='|'.join(months)
     text=re.sub(r'(?<!\d)(\d{1,2})\s+('+month_pattern+r')(?:\s+(\d{4})\s*(?:года|г\.)?)?',
         lambda m:spoken_date(m[3] or '2000',months.index(m[2].lower())+1,m[1],bool(m[3])),text,flags=re.I)
+    # DD.MM without a year is also a decimal. Only appointment/date context
+    # authorises reading it as a date; an isolated ambiguous value is rejected.
+    def short_date(match):
+        day, month = int(match[1]), int(match[2])
+        before = text[:match.start()]
+        after = text[match.end():]
+        date_context = re.search(r'(?:при[её]м(?:а|у|е)?|запис[ьи]|записаны|дата|дату|исследование|исследования)\s*:?\s*(?:на\s+)?$', before, re.I)
+        date_context = date_context or re.match(r'\s+(?:в\s+\d{1,2}:|года\b)', after, re.I)
+        if date_context:
+            return spoken_date(2000, month, day, False)
+        if 1 <= day <= 31 and 1 <= month <= 12:
+            raise ValueError('Неоднозначное число или дата: '+match[0]+'. Укажите дату с годом, а дробное число через запятую')
+        return match[0]
+    text=re.sub(r'(?<![\w.])(\d{1,2})\.(\d{2})(?!\d|\.\d)',short_date,text)
     text=re.sub(r'(?<!\d)(\d{1,2}):(\d{2})(?!\d)',lambda m:time_to_words(time(int(m[1]),int(m[2]))),text)
+    # Signs must be spoken. Date/telephone separators have already been consumed.
+    text=re.sub(r'(?<![\w\d])[-−](?=\d)', 'минус ', text)
+    text=re.sub(r'(?<![\w\d])\+(?=\d)', 'плюс ', text)
     for abbreviation,words in ABBREVIATIONS.items():
         text=re.sub(r'(?<!\w)'+re.escape(abbreviation)+r'(?!\w)',words,text,flags=re.I)
     text=re.sub(r'(?<!\w)([А-ЯЁ]{2,5})(?!\w)',lambda m:' '.join(LETTERS[c.lower()] for c in m[1]),text)

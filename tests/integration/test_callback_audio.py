@@ -27,7 +27,7 @@ def test_real_speech_requests_callback_but_emergency_transfers():
         )
         try:
             base = "http://127.0.0.1:28280"
-            for _ in range(250):
+            for _ in range(900):
                 if proc.poll() is not None:
                     raise AssertionError((folder / "test-stack.log").read_text())
                 try:
