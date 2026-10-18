@@ -15,12 +15,13 @@ from calls.orchestrator.modules import AsrModule, NluModule, OperatorModule
 from calls.scenario.engine import Event
 from calls.services.http import make_server
 from calls.tts.silero import StubTTS, TtsModule
-from tests.conftest import TODAY, wait_until
+from tests.conftest import NOW, TODAY, wait_until
 
 
 @pytest.fixture
 def remote_stack(flows):
-    reg = MockRegistry()
+    # Slot expiry and NLU must share the same fixed acceptance clock.
+    reg = MockRegistry(now=NOW)
     seed_demo(reg, TODAY)
     gw = MockSmsGateway()
     operator = OperatorModule(reg)

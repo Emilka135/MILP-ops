@@ -414,6 +414,8 @@ def make_server(repo, static, host="127.0.0.1", port=8090, token=""):
         ),
         os.environ.get("EDITOR_API_TOKEN", ""),
     )
+    from .demo_call import DemoCalls
+    demo = DemoCalls()
     static = Path(static).resolve()
 
     class Handler(BaseHTTPRequestHandler):
@@ -443,13 +445,14 @@ def make_server(repo, static, host="127.0.0.1", port=8090, token=""):
             if parsed.path.startswith("/api/"):
                 identity = auth.identity(self.headers)
                 workshop = parsed.path.startswith('/api/workshop/')
-                if identity is None and (workshop or parsed.path == '/api/me'):
+                demo_call = parsed.path.startswith('/api/demo-call/')
+                if identity is None and (workshop or demo_call or parsed.path == '/api/me'):
                     identity = {'username':'observer','role':'observer','registrar':None,'label':'Наблюдатель'}
                 if parsed.path != '/api/login' and identity is None:
                     return self.send_json(401, {'error':'Войдите с паролем администратора'})
-                if identity and identity['role'] == 'observer' and post and parsed.path != '/api/login':
+                if identity and identity['role'] == 'observer' and post and parsed.path != '/api/login' and not demo_call:
                     return self.send_json(403, {'error':'Наблюдатель может только просматривать'})
-                if identity and identity['role'] == 'registrar' and not (workshop or parsed.path in {'/api/me','/api/logout'}):
+                if identity and identity['role'] == 'registrar' and not (workshop or demo_call or parsed.path in {'/api/me','/api/logout'}):
                     return self.send_json(403, {'error':'Конструктор всей системы доступен администратору'})
                 origin = self.headers.get("Origin")
                 if (
@@ -472,6 +475,8 @@ def make_server(repo, static, host="127.0.0.1", port=8090, token=""):
                         if not isinstance(data, dict):
                             raise ValueError("Ожидается объект проекта")
                     route = parsed.path
+                    if demo_call:
+                        return self.send_json(200, demo.request(route, post, data, parse_qs(parsed.query), client=self.client_address[0]))
                     if post and route == "/api/login":
                         session = auth.login(
                             data.get("password", ""), self.client_address[0], data.get("username", "admin")

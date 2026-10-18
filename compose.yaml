@@ -152,6 +152,7 @@ services:
       AUDIO_BANK_DIR: /audio
       TTS_URL: http://tts:8080
       CRM_URL: http://crm:8080
+      ASR_URL: http://asr:8080
     ports: ["127.0.0.1:${EDITOR_PORT:-8090}:8090"]
     volumes: ["./scenarios:/workspace/scenarios", "editor-data:/data", "editor-cargo:/workspace/target", "audio-bank:/audio:ro"]
     healthcheck:

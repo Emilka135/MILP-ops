@@ -1,6 +1,7 @@
 """Fixed module destinations; browser cannot select a URL or an arbitrary operation."""
 import json
 import os
+import urllib.error
 import urllib.request
 from calls.services.netutil import open_http
 
@@ -14,6 +15,13 @@ def module_call(module, operation, args):
     try:
         with open_http(request, timeout=120 if operation in {'bank.refresh','bank.audit'} else 15) as response:
             result=json.loads(response.read(4*1024*1024))
+    except urllib.error.HTTPError as error:
+        # A module can be reachable but reject pronunciation or input. Preserve
+        # its structured explanation instead of reporting a connection outage.
+        try:
+            result=json.loads(error.read(4*1024*1024))
+        except (OSError,ValueError):
+            raise ValueError('Модуль '+module+' недоступен; проверьте запуск контейнера') from None
     except OSError:
         raise ValueError('Модуль '+module+' недоступен; проверьте запуск контейнера') from None
     if result.get('status') not in {'ok','empty'}:
