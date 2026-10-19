@@ -18,7 +18,11 @@ jobs:
         env: {HF_HUB_DISABLE_TELEMETRY: '1'}
       - run: mkdir -p debug/runs/containers debug/runs/security
       - run: docker compose build
-      - name: Real CPU startup, full audio-bank audit and readiness
+      - name: Real CPU startup, audio gate and public failure diagnostics
+        id: startup
+        # The verifier writes allowlisted errors into check annotations and the
+        # job summary, so the cause is visible without downloading private logs.
+        env: {PYTHONUNBUFFERED: '1'}
         run: python debug/run_ci_container_check.py --compose-file compose.yaml
       - name: Independent real tone, speech and combined acceptance
         run: |
