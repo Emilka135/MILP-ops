@@ -265,24 +265,22 @@ class Insights:
             self._queue_cluster(at)
             return "ok", {"feedback_id": row["id"], "kind": kind, "night_processing": "queued"}
         if op == "insights.dashboard":
-            where = " WHERE registrar=?" if role == "registrar" or args.get("registrar") else ""
-            params = (registrar_number(args["registrar"]),) if where else ()
-            feedback = self.reg.execute("SELECT * FROM feedback" + where + " ORDER BY id DESC LIMIT 300", params)
-            complaint_where = where.replace("registrar", "c.registrar")
+            selected = registrar_number(args["registrar"]) if role == "registrar" or args.get("registrar") else None
+            params = (selected, selected)
+            feedback = self.reg.execute(
+                "SELECT * FROM feedback WHERE (? IS NULL OR registrar=?) ORDER BY id DESC LIMIT 300", params)
             metrics = self.reg.execute(
-                "SELECT registrar,COUNT(*) AS feedback_count,SUM(CASE WHEN kind='complaint' THEN 1 ELSE 0 END) AS complaint_count,COUNT(CASE WHEN rating_source='patient_explicit' THEN rating END) AS explicit_rating_count,AVG(CASE WHEN rating_source='patient_explicit' THEN rating END) AS explicit_rating_mean FROM feedback"
-                + where + " GROUP BY registrar", params,
+                "SELECT registrar,COUNT(*) AS feedback_count,SUM(CASE WHEN kind='complaint' THEN 1 ELSE 0 END) AS complaint_count,COUNT(CASE WHEN rating_source='patient_explicit' THEN rating END) AS explicit_rating_count,AVG(CASE WHEN rating_source='patient_explicit' THEN rating END) AS explicit_rating_mean FROM feedback WHERE (? IS NULL OR registrar=?) GROUP BY registrar", params,
             )
             for row in metrics:
                 row["complaint_share"] = row["complaint_count"] / row["feedback_count"]
             return "ok", {
                 "feedback": feedback,
                 "complaints": self.reg.execute(
-                    "SELECT c.*,f.text FROM complaints c JOIN feedback f ON f.id=c.feedback_id"
-                    + complaint_where + " ORDER BY c.id DESC", params,
+                    "SELECT c.*,f.text FROM complaints c JOIN feedback f ON f.id=c.feedback_id WHERE (? IS NULL OR c.registrar=?) ORDER BY c.id DESC", params,
                 ),
-                "clusters": self.reg.execute("SELECT * FROM feedback_clusters" + where + " ORDER BY id DESC LIMIT 300", params),
-                "profiles": self.reg.execute("SELECT * FROM registrar_profiles" + where + " ORDER BY id DESC LIMIT 300", params),
+                "clusters": self.reg.execute("SELECT * FROM feedback_clusters WHERE (? IS NULL OR registrar=?) ORDER BY id DESC LIMIT 300", params),
+                "profiles": self.reg.execute("SELECT * FROM registrar_profiles WHERE (? IS NULL OR registrar=?) ORDER BY id DESC LIMIT 300", params),
                 "jobs": self.reg.execute("SELECT * FROM night_jobs ORDER BY id DESC LIMIT 30") if role == "admin" else [],
                 "metrics": metrics,
                 "rating_note": "Средняя оценка учитывает только явно названные пациентами числа. Доля жалоб считается отдельно. Текст не превращается в звёзды; влияние правок на качество ещё не измерено.",
