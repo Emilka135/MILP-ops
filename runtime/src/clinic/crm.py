@@ -724,13 +724,9 @@ class ClinicCrm:
             )
 
     def dial_due(self):
-        tomorrow = now().date() + timedelta(days=1)
-        result = []
-        for b in self.reg.bookings_on(tomorrow):
-            p = self.reg.patient_by_id(b.patient_id)
-            if not b.confirmed and p and p.phone:
-                result.append({"booking_id": b.id, "phone": p.phone})
-        return result
+        from .outreach import due_reminders
+
+        return due_reminders(self, now())["items"]
 
     def dial_reserve(self, args):
         # One process owns the persistent, per-PHONE rolling budget, shared across bookings.
@@ -744,9 +740,13 @@ class ClinicCrm:
                 b is None
                 or b.status != "booked"
                 or b.confirmed
-                or b.starts_at.date() != at.date() + timedelta(days=1)
             ):
                 return "blocked", {"reason": "booking not due"}
+            from .outreach import reminder_due
+
+            decision = reminder_due(self, b, at)
+            if not decision["due"]:
+                return "blocked", {"reason": decision["reason"], "reminder": decision}
             p = self.reg.patient_by_id(b.patient_id)
             if not p or not p.phone:
                 return "blocked", {"reason": "phone missing"}
