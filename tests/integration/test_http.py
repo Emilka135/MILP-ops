@@ -232,3 +232,48 @@ def test_combined_tones_and_real_speech(stack):
     (ROOT / "debug/runs/combined/commands.json").write_text(
         json.dumps(report, ensure_ascii=False, indent=2)
     )
+
+
+def test_assisted_confirmed_booking_and_post_confirmation_finish(stack):
+    post, _ = stack
+    state = post("call.start", call_id="assisted-book", flow="assisted", caller_phone="79165550000")
+    for digit in "1003#": state = post("call.dtmf", call_id="assisted-book", digit=digit)
+    assert state["state"] == "assisted.ask_request"
+    state = post("call.dtmf", call_id="assisted-book", digit="1")
+    assert state["state"] == "assisted.offer"
+    assert state["vars"]["agent_completed"] is False and not state["sms"]
+    assert state["vars"]["agent_attempt"] == 1
+    state = post("call.dtmf", call_id="assisted-book", digit="1")
+    assert state["state"] == "assisted.success" and state["vars"]["agent_completed"] is True
+    assert state["vars"]["booking_id"] and state["sms"] and not state["errors"]
+    state = post("call.speech", call_id="assisted-book", text="Спасибо")
+    assert state["status"] == "booked" and state["finished"]
+
+
+def test_assisted_three_declines_handoff_exact_machine_view_and_dialogue(stack):
+    post, _ = stack
+    post("call.start", call_id="assisted-decline", flow="assisted", caller_phone="79165550000")
+    for digit in "1003#": post("call.dtmf", call_id="assisted-decline", digit=digit)
+    state = post("call.dtmf", call_id="assisted-decline", digit="1")
+    seen = []
+    for attempt in range(1, 4):
+        assert state["state"] == "assisted.offer" and state["vars"]["agent_attempt"] == attempt
+        assert state["vars"]["slot_id"] not in seen
+        seen.append(state["vars"]["slot_id"])
+        state = post("call.dtmf", call_id="assisted-decline", digit="0")
+    assert state["status"] == "transfer" and not state["sms"]
+    ticket = state["transfer"]["ticket"]
+    view = ticket["machine_view"]
+    assert view["offers_made"] == 3 and view["selected_slot_id"] == seen[-1]
+    assert view["slots"] == state["vars"]["agent_seen_slots"]
+    assert view["query"] == state["vars"]["agent_sql"]
+    assert any(turn["role"] == "assistant" for turn in ticket["dialogue"])
+    assert not state["errors"]
+
+
+def test_assisted_unknown_caller_gets_first_visit_question(stack):
+    post, _ = stack
+    state = post("call.start", call_id="assisted-unknown", flow="assisted", caller_phone="79990009999")
+    assert state["state"] == "assisted.first_visit"
+    assert "Вы у нас впервые" in state["prompts"][-1]
+    assert not state["vars"].get("patient_id") and not state["sms"]

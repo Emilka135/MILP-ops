@@ -16,6 +16,7 @@ async fn main() {
         ("operator", 8084),
         ("tts", 8085),
         ("asr", 8086),
+        ("agent", 8087),
     ]
     .into_iter()
     .map(|(name, port)| {

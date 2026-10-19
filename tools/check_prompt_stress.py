@@ -10,15 +10,16 @@ import argparse
 import json
 import re
 import sys
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "runtime/src"))
+sys.path[:0] = [str(ROOT), str(ROOT / "runtime/src")]
 from calls.scenario.dsl import load_flows
 from calls.tts.normalize import ABBREVIATIONS, LETTERS, normalize_text
 from calls.tts.stress import DictAccentor, require_stress_marks
 from clinic.demo_call import speech_phrases
+from clinic.agent import offer_text
 
 
 def collect_prompts(scenarios: Path | None = None) -> list[dict]:
@@ -72,6 +73,10 @@ def collect_prompts(scenarios: Path | None = None) -> list[dict]:
             "Завтра в пятнадцать часов.",
             "У меня острая боль в груди.",
         )
+    ]
+    records += [
+        {"source": "agent.canonical_offer", "text": offer_text(datetime(2026, 10, 16, 8, 15) + timedelta(days=day)), "kind": "dynamic_example"}
+        for day in range(7)
     ]
     return records
 

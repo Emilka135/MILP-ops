@@ -473,7 +473,7 @@ async fn health(State(app): State<App>) -> Json<Value> {
 }
 async fn ready(State(app): State<App>) -> Response {
     let mut probes = tokio::task::JoinSet::new();
-    for module in ["crm", "nlu", "tts", "asr", "sms", "operator"] {
+    for module in ["crm", "nlu", "tts", "asr", "sms", "operator", "agent"] {
         let bus = app.bus.clone();
         probes.spawn(
             async move { bus.call(module, "health", json!({}), "probe").await.status == "ok" },

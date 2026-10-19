@@ -32,6 +32,7 @@ services:
       CRM_SCHEDULE: ${CRM_SCHEDULE:-}
       CRM_PATIENTS: ${CRM_PATIENTS:-}
       CRM_BOOKINGS: ${CRM_BOOKINGS:-}
+      CRM_ASSIGNMENTS: ${CRM_ASSIGNMENTS:-}
       CRM_SERVICE_HOURS: ${CRM_SERVICE_HOURS:-}
       CRM_SERVICE_CALENDAR: ${CRM_SERVICE_CALENDAR:-}
     volumes: ["clinic-data:/data", "./imports:/imports:ro"]
@@ -46,6 +47,18 @@ services:
     deploy:
       resources:
         limits: {memory: 4G}
+  agent:
+    <<: *module
+    build: {context: ., dockerfile: docker/module.Dockerfile, args: {MODULE: agent}}
+    environment:
+      <<: *environment
+      AGENT_MODE: ${AGENT_MODE:-deterministic}
+      OPENROUTER_MODEL: ${OPENROUTER_MODEL:-}
+      OPENROUTER_API_KEY_FILE: /run/secrets/openrouter.key
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://hub.gigaschool.ru/api/v1/llm/v1}
+      OPENAI_MODEL: ${OPENAI_MODEL:-}
+      OPENAI_API_KEY_FILE: /run/secrets/openai.key
+    volumes: ["./secrets:/run/secrets:ro"]
   sms:
     <<: *module
     build: {context: ., dockerfile: docker/module.Dockerfile, args: {MODULE: sms}}
@@ -106,11 +119,11 @@ services:
       OPERATOR_URL: http://operator:8080
       TTS_URL: http://tts:8080
       ASR_URL: http://asr:8080
+      AGENT_URL: http://agent:8080
       API_TOKEN: ${API_TOKEN:-}
       BIND: 0.0.0.0:8080
     ports: ["127.0.0.1:${HTTP_PORT:-8080}:8080"]
     depends_on:
-      nightly: {condition: service_started}
       audio-check: {condition: service_completed_successfully}
       crm: {condition: service_healthy}
       nlu: {condition: service_healthy}
@@ -118,6 +131,8 @@ services:
       operator: {condition: service_healthy}
       tts: {condition: service_healthy}
       asr: {condition: service_healthy}
+      agent: {condition: service_healthy}
+      nightly: {condition: service_started}
     healthcheck:
       test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:8080/readyz"]
       interval: 5s

@@ -15,7 +15,18 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "module",
-        choices=["crm", "nlu", "tts", "asr", "sms", "operator", "stand", "outbound", "nightly"],
+        choices=[
+            "crm",
+            "nlu",
+            "tts",
+            "asr",
+            "sms",
+            "operator",
+            "stand",
+            "outbound",
+            "agent",
+            "nightly",
+        ],
     )
     parser.add_argument("--port", type=int, default=int(os.environ.get("PORT", "8081")))
     parser.add_argument("--host", default=os.environ.get("HOST", "127.0.0.1"))
@@ -52,10 +63,16 @@ def main():
             connection = settings(os.environ)
             stand = StrictStand(*connection) if connection else None
             service.stand = stand
+            if stand:
+                threading.Thread(target=service.refresh_availability, daemon=True).start()
         else:
             from .modules import Nlu, Operator, Sms, Speech
 
-            if ns.module == "nlu":
+            if ns.module == "agent":
+                from .agent import SlotAgent
+
+                service = SlotAgent()
+            elif ns.module == "nlu":
                 service = Nlu()
             elif ns.module in ("tts", "asr"):
                 service = Speech(ns.module)

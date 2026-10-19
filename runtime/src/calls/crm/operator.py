@@ -86,9 +86,12 @@ class OperatorTicket:
         machine = ""
         if self.machine_view:
             machine = (
-                "<h3>Что видела машина при последнем предложении</h3><pre>"
+                "<h3>Что видела машина при последнем предложении</h3>"
+                + "<p>Предложений: " + html.escape(str(self.machine_view.get("offers_made", "—")))
+                + ". Выбран талон: " + html.escape(str(self.machine_view.get("selected_slot_id", "—")))
+                + ".</p><details><summary>Открыть исходные слоты и запрос</summary><pre>"
                 + html.escape(json.dumps(self.machine_view, ensure_ascii=False, indent=2))
-                + "</pre><p>Снимок на момент предложения. Доступность перед записью проверяется заново.</p>"
+                + "</pre></details><p>Снимок на момент предложения. Доступность перед записью проверяется заново.</p>"
             )
         dialogue = "".join(
             "<li><b>" + html.escape(str(turn.get("role", ""))) + ":</b> "

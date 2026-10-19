@@ -92,6 +92,11 @@ class Nlu:
         )
         if any(t in {"не", "нет", "нельзя"} for t in tokenize(text)):
             affirmative_action = False
+        if not safety_intent and re.fullmatch(
+            r"\s*(?:спасибо(?: большое)?|всего доброго|до свидания)[.! ]*", text.lower()
+        ):
+            intent = "gratitude"
+            confidence = 1.0
         ent = rules.entities
         vars = {}
         if ent.specialty:

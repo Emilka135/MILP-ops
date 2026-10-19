@@ -1,0 +1,1 @@
+{"flow":"assisted","caller_phone":"79165550000","registrar_number":"100","inputs":[{"dtmf":"1003#"},{"speak":"Запишите меня к терапевту."},{"dtmf":"1"},{"speak":"Спасибо."}],"expected":{"agent_completed":true,"final_status":"booked"}}

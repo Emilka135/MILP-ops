@@ -11,6 +11,7 @@ import html
 import json
 import os
 import threading
+import time
 import urllib.parse
 from datetime import datetime, timedelta, timezone
 
@@ -109,7 +110,11 @@ class ClinicCrm:
         self.reg, self.stand = reg, stand
         self.module = CrmModule(reg, today=lambda: now().date())
         self.mutations = threading.Lock()
+        self._last_slots_sync = None
         self.reg._conn.executescript(EXTRA_SCHEMA)
+        from .planner_store import SCHEMA as PLAN_SCHEMA
+
+        self.reg._conn.executescript(PLAN_SCHEMA)
         from . import hours
 
         hours.initialize(self.reg)
@@ -127,6 +132,17 @@ class ClinicCrm:
         try:
             if op.startswith("learning."):
                 return self.learning.handle(op, args, now(), not self.hours.is_open(self.reg, now()))
+            if op == "agent_slots":
+                from .planner_store import slots
+
+                # The API exposes occupied visits, not free-slot schedules. A
+                # live offer requires a fresh successful occupancy reconciliation.
+                with self.reg._lock:
+                    if self.stand and (self._last_slots_sync is None or time.monotonic() - self._last_slots_sync > 300):
+                        return "error", {"error": "availability_not_synchronized"}
+                    status, result = slots(self.reg, args, now())
+                    result["availability_source"] = "imported_schedule_and_synced_visits" if self.stand else "local_demo_schedule"
+                    return status, result
             if op == "schedule.service":
                 return "ok", {
                     "schedule": self.hours.schedule(
@@ -581,6 +597,7 @@ class ClinicCrm:
     def pull(self):
         if not self.stand:
             return "error", {"error": "stand not configured"}
+        self._last_slots_sync = None
         # Cache all pages once; use explicit local/remote patient mapping.
         doctors = self.stand.pages("/doctors")
         for d in doctors:
@@ -605,7 +622,19 @@ class ClinicCrm:
             except Exception:
                 conn.execute("ROLLBACK")
                 raise
+        self._last_slots_sync = time.monotonic()
         return "ok", {"visits": len(visits), "doctors": len(doctors)}
+
+    def refresh_availability(self):
+        """Read-only API reconciliation shares the single CRM rate limiter."""
+        while True:
+            try:
+                status, _ = self.pull()
+                if status != "ok":
+                    self._last_slots_sync = None
+            except (OSError, ValueError, TypeError, KeyError, MisError, RegistryError):
+                self._last_slots_sync = None
+            time.sleep(120)
 
     def ingest_visit(self, v):
         """Unknown patients still occupy time; manual moves preserve the original booking id."""

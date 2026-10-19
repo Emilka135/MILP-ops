@@ -42,12 +42,13 @@ def main():
         "TTS_MODEL": str(ROOT / "modules/tts/models/v5_cis_base.pt"),
         "ASR_MODEL_PATH": str(ROOT / "modules/asr/models"),
         "ASR_QUANTIZATION": os.environ.get("ASR_QUANTIZATION", "int8"),
+        "AGENT_MODE": "deterministic",
     }
     store = Path(env.get("DEMO_DATA_DIR", str(ROOT / "debug/runs/local-stack")))
     store.mkdir(parents=True, exist_ok=True)
     env["CRM_DB"] = str(store / "clinic.sqlite")
     env["BIND"] = f"127.0.0.1:{ns.base_port}"
-    modules = ["crm", "nlu", "sms", "operator", "tts", "asr"]
+    modules = ["crm", "nlu", "sms", "operator", "tts", "asr", "agent"]
     for index, module in enumerate(modules, 1):
         env[module.upper() + "_URL"] = f"http://127.0.0.1:{ns.base_port + index}"
     procs, files = [], []
@@ -73,8 +74,8 @@ def main():
                     cmd, cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT
                 )
             )
-        for port in range(ns.base_port, ns.base_port + 7):
-            deadline = time.monotonic() + 30
+        for port in range(ns.base_port, ns.base_port + 8):
+            deadline = time.monotonic() + 120
             while True:
                 if any(p.poll() is not None for p in procs):
                     raise RuntimeError(f"service failed; inspect {store}/*.log")

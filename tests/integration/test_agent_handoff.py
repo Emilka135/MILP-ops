@@ -34,6 +34,7 @@ def test_handoff_retains_original_rows_and_dialogue_without_executing_query(tmp_
     assert stored["dialogue"] == ticket.dialogue
     rendered = ticket.to_html()
     assert "Мне нужно позже" in rendered and "Снимок на момент предложения" in rendered
+    assert "<details><summary>Открыть исходные слоты и запрос</summary>" in rendered
     assert OperatorTicket(**json.loads(ticket.to_json())).machine_view == ticket.machine_view
 
 

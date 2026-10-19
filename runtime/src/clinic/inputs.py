@@ -106,4 +106,10 @@ def load(reg, env):
                     "clinic_order",
                 ),
             )
+    if env.get("CRM_ASSIGNMENTS"):
+        for r in rows(env["CRM_ASSIGNMENTS"]):
+            reg._x(
+                "INSERT OR REPLACE INTO patient_assignments VALUES(?,?,?)",
+                (int(r["patient_id"]), r["specialty"], int(r["doctor_id"])),
+            )
     return result
