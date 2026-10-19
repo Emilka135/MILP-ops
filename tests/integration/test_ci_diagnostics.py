@@ -3,6 +3,7 @@
 import importlib.util
 import json
 import subprocess
+import pytest
 from pathlib import Path
 
 
@@ -10,6 +11,22 @@ ROOT = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location("ci_container_diagnostics", ROOT / "debug/run_ci_container_check.py")
 ci = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(ci)
+
+
+def compose_configuration(extra=None):
+    services = {
+        "orchestrator": {"depends_on": {"tts": {"condition": "service_healthy"},
+                                          "asr": {"condition": "service_healthy"},
+                                          "audio-check": {"condition": "service_completed_successfully"}},
+                         "environment": {"API_KEY": "PRIVATE_CONFIG_SECRET"}},
+        "scenario-editor": {"depends_on": {"orchestrator": {"condition": "service_healthy"}}},
+        "tts": {"depends_on": {"audio-init": {"condition": "service_completed_successfully"}}},
+        "asr": {}, "audio-init": {}, "audio-check": {},
+        "stand": {"profiles": ["optional-contract"]},
+    }
+    if extra:
+        services.update(extra)
+    return {"services": services}
 
 
 def phrase(**extra):
@@ -97,10 +114,12 @@ def test_real_verifier_failure_publishes_structured_audit_reason_using_synthetic
     def fake_run(command, **kwargs):
         commands.append(command)
         text, code = "", 0
-        if command[:2] == ["docker", "inspect"]:
+        if "config" in command:
+            text = json.dumps(compose_configuration())
+        elif command[:2] == ["docker", "inspect"]:
             text = json.dumps(states)
         elif "up" in command:
-            assert "--wait" in command and command[command.index("--wait-timeout") + 1] == "240"
+            assert "--wait" not in command and "--no-deps" not in command
             assert command[-2:] == ["orchestrator", "scenario-editor"]
             text, code = "Mandatory audio-check exited 1\n", 1
         elif "--quiet" in command:
@@ -140,3 +159,141 @@ def test_asr_provider_mismatch_explains_expected_and_actual_without_raw_endpoint
     assert public["expected_provider"] == "CPUExecutionProvider"
     assert public["actual_provider"] == "CUDAExecutionProvider"
     assert public["provider_failed"] is True
+
+
+@pytest.mark.parametrize("initial_code,wait_code,oneshot_exit,health,failed,missing,control_exit", [
+    (0, 0, 0, "healthy", False, None, 0),
+    (1, None, 0, "healthy", True, None, 0),
+    (0, 1, 0, "healthy", True, None, 0),
+    (0, 0, 2, "healthy", True, None, 0),
+    (0, 0, 0, "unhealthy", True, None, 0),
+    (0, 0, 0, "healthy", True, "asr", 0),
+    (0, 0, 0, "healthy", True, None, 3),
+])
+def test_two_phase_startup_preserves_dependency_failure_and_inspects_oneshot_exit(
+        tmp_path, monkeypatch, initial_code, wait_code, oneshot_exit, health, failed, missing, control_exit):
+    """Synthetic Docker state, actual verifier control flow and gate decisions."""
+    commands = []
+    up_commands = []
+    audit = {"status": "passed", "count": 1, "voice": "fixture-voice",
+             "phrases": [{"key": "a" * 64, "status": "passed"}]}
+    current = {"keys": ["a" * 64], "voice": "fixture-voice"}
+    states = []
+    for service in ("orchestrator", "scenario-editor", "tts", "asr", "audio-init", "audio-check", "control-init", "stand"):
+        if service == missing:
+            continue
+        one_shot = service in {"audio-init", "audio-check", "control-init", "stand"}
+        states.append({"Config": {"Labels": {"com.docker.compose.service": service}},
+                       "Image": "sha256:" + "a" * 64, "RestartCount": 0,
+                       "HostConfig": {"Memory": 512}, "State": {
+                           "Status": "exited" if one_shot else "running",
+                           "ExitCode": oneshot_exit if service == "audio-check" else control_exit if service == "control-init" else 0,
+                           "Health": {"Status": "unhealthy" if service == "stand" else health if service == "asr" else "healthy"},
+                           "OOMKilled": False}})
+    def fake_run(command, **kwargs):
+        commands.append(command)
+        text, code = "", 0
+        if "config" in command:
+            configuration = compose_configuration({"control-init": {}})
+            configuration["services"]["orchestrator"]["depends_on"]["control-init"] = {"condition": "service_completed_successfully"}
+            text = json.dumps(configuration)
+        elif command[:2] == ["docker", "inspect"]:
+            text = json.dumps(states)
+        elif "up" in command:
+            up_commands.append(command)
+            assert command[-2:] == ["orchestrator", "scenario-editor"]
+            assert "--build" not in command
+            if len(up_commands) == 1:
+                assert "--wait" not in command and "--no-deps" not in command
+                code = initial_code
+            else:
+                assert initial_code == 0
+                assert "--no-deps" in command and "--wait" in command
+                assert command[command.index("--wait-timeout") + 1] == "240"
+                assert "audio-init" not in command and "audio-check" not in command
+                code = wait_code
+        elif "--quiet" in command:
+            text = "fixture-id\n"
+        elif "cp" in command:
+            Path(command[-1]).write_text(json.dumps(audit if command[-2].endswith("audit.json") else current))
+        elif "exec" in command:
+            assert "wave.open" in command[-1], "Provider check must use a real bank WAV"
+            text = json.dumps({"status": "ok", "payload": {"provider": "CPUExecutionProvider"}})
+        return subprocess.CompletedProcess(command, code, stdout=text, stderr="")
+    class ReadyResponse:
+        def __enter__(self): return self
+        def __exit__(self, *_): return False
+        def read(self): return b'{"ready":true}'
+    monkeypatch.setattr(ci.subprocess, "run", fake_run)
+    monkeypatch.setattr(ci.urllib.request, "urlopen", lambda *args, **kwargs: ReadyResponse())
+    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(tmp_path / "step-summary.md"))
+    output = tmp_path / "run"
+    assert ci.main(["--output", str(output), "--compose-file", "compose.yaml"]) is failed
+    summary = json.loads((output / "summary.json").read_text())
+    assert summary["status"] == ("failed" if failed else "passed")
+    assert summary["initial_phase_exit_code"] == initial_code
+    assert summary["wait_phase_exit_code"] == wait_code
+    assert summary["compose_exit_code"] == (initial_code or wait_code)
+    assert summary["public_diagnostics"]["initial_phase_exit_code"] == initial_code
+    assert summary["public_diagnostics"]["wait_phase_exit_code"] == wait_code
+    assert len(up_commands) == (1 if initial_code else 2)
+    assert (output / "compose-up.txt").exists() and (output / "compose-wait.txt").exists()
+    if oneshot_exit:
+        assert any("audio-check: exited, exit 2" in message for message in summary["failures"])
+    assert summary["dependency_service_count"] == 7 and summary["completed_job_count"] == 3
+    assert summary["ignored_container_count"] == 1
+    assert "stand" not in {item["service"] for item in json.loads((output / "container-states.json").read_text())}
+    assert "stand" in {item["service"] for item in json.loads((output / "container-states-all.json").read_text())}
+    if missing:
+        assert any("Missing required services: asr" in message for message in summary["failures"])
+    if control_exit:
+        assert any("control-init: exited, exit 3" in message for message in summary["failures"])
+    assert "PRIVATE_CONFIG_SECRET" not in (output / "summary.json").read_text()
+    assert not list(output.glob("*config*")), "Resolved configuration must never be written"
+    if initial_code or wait_code or oneshot_exit or health != "healthy" or missing or control_exit:
+        assert not any("exec" in command for command in commands), "Failure must stop actual ASR acceptance"
+    else:
+        assert any("exec" in command for command in commands)
+
+
+def test_dependency_closure_includes_only_targets_and_transitive_requirements():
+    required, completed = ci.dependency_requirements(compose_configuration())
+    assert required == {"orchestrator", "scenario-editor", "tts", "asr", "audio-init", "audio-check"}
+    assert completed == {"audio-init", "audio-check"} and "stand" not in required
+
+
+@pytest.mark.parametrize("mutation", ["missing-core-edge", "invalid-reference", "bad-json-structure"])
+def test_configuration_cannot_omit_the_mandatory_audio_gate(mutation):
+    configuration = compose_configuration()
+    if mutation == "missing-core-edge":
+        del configuration["services"]["orchestrator"]["depends_on"]["audio-check"]
+    elif mutation == "invalid-reference":
+        configuration["services"]["orchestrator"]["depends_on"]["missing"] = {}
+    else:
+        configuration["services"] = []
+    with pytest.raises(ValueError):
+        ci.dependency_requirements(configuration)
+
+
+def test_configuration_failure_never_prints_or_persists_resolved_secrets(tmp_path, monkeypatch, capsys):
+    def fake_run(command, **kwargs):
+        text = "PRIVATE_RESOLVED_ENV_VALUE" if "config" in command else ""
+        return subprocess.CompletedProcess(command, int("config" in command), stdout=text, stderr="PRIVATE_CONFIG_ERROR")
+    monkeypatch.setattr(ci.subprocess, "run", fake_run)
+    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(tmp_path / "step.md"))
+    output = tmp_path / "run"
+    assert ci.main(["--output", str(output)]) is True
+    assert "PRIVATE_" not in capsys.readouterr().out + (tmp_path / "step.md").read_text()
+    assert "PRIVATE_" not in "".join(path.read_text() for path in output.iterdir() if path.is_file())
+    summary = json.loads((output / "summary.json").read_text())
+    assert summary["public_diagnostics"]["dependency_config_failed"] is True
+    assert summary["public_diagnostics"]["stage"] == "compose-config"
+
+
+def test_lifecycle_state_drops_logs_and_preserves_absent_healthcheck_semantics():
+    assert ci.lifecycle_state({"Status": "running", "ExitCode": 0, "OOMKilled": False,
+                               "Error": "PRIVATE_DAEMON_ERROR"}) == {
+        "Status": "running", "ExitCode": 0, "OOMKilled": False}
+    result = ci.lifecycle_state({"Status": "running", "ExitCode": 0, "Health": {
+        "Status": "healthy", "Log": [{"Output": "PRIVATE_HEALTH_LOG"}]}})
+    assert result["Health"] == {"Status": "healthy"} and "PRIVATE_" not in json.dumps(result)

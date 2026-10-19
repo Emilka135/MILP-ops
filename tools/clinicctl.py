@@ -68,10 +68,16 @@ def main():
     if args.command=='start':
         from check_space import require_space
         require_space()
-        command=['up','-d','--wait','--no-build' if args.no_build else '--build',*TARGETS[args.target]]
+        command=['up','-d','--no-build' if args.no_build else '--build',*TARGETS[args.target]]
         result=docker(command)
         if result.returncode:
             print('\nНе удалось запустить. Журнал: docker compose logs --tail=80',file=sys.stderr)
+            return result.returncode
+        # Expected-successful one-shot dependencies ran in phase one. Wait
+        # only for persistent endpoints so Compose does not require them running.
+        result=docker(['up','-d','--no-deps','--wait','--wait-timeout','240','--no-build',*TARGETS[args.target]])
+        if result.returncode:
+            print('Сервис ещё не готов. Журнал: docker compose logs --tail=80',file=sys.stderr)
             return result.returncode
         show_access(args.target)
     elif args.command=='stop':

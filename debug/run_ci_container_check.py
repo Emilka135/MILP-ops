@@ -22,12 +22,59 @@ SERVICES = frozenset({"orchestrator", "scenario-editor", "tts", "asr", "audio-in
                       "crm", "nlu", "sms", "operator", "agent", "nightly", "nightly-worker", "scenario-builder"})
 STATUSES = frozenset({"created", "running", "paused", "restarting", "removing", "exited", "dead"})
 AUDIT_STATUSES = frozenset({"passed", "failed", "running", "needs_review"})
-STAGES = frozenset({"setup", "docker-version", "compose-version", "compose-up", "container-diagnostics",
+STAGES = frozenset({"setup", "docker-version", "compose-version", "compose-config", "compose-up", "compose-wait", "container-diagnostics",
                    "audio-audit", "asr-provider", "readiness", "complete"})
 
 
 def enum_value(value, allowed, default):
     return value if isinstance(value, str) and value in allowed else default
+
+
+def dependency_requirements(configuration, targets=("orchestrator", "scenario-editor")):
+    """Return target closure and completed-job dependencies, never environment."""
+    services = configuration.get("services") if isinstance(configuration, dict) else None
+    if not isinstance(services, dict):
+        raise ValueError("invalid_compose_services")
+    required, completed = set(), set()
+    pending = list(targets)
+    while pending:
+        service = pending.pop()
+        if not isinstance(service, str) or service not in services:
+            raise ValueError("missing_compose_dependency")
+        if service in required:
+            continue
+        definition = services[service]
+        if not isinstance(definition, dict):
+            raise ValueError("invalid_compose_service")
+        required.add(service)
+        dependencies = definition.get("depends_on", {})
+        if isinstance(dependencies, list):
+            if any(not isinstance(name, str) for name in dependencies):
+                raise ValueError("invalid_compose_dependency_name")
+            dependencies = {name: {} for name in dependencies}
+        if not isinstance(dependencies, dict):
+            raise ValueError("invalid_compose_dependencies")
+        for name, policy in dependencies.items():
+            if not isinstance(name, str) or not isinstance(policy, dict):
+                raise ValueError("invalid_compose_dependency_policy")
+            pending.append(name)
+            if policy.get("condition") == "service_completed_successfully":
+                completed.add(name)
+    # The voice release must continue to include its complete audio gate even if
+    # someone accidentally removes a dependency edge from the Compose source.
+    if not {"orchestrator", "scenario-editor", "tts", "asr", "audio-init", "audio-check"} <= required:
+        raise ValueError("mandatory_audio_dependency_missing")
+    return required, completed
+
+
+def lifecycle_state(state):
+    """Retain only lifecycle fields; health command output is application data."""
+    result = {"Status": state.get("Status"), "ExitCode": state.get("ExitCode"),
+              "OOMKilled": state.get("OOMKilled") is True}
+    health = state.get("Health")
+    if isinstance(health, dict) and "Status" in health:
+        result["Health"] = {"Status": health["Status"]}
+    return result
 
 
 def bounded_number(value, low, high):
@@ -108,6 +155,8 @@ def public_diagnostics(evidence):
     result = {
         "stage": enum_value(stage, STAGES, "unknown"),
         "compose_exit_code": bounded_number(evidence.get("compose_exit_code"), -255, 255),
+        "initial_phase_exit_code": bounded_number(evidence.get("initial_phase_exit_code"), -255, 255),
+        "wait_phase_exit_code": bounded_number(evidence.get("wait_phase_exit_code"), -255, 255),
         "containers": containers,
         "audit": {
             "status": enum_value(audit.get("status"), AUDIT_STATUSES, "missing-or-invalid"),
@@ -124,7 +173,11 @@ def public_diagnostics(evidence):
         allowed_providers = {"CPUExecutionProvider", "CUDAExecutionProvider"}
         result["expected_provider"] = enum_value(evidence.get("expected_provider"), allowed_providers, "unknown-provider")
         result["actual_provider"] = enum_value(evidence.get("actual_provider"), allowed_providers, "unknown-provider")
-    for flag in ("provider_failed", "readiness_failed", "summary_write_failed"):
+    if isinstance(evidence.get("required_services"), set):
+        result["dependency_service_count"] = len(evidence["required_services"])
+        result["completed_job_count"] = len(evidence.get("completed_services", set()))
+        result["ignored_container_count"] = evidence.get("ignored_container_count", 0)
+    for flag in ("provider_failed", "readiness_failed", "summary_write_failed", "dependency_config_failed"):
         if evidence.get(flag) is True:
             result[flag] = True
     if evidence.get("unexpected_exception"):
@@ -167,14 +220,51 @@ def verify(args, evidence):
     capture(['docker', 'version'], 'docker-version.txt')
     evidence['stage'] = 'compose-version'
     capture(compose + ['version'], 'compose-version.txt')
+    evidence['stage'] = 'compose-config'
+    try:
+        # Resolved Compose JSON contains environment secrets: keep both output
+        # streams in memory, and never use capture() or print their contents.
+        configuration = subprocess.run(compose + ['config', '--format', 'json'],
+                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                       text=True, check=False)
+        if configuration.returncode:
+            raise ValueError('compose_configuration_failed')
+        required, completed_services = dependency_requirements(json.loads(configuration.stdout))
+        del configuration
+        evidence['required_services'] = required
+        evidence['completed_services'] = completed_services
+    except (OSError, ValueError, TypeError):
+        evidence['dependency_config_failed'] = True
+        raise RuntimeError('compose_dependency_configuration_failed') from None
     evidence['stage'] = 'compose-up'
     started = time.monotonic()
-    startup = capture(compose + ['up', '--detach', '--wait', '--wait-timeout', '240',
-                                 'orchestrator', 'scenario-editor'], 'compose-up.txt')
+    # First run dependency ordering, including successful completion of the
+    # one-shot audio jobs. A broad --wait may reject an expected exited job on
+    # some Compose versions (docker/compose#11774, #9273).
+    initial = capture(compose + ['up', '--detach', 'orchestrator', 'scenario-editor'],
+                      'compose-up.txt')
+    initial_seconds = round(time.monotonic() - started, 3)
+    evidence['initial_phase_exit_code'] = initial.returncode
+    print(initial.stdout, end='', flush=True)
+    waited = None
+    wait_seconds = None
+    if initial.returncode == 0:
+        evidence['stage'] = 'compose-wait'
+        wait_started = time.monotonic()
+        # Dependencies already ran above. Wait only for the two persistent
+        # endpoints, then still inspect EVERY service and audit the full bank.
+        waited = capture(compose + ['up', '--detach', '--no-deps', '--wait',
+                                    '--wait-timeout', '240', 'orchestrator', 'scenario-editor'],
+                         'compose-wait.txt')
+        wait_seconds = round(time.monotonic() - wait_started, 3)
+        print(waited.stdout, end='', flush=True)
+    else:
+        (args.output / 'compose-wait.txt').write_text('Skipped: initial Compose phase failed.\n')
+    startup_code = initial.returncode if initial.returncode else waited.returncode
     startup_seconds = round(time.monotonic() - started, 3)
-    evidence['compose_exit_code'] = startup.returncode
+    evidence['wait_phase_exit_code'] = waited.returncode if waited is not None else None
+    evidence['compose_exit_code'] = startup_code
     evidence['stage'] = 'container-diagnostics'
-    print(startup.stdout, end='', flush=True)
     capture(compose + ['logs', '--no-color'], 'container-logs.txt')
     capture(compose + ['ps', '--all', '--format', 'json'], 'compose-ps.json')
     ids = capture(compose + ['ps', '--all', '--quiet'], 'container-ids.txt')
@@ -185,21 +275,28 @@ def verify(args, evidence):
             # Full inspect includes credentials in Config.Env. Save only startup diagnostics.
             for item in json.loads(inspection.stdout):
                 states.append({'service': item['Config']['Labels'].get('com.docker.compose.service'),
-                               'image': item['Image'], 'state': item['State'],
+                               'image': item['Image'], 'state': lifecycle_state(item['State']),
                                'restart_count': item['RestartCount'],
                                'memory_limit_bytes': item['HostConfig']['Memory']})
+    # Optional profiles and containers left from earlier configurations are not
+    # dependencies of these targets. Retain their sanitized state separately.
+    all_states = states
+    states = [item for item in all_states if item['service'] in required]
     evidence['states'] = states
-    (args.output / 'container-states.json').write_text(json.dumps(states, ensure_ascii=False, indent=2) + '\n')
+    evidence['ignored_container_count'] = len(all_states) - len(states)
+    for filename, records in (('container-states.json', states), ('container-states-all.json', all_states)):
+        (args.output / filename).write_text(json.dumps(records, ensure_ascii=False, indent=2) + '\n')
     failures = []
-    if startup.returncode:
-        failures.append(f'Compose startup exited {startup.returncode}')
-    required = {'orchestrator', 'scenario-editor', 'tts', 'asr', 'audio-init', 'audio-check'}
+    if initial.returncode:
+        failures.append(f'Compose dependency startup exited {initial.returncode}')
+    if waited is not None and waited.returncode:
+        failures.append(f'Compose endpoint wait exited {waited.returncode}')
     missing = required - {item['service'] for item in states}
     if missing:
         failures.append('Missing required services: ' + ', '.join(sorted(missing)))
     for item in states:
         state, service = item['state'], item['service']
-        if service in {'audio-init', 'audio-check'}:
+        if service in completed_services:
             if state['Status'] != 'exited' or state['ExitCode'] != 0:
                 failures.append(f'{service}: {state["Status"]}, exit {state["ExitCode"]}')
         elif state['Status'] != 'running' or state.get('Health', {}).get('Status', 'healthy') != 'healthy':
@@ -258,8 +355,12 @@ with urllib.request.urlopen(req,timeout=60) as response:print(response.read().de
             evidence['readiness_failed'] = True
             failures.append('Readiness request failed: ' + safe_exception(exc))
     summary = {'status': 'failed' if failures else 'passed', 'failures': failures,
-               'compose_exit_code': startup.returncode, 'startup_seconds': startup_seconds, 'audited_phrases': len(audit.get('phrases', [])) if audit else 0,
-               'expected_asr_provider': args.expected_provider}
+               'compose_exit_code': startup_code, 'startup_seconds': startup_seconds,
+               'initial_phase_exit_code': initial.returncode, 'initial_phase_seconds': initial_seconds,
+               'wait_phase_exit_code': waited.returncode if waited is not None else None, 'wait_phase_seconds': wait_seconds, 'audited_phrases': len(audit.get('phrases', [])) if audit else 0,
+               'expected_asr_provider': args.expected_provider,
+               'dependency_service_count': len(required), 'completed_job_count': len(completed_services),
+               'ignored_container_count': len(all_states) - len(states)}
     if not failures:
         evidence['stage'] = 'complete'
     return summary
