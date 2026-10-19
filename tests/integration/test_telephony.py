@@ -67,3 +67,49 @@ def test_playback_preserves_prompt_until_media_connection_exists():
     ctx.stop.set()
     worker.join(timeout=1)
     assert not worker.is_alive()
+
+
+import numpy as np
+import pytest
+from calls.dtmf.synth import dtmf_case
+
+
+@pytest.mark.parametrize("codec", ["lin", "alaw", "ulaw"])
+@pytest.mark.parametrize("duration_ms", [100, 300])
+@pytest.mark.parametrize("digit", list("123A456B789C*0#D"))
+def test_tones_do_not_become_asr_when_scenario_is_listening(codec, duration_ms, digit):
+    bridge = Bridge(ari=object(), client=object())
+    ctx = Context("armed-tone-test", "test", listening=True)
+    pcm, _, _ = dtmf_case(digit, duration_ms, codec=codec, trail_ms=800)
+    # Exercise an AudioSocket read larger than a single 20-ms frame as well.
+    bridge.audio(ctx, pcm.tobytes())
+    assert list(ctx.events.queue) == [("call.dtmf", {"digit": digit})]
+    assert not ctx.voiced and not ctx.utterance and not ctx.last_utterance
+
+
+def test_key_interrupts_stale_speech_and_preserves_next_spoken_pcm():
+    bridge = Bridge(ari=object(), client=object())
+    ctx = Context("speech-tone-speech", "test", listening=True)
+    # A fixed broadband fragment exercises buffering, not speech recognition.
+    speech = np.random.default_rng(42).integers(-2000, 2001, 3200, dtype=np.int16)
+    bridge.audio(ctx, speech.tobytes())
+    assert ctx.voiced
+    pcm, _, _ = dtmf_case("2", 100, trail_ms=800)
+    bridge.audio(ctx, pcm.tobytes())
+    assert list(ctx.events.queue) == [("call.dtmf", {"digit": "2"})]
+    ctx.events.get_nowait()
+    bridge.audio(ctx, speech.tobytes() + np.zeros(6400, dtype=np.int16).tobytes())
+    [(operation, args)] = list(ctx.events.queue)
+    assert operation == "call.audio" and args["rate"] == 8000
+    import base64
+    heard = base64.b64decode(args["pcm_b64"])
+    assert heard.startswith(speech.tobytes())
+
+
+def test_key_still_interrupts_bot_playback_without_arming_asr():
+    bridge = Bridge(ari=object(), client=object())
+    ctx = Context("tone-barge-in", "test", playing=True, listening=True)
+    pcm, _, _ = dtmf_case("*", 100, trail_ms=800)
+    bridge.audio(ctx, pcm.tobytes())
+    assert list(ctx.events.queue) == [("call.dtmf", {"digit": "*"})]
+    assert ctx.generation == 1

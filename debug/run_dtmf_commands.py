@@ -24,10 +24,12 @@ def execute(base, output_dir="debug/runs/dtmf-only", *, operator_available=True)
         ctx = Context(prefix, "local-media-test")
 
         def post(op, **args):
-            return request(base, op, args)
+            result = request(base, op, args)
+            ctx.listening = bool(result.get("listening"))
+            return result
 
         def tone(call, digit, codec=codec, ctx=ctx):
-            pcm, _, _ = dtmf_case(digit, 100, codec=codec, trail_ms=400)
+            pcm, _, _ = dtmf_case(digit, 100, codec=codec, trail_ms=800)
             with wave.open(
                 str(
                     folder
@@ -63,7 +65,8 @@ def execute(base, output_dir="debug/runs/dtmf-only", *, operator_available=True)
             )
             return state
 
-        # All 16 frequency pairs independently, including repeatable star/hash and A-D.
+        # Also arm ASR while testing all pairs; a tone must never become speech.
+        ctx.listening = True
         for digit in "123A456B789C*0#D":
             tone(None, digit)
         call = prefix + "-book"

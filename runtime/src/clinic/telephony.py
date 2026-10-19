@@ -19,7 +19,7 @@ from queue import Full, Queue
 
 import numpy as np
 from calls.dtmf.arbiter import DtmfArbiter
-from calls.dtmf.events import DigitEnd
+from calls.dtmf.events import DigitEnd, DigitStart
 from calls.dtmf.inband import InbandDtmfDetector
 from calls.services.netutil import open_http
 from calls.telephony.ari_bridge import Ari, WsClient
@@ -171,10 +171,27 @@ class Bridge:
     def audio(self, ctx, pcm):
         if len(pcm) % 2:
             return
+        # AudioSocket may combine many 20-ms packets. Keep detector/VAD ordering
+        # causal even for a large read containing both speech and a keypad tone.
+        for offset in range(0, len(pcm), 320):
+            self._audio_frame(ctx, pcm[offset : offset + 320])
+
+    def _audio_frame(self, ctx, pcm):
         frame = np.frombuffer(pcm, dtype="<i2")
         ctx.samples += len(frame)
+        tone = ctx.detector.active_digit is not None
         for ev in ctx.detector.push(frame):
+            if isinstance(ev, DigitStart):
+                # A confirmed key interrupts an unfinished spoken answer. Clear
+                # its leading detection window as well; otherwise pure tones
+                # later become a second, spurious ASR answer in the next state.
+                ctx.utterance.clear()
+                ctx.last_utterance = b""
+                ctx.voiced = False
+                ctx.silence_samples = 0
+                tone = True
             if isinstance(ev, DigitEnd):
+                tone = True
                 for digit in ctx.arbiter.on_inband(
                     ev.digit, ev.t_start, ev.t_end, detector_version=ev.detector_version
                 ):
@@ -183,7 +200,7 @@ class Bridge:
         for digit in ctx.arbiter.tick(ctx.samples):
             self.enqueue(ctx, "call.dtmf", digit=digit.digit)
         # 600 ms energy endpoint with a hard 10-second utterance cap. No inference on 20 ms frames.
-        if ctx.playing:
+        if ctx.playing or tone or ctx.detector.active_digit is not None:
             return
         rms = (
             float(np.sqrt(np.mean(frame.astype(np.float32) ** 2))) if len(frame) else 0

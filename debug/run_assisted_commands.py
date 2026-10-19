@@ -122,6 +122,8 @@ class Acceptance:
 
     def record(self, call, label, state, event):
         assert not state.get("errors"), state.get("errors")
+        context = self.contexts.setdefault(call, Context(call, "assisted-pcm-acceptance"))
+        context.listening = bool(state.get("listening"))
         event.update({"call_id": call, "step": label, "state": state})
         self.events.append(event)
         self.prompts(call, label)
@@ -135,15 +137,26 @@ class Acceptance:
         pcm = base64.b64decode(clip["pcm_b64"], validate=True)
         path = self.output / "audio" / "caller" / f"{len(self.events) + 1:03d}-{label}.wav"
         event = save_pcm(path, pcm, clip["sample_rate"])
-        state = self.post("call.audio", call_id=call, pcm_b64=clip["pcm_b64"], rate=clip["sample_rate"])
+        context = self.contexts[call]
+        assert context.listening, "The actual scenario must arm speech before caller audio"
+        assert clip["sample_rate"] == 8000, "AudioSocket acceptance uses 8-kHz mono PCM"
+        # Real caller PCM enters the same detector/VAD as telephony. The trailing
+        # pause only marks the end of this audible phrase; it is never its input.
+        self.bridge.audio(context, pcm + bytes(8000 * 2))
+        pending = []
+        while not context.events.empty():
+            pending.append(context.events.get_nowait())
+        assert len(pending) == 1 and pending[0][0] == "call.audio", [op for op, _ in pending]
+        operation, args = pending[0]
+        state = self.post(operation, call_id=call, **args)
         assert "ignored" not in state, state
-        event.update({"input": "speech", "source": phrase,
+        event.update({"input": "speech", "media_path": "production_detector_vad", "source": phrase,
                       "elapsed_s": round(time.perf_counter() - started, 3)})
         return self.record(call, label, state, event)
 
     def tone(self, call, label, digit):
         context = self.contexts.setdefault(call, Context(call, "assisted-pcm-acceptance"))
-        pcm, _, _ = dtmf_case(digit, 100, codec=self.codec, trail_ms=400)
+        pcm, _, _ = dtmf_case(digit, 100, codec=self.codec, trail_ms=800)
         path = self.output / "audio" / "tones" / f"{len(self.events) + 1:03d}-{label}.wav"
         event = save_pcm(path, pcm.tobytes(), 8000)
         detected = detect_tone(self.bridge, context, pcm, digit)
@@ -290,9 +303,9 @@ def self_test(output):
     bridge = Bridge(ari=object(), client=object())
     records = []
     for codec in ("lin", "alaw", "ulaw"):
-        context = Context("self-test-" + codec, "offline")
+        context = Context("self-test-" + codec, "offline", listening=True)
         for index, digit in enumerate("123A456B789C*0#D", 1):
-            pcm, _, _ = dtmf_case(digit, 100, codec=codec, trail_ms=400)
+            pcm, _, _ = dtmf_case(digit, 100, codec=codec, trail_ms=800)
             detected = detect_tone(bridge, context, pcm, digit)
             record = save_pcm(folder / "audio" / f"{codec}-{index:02d}.wav", pcm.tobytes(), 8000)
             record.update({"codec": codec, "generated": digit, "detected": detected})
