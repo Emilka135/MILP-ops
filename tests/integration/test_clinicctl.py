@@ -54,3 +54,17 @@ def test_start_never_hides_dependency_or_readiness_failure(monkeypatch, capsys):
         assert clinicctl.main() == 17
         assert len(commands) == fail_phase
         assert 'ГОТОВО' not in capsys.readouterr().out
+
+
+def test_model_key_reader_uses_host_identity_without_changing_other_services(monkeypatch):
+    import os
+    seen = {}
+    monkeypatch.delenv('CLINIC_LOCAL_UID', raising=False)
+    monkeypatch.delenv('CLINIC_LOCAL_GID', raising=False)
+    def run(command, **options):
+        seen.update(options)
+        return subprocess.CompletedProcess(command,0,'','')
+    monkeypatch.setattr(clinicctl.subprocess, 'run', run)
+    clinicctl.docker(['ps'])
+    assert seen['env']['CLINIC_LOCAL_UID'] == str(os.getuid())
+    assert seen['env']['CLINIC_LOCAL_GID'] == str(os.getgid())

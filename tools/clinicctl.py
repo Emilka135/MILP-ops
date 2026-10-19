@@ -1,6 +1,7 @@
 """Simple clinic start/stop/status with actual published URLs and an honest backup placeholder."""
 import argparse
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -18,7 +19,9 @@ def docker(arguments,capture=False):
         if (ROOT/'compose.override.yaml').exists():files+=['-f','compose.override.yaml']
         files+=['-f','compose.gpu.yaml']
     return subprocess.run(['docker','compose',*files,*arguments],cwd=ROOT,text=True,
-        stdout=subprocess.PIPE if capture else None,stderr=subprocess.PIPE if capture else None,check=False)
+        stdout=subprocess.PIPE if capture else None,stderr=subprocess.PIPE if capture else None,check=False,
+        env={**os.environ,'CLINIC_LOCAL_UID':os.environ.get('CLINIC_LOCAL_UID',str(getattr(os,'getuid',lambda:1000)())),
+             'CLINIC_LOCAL_GID':os.environ.get('CLINIC_LOCAL_GID',str(getattr(os,'getgid',lambda:1000)()))})
 
 
 def address(service,port):
@@ -68,6 +71,7 @@ def main():
     if args.command=='start':
         from check_space import require_space
         require_space()
+        (ROOT/'secrets').mkdir(mode=0o700,exist_ok=True)
         command=['up','-d','--no-build' if args.no_build else '--build',*TARGETS[args.target]]
         result=docker(command)
         if result.returncode:

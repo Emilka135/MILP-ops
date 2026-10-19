@@ -60,6 +60,7 @@ services:
         limits: {memory: 4G}
   agent:
     <<: *module
+    user: "${CLINIC_LOCAL_UID:-1000}:${CLINIC_LOCAL_GID:-1000}"
     build: {context: ., dockerfile: docker/module.Dockerfile, args: {MODULE: agent}}
     environment:
       <<: *environment
