@@ -22,6 +22,8 @@ flowchart LR
 
 ```bash
 ./clinic start --gpu
+# Повторный запуск уже собранной версии:
+./clinic start --gpu --no-build
 ./clinic status
 # Остановка, рабочие данные остаются в томах:
 ./clinic stop --backup
@@ -67,12 +69,15 @@ python3 tools/check_space.py --write-path modules --expected-gib 2
 # Один раз: в Python-окружении с requirements/asr.txt и huggingface_hub
 python3 tools/download_models.py --tts --asr
 # Главный контейнер вместе с необходимыми модулями:
-docker compose up --build -d --wait orchestrator
+docker compose up --build --detach orchestrator &&
+  docker compose up --detach --no-deps --no-build --wait --wait-timeout 240 orchestrator
 # Проверка состояния и готовности:
 docker compose ps
 curl --fail http://127.0.0.1:8080/readyz
 docker compose logs --tail=100 orchestrator crm tts asr
 ```
+
+Запуск разделён на обязательные зависимости и ожидание постоянного сервиса: завершившиеся успешно `audio-init`/`audio-check` не должны ошибочно считаться упавшими контейнерами. `./clinic start` выполняет эти фазы автоматически и печатает адреса.
 
 API: `http://127.0.0.1:8080`; окно регистратора: `http://127.0.0.1:8080/operator`. При изменении `HTTP_PORT` используйте его в URL. В live API требует `Authorization: Bearer …`; `/readyz` остаётся технической проверкой. Настройка SIP ниже запускается отдельным профилем. Завершение: `docker compose down`; данные в именованных томах сохраняются.
 
@@ -85,10 +90,10 @@ API: `http://127.0.0.1:8080`; окно регистратора: `http://127.0.0
 ## Визуальный редактор сценариев
 
 ```bash
-docker compose up --build -d --wait scenario-editor
+./clinic start editor
 ```
 
-Открыть `http://127.0.0.1:8090`, пароль **admin**. Для последующих запусков готового образа: `docker compose up -d --no-build --wait scenario-editor`. Кэши и отдельный необязательный Rust-сборщик: [BUILD_CACHE.md](docs/BUILD_CACHE.md). Блоки и связи редактируются мышью, условия и клавиши — в формах; есть индексированный поиск, проверка графа, история и сборка версии. Смена пароля, локальный запуск и браузерная приёмка: [EDITOR.md](docs/EDITOR.md). Редактор использует отдельную сессию администратора. Изменение сценария сохраняет исходник; новая версия устанавливается пересборкой `orchestrator` после завершения активных звонков.
+Открыть `http://127.0.0.1:8090`, пароль **admin**. Для последующих запусков готового образа: `./clinic start editor --no-build`. Кэши и отдельный необязательный Rust-сборщик: [BUILD_CACHE.md](docs/BUILD_CACHE.md). Блоки и связи редактируются мышью, условия и клавиши — в формах; есть индексированный поиск, проверка графа, история и сборка версии. Смена пароля, локальный запуск и браузерная приёмка: [EDITOR.md](docs/EDITOR.md). Редактор использует отдельную сессию администратора. Изменение сценария сохраняет исходник; новая версия устанавливается пересборкой `orchestrator` после завершения активных звонков.
 
 ## Локальная разработка и реальные аудиопроверки
 
@@ -120,7 +125,7 @@ python debug/run_speech_roundtrip.py
 
 ## Стенд и SIP
 
-Скопируйте `.env.example` в `.env`. Для подключения стенда задайте `APP_MODE=live`, `WITH_ML=1`, `API_TOKEN`, `STAND_URL=https://crm-med-mock.dbi-testing.ru/api/v1`, `STAND_TOKEN`, импорты расписания/пациентов и СМС-шлюз. Затем `docker compose up --build -d --wait`. В live отсутствующие модели и токен останавливают соответствующий сервис. API принимает `Authorization: Bearer …`.
+Скопируйте `.env.example` в `.env`. Для подключения стенда задайте `APP_MODE=live`, `WITH_ML=1`, `API_TOKEN`, `STAND_URL=https://crm-med-mock.dbi-testing.ru/api/v1`, `STAND_TOKEN`, импорты расписания/пациентов и СМС-шлюз. Затем `./clinic start`. В live отсутствующие модели и токен останавливают соответствующий сервис. API принимает `Authorization: Bearer …`.
 
 Нужен экспорт пациентов и настоящее расписание с **явными doctor_id стенда**. В `data/schedule_grid.json` сохранены демонстрационные допущения исходника, это не подтверждённое расписание организаторов. Контракт: [STAND.md](docs/STAND.md).
 
