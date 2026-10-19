@@ -251,7 +251,7 @@ impl App {
                     .call(
                         "nlu",
                         "interpret",
-                        json!({"text":recognized,"today":c.session.vars.get("today")}),
+                        json!({"text":recognized,"today":c.session.vars.get("today"),"identity_field":c.session.input_field()}),
                         id,
                     )
                     .await;

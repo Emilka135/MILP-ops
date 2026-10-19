@@ -97,6 +97,17 @@ class Nlu:
         ):
             intent = "gratitude"
             confidence = 1.0
+        identity_field = args.get("identity_field")
+        identity_context = identity_field in {"birth_date", "card_no", "snils", "phone"}
+        digits = it.digits
+        if identity_context:
+            from .identity import normalize_birth_date, normalize_identifier
+            try:
+                digits = (normalize_birth_date(text, today=today).strftime("%d%m%Y")
+                          if identity_field == "birth_date" else normalize_identifier(text, identity_field))
+            except ValueError:
+                # Never reuse a partial number or guess a year for identification.
+                digits = ""
         ent = rules.entities
         vars = {}
         if ent.specialty:
@@ -110,11 +121,11 @@ class Nlu:
             vars["doctor_surname"] = text.split()[-1]
         if ent.for_other is not None:
             vars["for_other"] = ent.for_other
-        if it.date:
+        if it.date and not identity_context:
             vars["said_date"] = it.date.isoformat()
-        if it.time:
+        if it.time and not identity_context:
             vars["said_time"] = it.time.strftime("%H:%M")
-        if it.daypart:
+        if it.daypart and not identity_context:
             vars["said_daypart"] = it.daypart
         return "ok", {
             "intent": intent,
@@ -122,7 +133,7 @@ class Nlu:
             "normalized": it.normalized,
             "yes_no": it.yes_no,
             "affirmative_action": affirmative_action,
-            "digits": it.digits,
+            "digits": digits,
             "vars": vars,
             "decision": verified.action,
             "classifier": rules.intent,

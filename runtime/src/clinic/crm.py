@@ -151,6 +151,12 @@ class ClinicCrm:
             ):
                 closed = not self.hours.is_open(self.reg, now())
                 return self.insights.handle(op, args, now(), closed)
+            if op == "identity.lookup":
+                from .identity import IdentityLookup
+                fields = {"surname", "card_no", "snils", "phone", "birth_date"}
+                if set(args) - fields - {"call_id", "request_id", "operation_key", "locked_patient_id"}:
+                    return "error", {"error": "invalid_identity_fields"}
+                return IdentityLookup(self.reg).lookup({key: value for key, value in args.items() if key in fields}, locked_patient_id=args.get("locked_patient_id"), today=now().date())
             if op == "agent_slots":
                 from .planner_store import slots
 

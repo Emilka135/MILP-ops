@@ -13,6 +13,7 @@
 | Сравнение двух NLU | `python debug/run_nlu_benchmark.py` | `runs/nlu/benchmark.json`, 5 повторов |
 | Реальный банк постоянных фраз | `TTS_MODEL=modules/tts/models/v5_cis_base.pt python debug/run_audio_bank.py` | `runs/audio-bank/result.json`, два слышимых WAV |
 | Браузер конструктора и аудиобанк | `TEST_AUDIO_BANK=1 node debug/run_editor_browser.mjs` | `runs/editor-browser/`, 6 скриншотов |
+| Сложные фамилии, дата рождения и ведущий ноль | `python debug/run_identity_speech.py` | `runs/identity-module/current/result.json`, `audio/`, `rust-birth/` |
 | Все автоматические проверки | `python debug/run_checks.py` | `runs/checks/`, `runs/integration/`, `runs/legacy/` |
 | Фактический ARI / AudioSocket | `ARI_PASSWORD=… python debug/run_asterisk_contract.py` | `runs/containers/asterisk-contract.json`; PBX должен работать |
 | Сохранённые MILP-проверки | `python debug/run_legacy_milp.py` | вывод / runner `run_checks.py` |

@@ -293,3 +293,15 @@ def test_assisted_optional_feedback_after_explicit_details_confirmation(stack):
     state = post("call.speech", call_id=call, text="Пожалуйста, говорите немного медленнее")
     assert state["finished"] and state["status"] == "booked" and state["vars"]["feedback_id"] > 0
     assert state["vars"]["night_processing"] == "queued" and not state["errors"]
+
+
+def test_spoken_historical_birth_date_is_contextual_identity_not_appointment_date(stack):
+    post, _ = stack
+    call = "spoken-birth"
+    post("call.start", call_id=call, caller_phone="79165550000")
+    post("call.dtmf", call_id=call, digit="1")
+    state = post("call.dtmf", call_id=call, digit="1")
+    assert state["state"] == "inbound.id_birth_check" and state["listening"] is True
+    state = post("call.speech", call_id=call, text="двадцать третьего ноября тысяча девятьсот девяносто второго года")
+    assert state["state"] == "inbound.book_start" and state["vars"]["patient_id"] == 3
+    assert "said_date" not in state["vars"] and not state["sms"] and not state["finished"]

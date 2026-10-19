@@ -382,7 +382,7 @@ class MockRegistry:
 
     def find_patient(self, snils: Optional[str] = None, card_no: Optional[str] = None, phone: Optional[str] = None,
                      birth_date: Optional[date] = None) -> list[Patient]:
-        """Any identifier; ``birth_date`` narrows the result (never identifies alone)."""
+        """All supplied identifiers must match; birth_date never identifies alone."""
         where, params = [], []
         if snils:
             where.append("snils = ?")
@@ -395,7 +395,7 @@ class MockRegistry:
             params.append(normalize_phone(phone))
         if not where:
             return []
-        rows = self._q("SELECT * FROM patients WHERE " + " OR ".join(where), params)
+        rows = self._q("SELECT * FROM patients WHERE " + " AND ".join(where), params)
         pats = [self._patient(r) for r in rows]
         if birth_date is not None:
             pats = [p for p in pats if p.birth_date == birth_date]

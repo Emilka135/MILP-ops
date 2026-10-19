@@ -127,6 +127,11 @@ impl Session {
     pub fn state_name(&self) -> String {
         format!("{}.{}", self.flow, self.state)
     }
+    pub fn input_field(&self) -> Option<&str> {
+        self.ask
+            .as_ref()
+            .and_then(|ask| ask.get("var").map(String::as_str))
+    }
     pub fn start(&mut self) -> Vec<Action> {
         self.enter(self.state.clone(), false)
     }
