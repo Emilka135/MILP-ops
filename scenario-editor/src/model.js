@@ -15,3 +15,31 @@ export function diagram(project,flowName){const flow=project.flows.find(f=>f.nam
 export const PALETTE=[['question','Вопрос и кнопки','Предложить варианты ответа','MessageSquare'],['listen','Голосовой ответ','Распознать речь и намерение','Mic'],['ask','Ввод цифр','Номер карты, дата или СНИЛС','Keyboard'],['call','Запрос к МИС','Найти пациента или изменить запись','Database'],['switch','Условие','Разветвить сценарий по значению','GitBranch'],['say','Сообщение','Озвучить текст пациенту','Volume2'],['sms','СМС','Отправить информацию о записи','Send'],['transfer','Оператор','Передать разговор человеку','Headphones'],['end','Завершение','Попрощаться и завершить звонок','PhoneOff']];
 export function newState(flow,kind){let i=1;while(flow.states.some(s=>s.name===`${kind}_${i}`))i++;const state={name:`${kind}_${i}`,label:PALETTE.find(p=>p[0]===kind)?.[1]||'Новый блок',description:'',statements:[],edges:[]};const say=text=>({kind:'say',args:{},text});const edge=(kind,target,extra={})=>({kind,target,values:[],sets:{},...extra});const operator=flow.states.some(s=>s.name==='operator')?'operator':flow.entry;state.statements=[say('Введите текст сообщения.')];if(kind==='question'||kind==='listen'){state.statements.push({kind:'listen',args:{timeout:'20'},text:''});state.edges=[edge(kind==='question'?'dtmf':'yes',flow.entry,kind==='question'?{values:['1']}:{}) ,edge('timeout',operator,{seconds:20}),edge('retry',operator,{count:2})];}else if(kind==='ask'){state.statements=[say('Назовите номер карты по одной цифре.'),{kind:'ask',args:{var:'card_no',min:'3',max:'10',timeout:'25',terminator:'#'},text:''}];state.edges=[edge('ok',flow.entry),edge('timeout',operator,{seconds:25}),edge('retry',operator,{count:2})];}else if(kind==='call'){state.statements=[{kind:'call',args:{module:'crm',op:'lookup_phone','arg:phone':'$caller_phone'},text:''}];state.edges=[edge('ok',flow.entry),edge('empty',operator),edge('many',operator),edge('error',operator)];}else if(kind==='switch'){state.statements=[{kind:'switch',args:{var:'intent'},text:''}];state.edges=[edge('case',flow.entry,{values:['book']}),edge('default',operator)];}else if(kind==='end'){state.statements=[say('Спасибо за звонок. Всего доброго!'),{kind:'end',args:{status:'done'},text:''}];}else if(kind==='transfer'){state.statements=[say('Соединяю с оператором.'),{kind:'transfer',args:{reason:'requested'},text:''},{kind:'end',args:{status:'transfer'},text:''}];}else if(kind==='sms'){state.statements=[{kind:'sms',args:{template:'booked'},text:''},{kind:'goto',args:{target:flow.entry},text:''}];}else state.statements.push({kind:'goto',args:{target:flow.entry},text:''});return state;}
 export function renameState(project,flowName,oldName,newName){const flow=project.flows.find(f=>f.name===flowName);if(!/^[A-Za-z_][A-Za-z0-9_]*$/.test(newName)||flow.states.some(s=>s.name===newName&&s.name!==oldName))throw Error('Идентификатор должен быть уникальным: латинские буквы, цифры и _.');flow.states.find(s=>s.name===oldName).name=newName;if(flow.entry===oldName)flow.entry=newName;for(const f of project.flows)for(const s of f.states){for(const e of s.edges){if(ref(f.name,e.target)===`${flowName}.${oldName}`)e.target=f.name===flowName?newName:`${flowName}.${newName}`;}for(const st of s.statements)for(const k of ['target','return'])if(st.args?.[k]&&ref(f.name,st.args[k])===`${flowName}.${oldName}`)st.args[k]=f.name===flowName?newName:`${flowName}.${newName}`;}return project;}
+
+// Selection must be available before React invokes a queued state updater.
+// No value needed by the inspector is assigned as a side effect of apply().
+export function connectionChange(project, connection) {
+  const [flowName, stateName] = connection.source.split('.');
+  const [targetFlow, targetName] = connection.target.split('.');
+  const source = project.flows.find(f => f.name === flowName)?.states.find(s => s.name === stateName);
+  const destination = project.flows.find(f => f.name === targetFlow)?.states.find(s => s.name === targetName);
+  if (!source || !destination) throw Error('Не удалось найти блок. Выберите связь заново.');
+  const handle = connection.sourceHandle || 'new';
+  const match = /^([es]):(\d+)$/.exec(handle);
+  if (handle !== 'new' && !match) throw Error('Неизвестная точка соединения.');
+  const type = match?.[1] === 's' ? 'statement' : 'edge';
+  const index = handle === 'new' ? source.edges.length : Number(match[2]);
+  if (handle !== 'new' && !(type === 'statement' ? source.statements[index] : source.edges[index]))
+    throw Error('Связь изменилась. Выберите её заново.');
+  const target = targetFlow === flowName ? targetName : connection.target;
+  const selection = {flow: flowName, node: stateName, type, index};
+  return {
+    selection,
+    apply(next) {
+      const state = next.flows.find(f => f.name === flowName).states.find(s => s.name === stateName);
+      if (handle === 'new') state.edges.push({kind:'any', values:[], target, sets:{}});
+      else if (type === 'statement') state.statements[index].args.target = target;
+      else state.edges[index].target = target;
+    },
+  };
+}

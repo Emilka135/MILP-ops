@@ -28,3 +28,6 @@
 В прогонах используются только синтетические пациенты. Не направляйте их на МИС организаторов или внешний SIP-транк. CI сохраняет `debug/runs/` отдельным артефактом, включая WAV и JUnit.
 
 Полный набор произношения: `python debug/run_speech_quality.py --all-phrases --out debug/runs/tts-quality/verified`; все текущие постоянные фразы плюс СМС/даты/цифры, реальный ASR, WAV 48/8 кГц.
+
+
+Регрессия соединения блоков при отложенном обновлении React: `node --test scenario-editor/tests/connection.test.mjs`. Для замедленного браузерного прогона: `EDITOR_TEST_CPU_SLOWDOWN=6 CHROME_PATH='' EDITOR_TEST_OUTPUT=debug/runs/editor-slow node debug/run_editor_browser.mjs` (нужен `npx playwright install chromium` в `scenario-editor`). Все проверки сохраняются, ошибки публикуют только контролируемый этап/тип, подробности и снимки остаются в debug.

@@ -21,6 +21,8 @@ try{
   stage='browser-launch';
   browser=await chromium.launch({executablePath:process.env.CHROME_PATH===undefined?'/opt/google/chrome/chrome':(process.env.CHROME_PATH||undefined),headless:true,args:['--no-sandbox']});
   const page=await browser.newPage({viewport:{width:1600,height:1000},deviceScaleFactor:1});page.on('pageerror',e=>errors.push(String(e)));
+  const slowdown=Number(process.env.EDITOR_TEST_CPU_SLOWDOWN||1);assert.ok(Number.isFinite(slowdown)&&slowdown>=1&&slowdown<=20);
+  if(slowdown>1){const cdp=await page.context().newCDPSession(page);await cdp.send('Emulation.setCPUThrottlingRate',{rate:slowdown})}
   stage='login';
   await page.goto(base);await page.getByLabel('Пароль администратора').fill('admin');await page.getByRole('button',{name:'Подключиться',exact:true}).click();
   await page.locator('.react-flow__node').first().waitFor();await page.waitForTimeout(500);
