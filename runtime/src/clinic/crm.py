@@ -279,10 +279,7 @@ class ClinicCrm:
                     if "highlight_sql" in data:
                         t = OperatorTicket(**data)
                         sections.append(
-                            "<h2>Звонок "
-                            + html.escape(t.call_id)
-                            + "</h2>"
-                            + t.to_html().split("<body>", 1)[1].split("</body>", 1)[0]
+                            t.to_html().split("<body>", 1)[1].split("</body>", 1)[0]
                         )
                     else:
                         sections.append(
@@ -291,8 +288,8 @@ class ClinicCrm:
                             + "</pre>"
                         )
                 return "ok", {
-                    "html": "<!doctype html><html lang='ru'><meta charset='utf-8'><meta http-equiv='refresh' content='5'><title>Регистратура</title><body><h1>Заявки оператору</h1>"
-                    + "<hr>".join(sections)
+                    "html": "<!doctype html><html lang='ru'><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Регистратура</title><body><h1 style='max-width:1040px;margin:20px auto;padding:0 20px'>Заявки оператору</h1><p style='max-width:1040px;margin:0 auto;padding:0 20px'><a href='/operator'>Обновить список</a></p>"
+                    + "".join(sections)
                     + "</body></html>"
                 }
             if op == "sms_enqueue":
