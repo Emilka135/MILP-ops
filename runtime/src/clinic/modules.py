@@ -22,8 +22,8 @@ from app.types import SafetyVerdict
 
 
 class Nlu:
-    def __init__(self):
-        model = os.environ.get("NLU_EMBEDDER", "hash")
+    def __init__(self, model=None):
+        model = model or os.environ.get("NLU_EMBEDDER", "hash")
         embed = (
             SentenceTransformerEmbedder(
                 os.environ.get("NLU_MODEL", "deepvk/USER-bge-m3")
@@ -180,6 +180,9 @@ class Sms(CrmProxy):
         return status, result
 
     def flush(self):
+        from .module_settings import configured
+        if not configured().read()['sms']['enabled']:
+            return
         if not self.lock.acquire(blocking=False):
             return
         try:
@@ -187,6 +190,8 @@ class Sms(CrmProxy):
             if status != "ok":
                 return
             for m in result["messages"]:
+                if not configured().read()['sms']['enabled']:
+                    return
                 if not self.gateway:
                     if self.demo:
                         self.call(
@@ -234,7 +239,7 @@ class Sms(CrmProxy):
 
 
 class Speech:
-    def __init__(self, kind):
+    def __init__(self, kind, settings=None):
         self.kind = kind
         if kind == "tts":
             from calls.tts.silero import SileroTTS, TtsModule
@@ -242,7 +247,7 @@ class Speech:
             path = os.environ.get("TTS_MODEL", "modules/tts/models/v5_cis_base.pt")
             synth = SileroTTS(
                 path,
-                os.environ.get("TTS_SPEAKER") or None,
+                (settings or {}).get('voice') or os.environ.get("TTS_SPEAKER") or None,
                 device=os.environ.get("TTS_DEVICE", "cpu"),
                 stress=os.environ.get("TTS_STRESS", "dict"),
             )

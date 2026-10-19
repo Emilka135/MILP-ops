@@ -162,7 +162,9 @@ class SileroTTS:
 
     def synth_quality(self, text: str, rate: float, output_rate: int = SOURCE_RATE) -> np.ndarray:
         # Synthesize at native quality and neutral speed. Apply tempo exactly once.
-        ssml, _ = build_ssml(text, 1.0, self.accentor, require_stress=self.kind == "cis")
+        # Manual accent is an optional correction. Unknown words must remain
+        # speakable; pronunciation coverage is a diagnostic, not an input gate.
+        ssml, _ = build_ssml(text, 1.0, self.accentor)
         with self._lock, self._torch.random.fork_rng(devices=[]):
             # The acoustic model samples noise. Make an unchanged phrase reproducible.
             seed=int.from_bytes(hashlib.sha256((self.speaker+ssml).encode()).digest()[:8],'little')

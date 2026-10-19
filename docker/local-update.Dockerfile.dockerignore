@@ -1,0 +1,10 @@
+**
+!runtime
+!runtime/src
+!runtime/src/**
+!scenario-editor
+!scenario-editor/dist
+!scenario-editor/dist/**
+!docker
+!docker/local-update.Dockerfile
+**/__pycache__

@@ -1,0 +1,15 @@
+{
+  "status": "passed",
+  "base": "http://127.0.0.1:8090",
+  "checks": [
+    "Per-module settings and disabled extensions persist",
+    "Actual HQ TTS plays in Chrome",
+    "Greeting, repetition, slang, identity, slots and final booking pass in browser",
+    "Booking and parameterized SQL trace visible to admin",
+    "Anonymous access to call archives and SQL denied",
+    "Imported employee transcript is mapped without booking writes",
+    "Real WAV upload, ASR, consented archive and playback pass in Chrome",
+    "Mobile archive fits panel"
+  ],
+  "errors": []
+}

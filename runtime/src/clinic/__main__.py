@@ -71,17 +71,30 @@ def main():
             if ns.module == "agent":
                 from .agent import SlotAgent
 
-                service = SlotAgent()
+                service = None
             elif ns.module == "nlu":
-                service = Nlu()
+                service = None
             elif ns.module in ("tts", "asr"):
-                service = Speech(ns.module)
+                service = None
             elif ns.module == "operator":
                 service = Operator()
             else:
                 service = Sms()
                 threading.Thread(target=service.run, daemon=True).start()
-        server = make_server(ns.module, service.handle, ns.host, ns.port)
+        from .module_settings import configured
+        from .provider_adapter import ConfiguredService
+        settings = configured()
+        def factory(item):
+            if ns.module in {'tts','asr'}: return Speech(ns.module, item if settings.path.exists() else None)
+            if ns.module == 'nlu': return Nlu((item['model'] if item['provider']=='local' else 'hash') if settings.path.exists() else None)
+            if ns.module == 'agent':
+                # SlotAgent retains its strict schema, bounded reads and validation.
+                from .agent import SlotAgent
+                return SlotAgent(settings=item if settings.path.exists() else None)
+            return service
+        wrapped = ConfiguredService(ns.module, factory, settings)
+        wrapped.prime()
+        server = make_server(ns.module, wrapped.handle, ns.host, ns.port)
     print(f"{ns.module} listening on {ns.host}:{ns.port}", flush=True)
     try:
         server.serve_forever()

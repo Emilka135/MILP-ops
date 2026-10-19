@@ -123,9 +123,10 @@ def decision_is_valid(value, slots):
 
 
 class SlotAgent:
-    def __init__(self, crm=None, choose=None):
+    def __init__(self, crm=None, choose=None, settings=None):
         self.crm = crm or CrmProxy()
-        self.mode = os.environ.get("AGENT_MODE", "deterministic")
+        self.mode = (('deterministic' if settings['provider']=='local' else 'openrouter' if settings['provider']=='openrouter' else 'openai')
+                     if settings else os.environ.get("AGENT_MODE", "deterministic"))
         if self.mode not in {"deterministic", "openrouter", "openai"}:
             raise ValueError("unknown AGENT_MODE")
         self.key = ""
@@ -133,14 +134,15 @@ class SlotAgent:
         self.url = ""
         if self.mode != "deterministic":
             prefix = "OPENROUTER" if self.mode == "openrouter" else "OPENAI"
-            self.key = load_key(prefix)
-            self.model = os.environ.get(prefix + "_MODEL", "").strip()
+            from .module_settings import secret
+            self.key = secret(settings) if settings else load_key(prefix)
+            self.model = settings['model'] if settings else os.environ.get(prefix + "_MODEL", "").strip()
             if not self.key or not self.model:
                 raise ValueError(prefix + "_MODEL and local API key are required")
             base = (
                 "https://openrouter.ai/api/v1"
                 if self.mode == "openrouter"
-                else os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
+                else (settings['base_url'] if settings else os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1"))
             )
             self.url = completion_url(base)
         self.choose = choose

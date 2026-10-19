@@ -121,6 +121,7 @@ def main(argv=None):
         help="Also preflight a new prompt or explicitly stressed name",
     )
     parser.add_argument("--out", type=Path, default=ROOT / "debug/runs/prompt-stress")
+    parser.add_argument("--strict", action="store_true", help="Fail on dictionary gaps (diagnostic mode only)")
     args = parser.parse_args(argv)
     records = collect_prompts(args.scenarios)
     records += [
@@ -130,7 +131,7 @@ def main(argv=None):
     missing = sorted(
         {word for item in results for word in item.get("missing_words", [])}
     )
-    failed = [item for item in results if item["status"] != "passed"]
+    failed = [item for item in results if item["status"] == "invalid_text" or (args.strict and item["status"] != "passed")]
     report = {
         "status": "failed" if failed else "passed",
         "checked_at_utc": datetime.now(UTC).isoformat(),
@@ -138,6 +139,7 @@ def main(argv=None):
         "checked_phrases": len(results),
         "failed_phrases": len(failed),
         "missing_words": missing,
+        "manual_stress_required": False,
         "results": results,
         "limitation": "Coverage is not linguistic approval of a stress position or a patient surname.",
     }

@@ -415,7 +415,12 @@ def make_server(repo, static, host="127.0.0.1", port=8090, token=""):
         os.environ.get("EDITOR_API_TOKEN", ""),
     )
     from .demo_call import DemoCalls
-    demo = DemoCalls()
+    from .sandbox_store import SandboxStore
+    from .module_settings import ModuleSettings
+    settings = ModuleSettings(repo.data / 'modules.json')
+    demo = DemoCalls(store=SandboxStore(repo.data / 'call-log'),settings=settings)
+    from .call_analysis import Uploads
+    demo.uploads=Uploads(demo)
     static = Path(static).resolve()
 
     class Handler(BaseHTTPRequestHandler):
@@ -452,7 +457,8 @@ def make_server(repo, static, host="127.0.0.1", port=8090, token=""):
                     return self.send_json(401, {'error':'Войдите с паролем администратора'})
                 if identity and identity['role'] == 'observer' and post and parsed.path != '/api/login' and not demo_call:
                     return self.send_json(403, {'error':'Наблюдатель может только просматривать'})
-                if identity and identity['role'] == 'registrar' and not (workshop or demo_call or parsed.path in {'/api/me','/api/logout'}):
+                extensions = parsed.path.startswith('/api/extensions/')
+                if identity and identity['role'] == 'registrar' and not (workshop or demo_call or extensions or parsed.path in {'/api/me','/api/logout'}):
                     return self.send_json(403, {'error':'Конструктор всей системы доступен администратору'})
                 origin = self.headers.get("Origin")
                 if (
@@ -475,6 +481,43 @@ def make_server(repo, static, host="127.0.0.1", port=8090, token=""):
                         if not isinstance(data, dict):
                             raise ValueError("Ожидается объект проекта")
                     route = parsed.path
+                    if route in {'/api/settings/modules','/api/settings/models','/api/sandbox/tables','/api/calls','/api/calls/detail','/api/calls/import','/api/calls/transcribe','/api/calls/audio','/api/calls/upload'}:
+                        if identity.get('role') != 'admin':
+                            return self.send_json(403,{'error':'Требуется администратор'})
+                        query=parse_qs(parsed.query)
+                        if route=='/api/settings/modules':
+                            result=settings.save(data.get('modules')) if post else settings.public()
+                        elif route=='/api/settings/models' and not post:
+                            from .module_settings import model_catalog
+                            result=model_catalog(query.get('module',[''])[0])
+                        elif route=='/api/sandbox/tables' and not post:result=demo.store.tables()
+                        elif route=='/api/calls' and not post:result={'calls':demo.store.list_calls()}
+                        elif route=='/api/calls/detail' and not post:result=demo.store.call(query.get('id',[''])[0])
+                        elif route=='/api/calls/audio' and not post:
+                            key=query.get('id',[''])[0];filename=query.get('file',[''])[0]
+                            doc=demo.store.call(key)
+                            folder=(demo.store.audio/key).resolve();path=(folder/filename).resolve()
+                            if not doc.get('consent_audio') or path.parent!=folder or path.suffix!='.wav' or not path.is_file():
+                                return self.send_json(404,{'error':'Аудиозапись не найдена'})
+                            body=path.read_bytes();self.send_response(200);self.send_header('Content-Type','audio/wav');self.send_header('Content-Length',str(len(body)));self.send_header('Cache-Control','no-store');self.end_headers();return self.wfile.write(body)
+                        elif route=='/api/calls/import' and post:
+                            from .call_analysis import analyze
+                            result=analyze(demo,data,identity['username'])
+                        elif route=='/api/calls/upload' and post:
+                            if not settings.read()['asr']['enabled']:raise ValueError('Распознавание речи отключено')
+                            result=demo.uploads.request(data,identity['username'])
+                        elif route=='/api/calls/transcribe' and post:
+                            if not settings.read()['asr']['enabled']:raise ValueError('Распознавание речи отключено')
+                            from .call_analysis import transcribe
+                            result=transcribe(demo,data.get('wav_b64'))
+                        else:raise ValueError('Неизвестное действие')
+                        return self.send_json(200,result)
+                    if extensions:
+                        from .scenario_extensions import request as extension_request
+                        op=route.rsplit('/',1)[-1]
+                        if (post and op not in {'add','compile','remove'}) or (not post and op!='list'):raise ValueError('Неизвестное действие расширения')
+                        params=data if post else {k:v[0] for k,v in parse_qs(parsed.query).items()}
+                        return self.send_json(200,extension_request(demo.store,settings,identity,op,params))
                     if route.startswith('/api/insights/'):
                         operations = {
                             (False, '/api/insights/dashboard'): 'insights.dashboard',
@@ -495,6 +538,7 @@ def make_server(repo, static, host="127.0.0.1", port=8090, token=""):
                         envelope = sign_request(operation, arguments, identity)
                         return self.send_json(200, module_call('crm', 'control.insights', envelope))
                     if demo_call:
+                        data['_line']=identity.get('registrar') or '100'
                         return self.send_json(200, demo.request(route, post, data, parse_qs(parsed.query), client=self.client_address[0]))
                     if post and route == "/api/login":
                         session = auth.login(

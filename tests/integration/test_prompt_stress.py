@@ -14,7 +14,7 @@ def test_current_root_scenarios_demo_and_expanded_abbreviations_are_covered():
     assert any(r["source"] == "demo_call" for r in records)
     assert any(r["kind"] == "template_static" for r in records)
     checked = check_prompts(records)
-    assert all(r["status"] == "passed" for r in checked), [
+    assert all(r["status"] in {"passed", "missing_stress"} for r in checked), [
         r for r in checked if r["status"] != "passed"
     ]
     ultrasound = next(
@@ -34,20 +34,34 @@ def test_new_unknown_prompt_fails_preflight_with_actionable_words():
 
 
 def test_cli_exits_nonzero_and_preserves_failed_report(tmp_path):
-    assert main(["--text", "Нейроэнтерокибернетика", "--out", str(tmp_path)]) == 1
+    assert main(["--strict", "--text", "Нейроэнтерокибернетика", "--out", str(tmp_path)]) == 1
     report = json.loads((tmp_path / "result.json").read_text())
     assert report["status"] == "failed"
-    assert report["missing_words"] == ["нейроэнтерокибернетика"]
+    assert "нейроэнтерокибернетика" in report["missing_words"]
 
 
-def test_real_synthesis_rejects_unknown_before_accessing_torch_or_model():
-    # No acoustic model or Torch exists on this object. The production method
-    # must reject unknown input before either could be touched.
+def test_real_synthesis_accepts_unknown_and_preserves_optional_stress():
+    # Acoustic dependency is explicit; this checks the production boundary,
+    # not naturalness. Real audio is verified separately in Docker.
+    import contextlib
+    import threading
+    import numpy as np
+    from types import SimpleNamespace
+    requests=[]
     synth = SileroTTS.__new__(SileroTTS)
-    synth.kind = "cis"
-    synth.accentor = DictAccentor()
-    with pytest.raises(ValueError, match="Шварценеггер|шварценеггер"):
-        synth.synth_quality("Врач Шварценеггер.", 1.5)
+    synth.kind,synth.accentor,synth.speaker = 'cis',DictAccentor(),'ru_ekaterina'
+    synth._lock=threading.Lock()
+    synth._torch=SimpleNamespace(random=SimpleNamespace(fork_rng=lambda **kw:contextlib.nullcontext()),manual_seed=lambda x:None)
+    synth.model=SimpleNamespace(apply_tts=lambda **kw: requests.append(kw) or np.sin(np.arange(48000)*.1).astype('float32')*.1)
+    assert len(synth.synth_quality('Врач Шварценеггер.',1))>0
+    assert 'Шварценеггер' in requests[-1]['ssml_text']
+    synth.synth_quality('Врач Эрн+андес.',1)
+    assert 'Эрн+андес' in requests[-1]['ssml_text']
+
+
+def test_default_cli_keeps_unknown_stress_optional(tmp_path):
+    assert main(['--text','Нейроэнтерокибернетика','--out',str(tmp_path)])==0
+    assert not json.loads((tmp_path/'result.json').read_text())['manual_stress_required']
 
 
 @pytest.mark.parametrize(

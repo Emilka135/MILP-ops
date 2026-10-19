@@ -18,8 +18,8 @@ Three layers, cheapest first:
 3. **Fallback** – optional ``silero-stress`` (MIT, ~50 MB, ~0.5 ms/word) for
    out-of-vocabulary words such as doctor surnames imported from the Excel
    schedule. Unknown words are counted in :attr:`DictAccentor.unknown` for
-   diagnostics. The production CIS synth requires complete stress coverage
-   and rejects them before calling the acoustic model.
+   diagnostics. Unknown words remain speakable. Manual stress is optional,
+   and pronunciation gaps are reported by the diagnostic tool.
 
 The accentor is idempotent: text that is already stressed is returned as is.
 """
@@ -107,6 +107,8 @@ _LEXICON_TEXT = """
 ан+ализ вопр+ос дост+упны зад+ачей за+явка звонк+и измен+ить как+ое когд+а колл+ег назн+ачили
 обр+атные обр+атный предпочт+ительное прин+ять соедин+ю спр+авиться ув+идит уд+обно +узкий час+ы +этой
 отмен+ите запиш+ите мен+я мо+ю перенес+ите подтвержд+аю прид+у +острая груд+и позов+ите кон+ечно
+двен+адцатое журн+але иван+ов картот+ека насто+ящей отм+ечена перед+ача петр+ова поликл+инике п+олностью
+реж+име создав+алась сотр+удника табл+ице т+естовая т+естового т+естовой фам+илию повт+орю сл+ышу помог+аю
 """
 
 LEXICON: dict[str, str] = {w.replace("+", ""): w for w in _LEXICON_TEXT.split()}

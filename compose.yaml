@@ -6,10 +6,15 @@ x-module: &module
   environment: &environment
     APP_MODE: ${APP_MODE:-demo}
     CRM_URL: http://crm:8080
+    MODULE_SETTINGS_FILE: /module-config/modules.json
+    MODULE_SECRETS_DIR: /run/secrets
+    OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+    OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     CRM_NOW: ${CRM_NOW:-}
     OPERATOR_AVAILABLE: ${OPERATOR_AVAILABLE:-1}
     CLINIC_NAME: ${CLINIC_NAME:-Демонстрационная поликлиника}
     CLINIC_PHONE: ${CLINIC_PHONE:-+7 (000) 000-00-00}
+  volumes: ["editor-data:/module-config:ro", "./secrets:/run/secrets:ro"]
   healthcheck:
     test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health',timeout=2)"]
     interval: 5s
@@ -44,7 +49,7 @@ services:
       CRM_ASSIGNMENTS: ${CRM_ASSIGNMENTS:-}
       CRM_SERVICE_HOURS: ${CRM_SERVICE_HOURS:-}
       CRM_SERVICE_CALENDAR: ${CRM_SERVICE_CALENDAR:-}
-    volumes: ["clinic-data:/data", "./imports:/imports:ro", "control-data:/control:ro"]
+    volumes: ["clinic-data:/data", "./imports:/imports:ro", "control-data:/control:ro", "editor-data:/module-config:ro", "./secrets:/run/secrets:ro"]
     depends_on:
       control-init: {condition: service_completed_successfully}
   nlu:
@@ -54,7 +59,7 @@ services:
       <<: *environment
       NLU_EMBEDDER: ${NLU_EMBEDDER:-hash}
       NLU_MODEL: ${NLU_MODEL:-/models/USER-bge-m3}
-    volumes: ["./modules/nlu/models:/models:ro"]
+    volumes: ["./modules/nlu/models:/models:ro", "editor-data:/module-config:ro", "./secrets:/run/secrets:ro"]
     deploy:
       resources:
         limits: {memory: 4G}
@@ -70,7 +75,7 @@ services:
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://hub.gigaschool.ru/api/v1/llm/v1}
       OPENAI_MODEL: ${OPENAI_MODEL:-}
       OPENAI_API_KEY_FILE: /run/secrets/openai.key
-    volumes: ["./secrets:/run/secrets:ro"]
+    volumes: ["./secrets:/run/secrets:ro", "editor-data:/module-config:ro"]
   sms:
     <<: *module
     build: {context: ., dockerfile: docker/module.Dockerfile, args: {MODULE: sms}}
@@ -104,7 +109,7 @@ services:
       ASR_URL: http://asr:8080
     depends_on:
       audio-init: {condition: service_completed_successfully}
-    volumes: ["./modules/tts/models:/models:ro", "./scenarios:/scenarios:ro", "audio-bank:/audio"]
+    volumes: ["editor-data:/module-config:ro", "./secrets:/run/secrets:ro", "./modules/tts/models:/models:ro", "./scenarios:/scenarios:ro", "audio-bank:/audio"]
     deploy:
       resources:
         limits: {memory: 3G}
@@ -116,7 +121,7 @@ services:
       ASR_MODEL: ${ASR_MODEL:-gigaam-v3-e2e-rnnt}
       ASR_MODEL_PATH: /models
       HF_HUB_OFFLINE: "1"
-    volumes: ["./modules/asr/models:/models:ro"]
+    volumes: ["editor-data:/module-config:ro", "./secrets:/run/secrets:ro", "./modules/asr/models:/models:ro"]
     deploy:
       resources:
         limits: {memory: 4G}
@@ -175,6 +180,8 @@ services:
       EDITOR_HOST: 0.0.0.0
       EDITOR_PORT: 8090
       EDITOR_DATA: /data
+      MODULE_SETTINGS_FILE: /data/modules.json
+      MODULE_SECRETS_DIR: /run/secrets
       EDITOR_ALLOW_BUILD: ${EDITOR_ALLOW_BUILD:-0}
       EDITOR_BUILD_QUEUE: "1"
       AUDIO_BANK_DIR: /audio
@@ -182,7 +189,7 @@ services:
       CRM_URL: http://crm:8080
       ASR_URL: http://asr:8080
     ports: ["127.0.0.1:${EDITOR_PORT:-8090}:8090"]
-    volumes: ["./scenarios:/workspace/scenarios", "editor-data:/data", "editor-cargo:/workspace/target", "audio-bank:/audio:ro", "control-data:/control:ro"]
+    volumes: ["./scenarios:/workspace/scenarios", "editor-data:/data", "editor-cargo:/workspace/target", "audio-bank:/audio:ro", "control-data:/control:ro", "./secrets:/run/secrets:ro"]
     depends_on:
       control-init: {condition: service_completed_successfully}
       crm: {condition: service_healthy}

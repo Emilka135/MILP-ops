@@ -40,7 +40,8 @@ def test_separate_dtmf_route_never_writes_to_mis(sandbox):
     chosen=request('dtmf',{'call_id':key,'digit':'1','op':'book','patient_id':13})
     assert chosen['state']=='demo.confirm' and chosen['selection']['id']=='therapist'
     done=request('dtmf',{'call_id':key,'digit':'1'})
-    assert done['finished'] and not done['executed'] and done['state']=='demo.done'
+    assert not done['finished'] and not done['executed'] and done['state']=='demo.identity_name'
+    assert not sandbox[0].store.tables()['tables']['bookings']
     assert all((module,op)==('tts','preview') for module,op,_ in calls)
 
 
