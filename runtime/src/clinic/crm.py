@@ -241,6 +241,7 @@ class ClinicCrm:
                     vars,
                     args.get("history", []),
                     [vars.get("last_utterance", "")],
+                    dialogue=args.get("dialogue", []),
                 )
                 return "ok", {
                     "ticket_id": ticket.request_id,

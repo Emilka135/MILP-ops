@@ -145,7 +145,9 @@ impl App {
                     }
                 }
                 "transfer" => {
-                    let r = self.bus.call("operator", "transfer", a.args, id).await;
+                    let mut payload = a.args;
+                    payload["dialogue"] = json!(c.transcript);
+                    let r = self.bus.call("operator", "transfer", payload, id).await;
                     if r.status != "ok" {
                         c.errors.push("operator service unavailable".into());
                     }

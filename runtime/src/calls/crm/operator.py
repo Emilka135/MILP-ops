@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import html
 import json
+from copy import deepcopy
 from dataclasses import asdict, dataclass, field
 from datetime import date, datetime
 from typing import Optional
@@ -40,6 +41,8 @@ class OperatorTicket:
     slots: list[dict] = field(default_factory=list)  # preview: all free slots for the specialty (first N)
     notes: list[str] = field(default_factory=list)
     user_state: Optional[dict] = None  # early caller state (calm / hurried / agitated / distressed / confused) + cues
+    machine_view: Optional[dict] = None  # frozen data shown to the slot chooser; never executed
+    dialogue: list[dict] = field(default_factory=list)
     request_id: Optional[int] = None  # row id in the mirror's operator_requests (sync bookkeeping with the stand)
 
     def to_json(self) -> str:
@@ -76,10 +79,22 @@ class OperatorTicket:
         green = set(self.highlighted_slot_ids)
         for s in self.slots:
             style = ' style="background:#c8f7c5"' if s["id"] in green else ""
-            rows.append(f"<tr{style}><td>{s['id']}</td><td>{html.escape(s['doctor'])}</td><td>{html.escape(s['specialty'])}</td><td>{s['starts_at']}</td></tr>")
+            rows.append(f"<tr{style}><td>{s['id']}</td><td>{html.escape(s['doctor'])}</td><td>{html.escape(s['specialty'])}</td><td>{html.escape(str(s['starts_at']))}</td></tr>")
         cons = "".join(f"<li>{html.escape(k)}: {html.escape(str(v))}</li>" for k, v in self.constraints.items())
         notes = "".join(f"<li>{html.escape(str(note))}</li>" for note in self.notes)
         utts = "".join(f"<li>{html.escape(u)}</li>" for u in self.utterances)
+        machine = ""
+        if self.machine_view:
+            machine = (
+                "<h3>Что видела машина при последнем предложении</h3><pre>"
+                + html.escape(json.dumps(self.machine_view, ensure_ascii=False, indent=2))
+                + "</pre><p>Снимок на момент предложения. Доступность перед записью проверяется заново.</p>"
+            )
+        dialogue = "".join(
+            "<li><b>" + html.escape(str(turn.get("role", ""))) + ":</b> "
+            + html.escape(str(turn.get("text", ""))) + "</li>"
+            for turn in self.dialogue
+        )
         return (
             f"<html><head><meta charset='utf-8'><title>Звонок {html.escape(self.call_id)}</title></head><body>"
             f"<h2>Перевод на оператора: {html.escape(self.reason)}</h2>"
@@ -89,11 +104,12 @@ class OperatorTicket:
             f"<h3>Что сказал пациент</h3><ul>{utts}</ul><h3>Ограничения</h3><ul>{cons}</ul>"
             f"<h3>Слоты (зелёным — подходящие по словам пациента)</h3><pre>{html.escape(self.highlight_sql)}\n{html.escape(json.dumps(self.highlight_params, ensure_ascii=False))}</pre>"
             f"<table border='1' cellpadding='4'><tr><th>id</th><th>врач</th><th>специальность</th><th>время</th></tr>{''.join(rows)}</table>"
+            f"{machine}<h3>Разговор</h3><ol>{dialogue}</ol>"
             f"<p>Маршрут: {html.escape(' → '.join(self.history))}</p></body></html>"
         )
 
 
-def build_ticket(reg: MockRegistry, call_id: str, reason: str, vars: dict, history: list[str], utterances: list[str], preview: int = 40, user_state: Optional[dict] = None) -> OperatorTicket:
+def build_ticket(reg: MockRegistry, call_id: str, reason: str, vars: dict, history: list[str], utterances: list[str], preview: int = 40, user_state: Optional[dict] = None, dialogue: Optional[list[dict]] = None) -> OperatorTicket:
     specialty = vars.get("specialty")
     day = vars.get("said_date") or vars.get("slot_date")
     daypart = vars.get("said_daypart")
@@ -111,6 +127,17 @@ def build_ticket(reg: MockRegistry, call_id: str, reason: str, vars: dict, histo
             s = reg.slot(sid)
             if s:
                 slots.append({"id": s.id, "doctor": s.doctor, "specialty": s.specialty, "starts_at": s.starts_at.isoformat(timespec="minutes")})
+    machine_view = None
+    # Preserve the original read-only result, including rows no longer free now.
+    # This is evidence for the operator, never a new SQL execution path.
+    if isinstance(vars.get("agent_sql"), str) and isinstance(vars.get("agent_sql_params"), dict) and isinstance(vars.get("agent_seen_slots"), list):
+        machine_view = deepcopy({
+            "query": vars["agent_sql"], "parameters": vars["agent_sql_params"],
+            "slots": vars["agent_seen_slots"][:96],
+            "selected_slot_id": vars.get("agent_selection"),
+            "offers_made": vars.get("agent_attempt"),
+            "selection_mode": vars.get("agent_mode"),
+        })
     notes = []
     if vars.get("needs_referral") and not vars.get("has_referral"):
         notes.append("Требуется направление терапевта — пациент не подтвердил наличие")
@@ -123,6 +150,7 @@ def build_ticket(reg: MockRegistry, call_id: str, reason: str, vars: dict, histo
         patient_id=vars.get("patient_id"), patient_name=vars.get("patient_name"), booking_id=vars.get("booking_id"),
         constraints=constraints, utterances=[u for u in utterances if u], history=history, highlight_sql=sql, highlight_params=params,
         highlighted_slot_ids=ids, slots=slots, notes=notes, user_state=user_state,
+        machine_view=machine_view, dialogue=deepcopy((dialogue or [])[-500:]),
     )
     ticket.request_id = reg.record_operator_request(call_id, reason, ticket.to_json())
     return ticket

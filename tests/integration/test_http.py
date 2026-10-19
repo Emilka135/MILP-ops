@@ -159,6 +159,9 @@ def test_operator_access_at_identity_step_and_ticket_panel(stack):
     post("call.dtmf", call_id="identity-operator", digit="1")
     state = post("call.dtmf", call_id="identity-operator", digit="*")
     assert state["status"] == "transfer"
+    dialogue = state["transfer"]["ticket"]["dialogue"]
+    assert any(turn["role"] == "assistant" for turn in dialogue)
+    assert dialogue[-1]["text"] == state["prompts"][-1]
     with urllib.request.urlopen(base + "/operator") as response:
         assert "identity-operator" in response.read().decode()
 
