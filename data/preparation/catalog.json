@@ -1,0 +1,436 @@
+{
+  "schema_version": 1,
+  "catalog_id": "preparation-research-2026-10-15",
+  "title": "Исходники правил подготовки: требуют утверждения клиникой",
+  "verified_on": "2026-10-16",
+  "enabled": false,
+  "review_required": true,
+  "clinic_id": null,
+  "approved_by": null,
+  "approved_at": null,
+  "review_due_on": null,
+  "scope": "Взрослые, плановые амбулаторные исследования. Не индивидуальное назначение и не протокол неизвестной клиники.",
+  "rights": "Собственные краткие пересказы фактов со ссылками. Исходные памятки, изображения и лекарственные схемы не копировались. Права на источники принадлежат их владельцам; лицензия репозитория не распространяется на исходные страницы.",
+  "activation_requirements": [
+    "Ответственный врач клиники выбирает локальную памятку для конкретной услуги и версии протокола.",
+    "Утверждаются сроки, тексты, ограничения, маршрут к сотруднику и срок пересмотра.",
+    "Администратор сохраняет clinic_id, approved_by, approved_at и review_due_on; отдельное включение требуется каталогу и записи.",
+    "У пациента подтверждены услуга, инструкция и достаточное время подготовки; клинические исключения проверяет сотрудник."
+  ],
+  "dispatch_contract": {
+    "default_decision": "manual_review",
+    "automatic_invitation_allowed_while_disabled": false,
+    "automatic_medication_advice_allowed": false,
+    "lead_time_definition": "lead_time_hours — консервативный исследовательский порог планировщика от звонка до процедуры для пациента, ещё НЕ начавшего подготовку. Это не универсальная медицинская норма. Даже достаточный интервал не подтверждает готовность пациента.",
+    "below_lead_time": "Не предлагать автоматически. Индивидуальное разрешение сотрудника с уже выполненной подготовкой может дать допуск только в рамках утверждённого локального протокола.",
+    "unknown_procedure_or_protocol": "manual_review",
+    "unknown_recipient": "До подтверждения личности не произносить вид исследования, ФИО, время визита или медицинскую подготовку; автоответчик не считается пациентом.",
+    "cancelled_visit": "При окончательной отмене без новой даты не давать указания голодать или начинать подготовку. Направить вопрос о прекращении уже начатой подготовки сотруднику.",
+    "text_generation": "LLM может использовать только утверждённый reminder_text_ru и факты выбранного локального протокола; не сочиняет диету, интервалы, препараты или противопоказания.",
+    "expired_or_missing_approval": "manual_review; instructions must not be spoken or used for automatic invitation",
+    "activation_scope": "A matching clinic_id and valid staff approval are required on BOTH catalog and procedure; source verification is not clinical approval."
+  },
+  "sources": [
+    {
+      "id": "nmic_radiology_egds_2024",
+      "organization": "ФГБУ «НМИЦ радиологии» Минздрава России",
+      "title": "Как правильно подготовиться к гастроскопии: лайфхаки от эксперта НМИЦ радиологии",
+      "url": "https://new.nmicr.ru/news/onkolikbez/kak-pravilno-podgotovitsja-k-gastroskopii-lajfhaki-ot-jeksperta-nmic-radiologii/",
+      "published_on": "2024-11-20",
+      "verified_on": "2026-10-16",
+      "jurisdiction": "RU",
+      "evidence_role": "Памятка конкретной организации: за 24 часа ограничиваются газообразующие, жирные/жареные и богатые клетчаткой продукты; лекарства согласуются с врачом.",
+      "license": "Публичная памятка; отдельное разрешение на воспроизведение здесь не установлено. Только собственный пересказ и ссылка.",
+      "verification": {
+        "checked_on": "2026-10-16",
+        "method": "official_page_open_and_relevant_text",
+        "direct_page_readable": true,
+        "content_facts_confirmed": true,
+        "clinical_currency_for_target_clinic": "not_established"
+      }
+    },
+    {
+      "id": "gstt_gastroscopy",
+      "organization": "Guy's and St Thomas' NHS Foundation Trust",
+      "title": "Gastroscopy — Having a gastroscopy",
+      "url": "https://www.guysandstthomas.nhs.uk/health-information/gastroscopy/having-gastroscopy",
+      "verified_on": "2026-10-16",
+      "jurisdiction": "GB",
+      "evidence_role": "Пример локального голодания: твёрдая пища исключается минимум за 6 часов, небольшие глотки воды разрешены до 2 часов. Не переносить автоматически в другую клинику.",
+      "license": "Права владельца сайта; исходный текст не включён.",
+      "verification": {
+        "checked_on": "2026-10-16",
+        "method": "official_page_open_and_relevant_text",
+        "direct_page_readable": true,
+        "content_facts_confirmed": true,
+        "clinical_currency_for_target_clinic": "not_established"
+      },
+      "last_reviewed": "2026-04",
+      "next_review": "2029-04"
+    },
+    {
+      "id": "cuh_gastroscopy",
+      "organization": "Cambridge University Hospitals NHS Foundation Trust",
+      "title": "Gastroscopy",
+      "url": "https://www.cuh.nhs.uk/patient-information/gastroscopy/",
+      "verified_on": "2026-10-16",
+      "jurisdiction": "GB",
+      "evidence_role": "Контрпример переноса протоколов: на странице указаны 6 часов без еды и 4 часа без питья; при седации нужен сопровождающий.",
+      "license": "Права владельца сайта; исходный текст не включён.",
+      "verification": {
+        "checked_on": "2026-10-16",
+        "method": "official_page_open_and_relevant_text",
+        "direct_page_readable": true,
+        "content_facts_confirmed": true,
+        "clinical_currency_for_target_clinic": "not_established"
+      }
+    },
+    {
+      "id": "nmic_tpm_colonoscopy_2020",
+      "organization": "ФГБУ «НМИЦ терапии и профилактической медицины» Минздрава России",
+      "title": "Подготовка кишечника к видеоколоноскопии",
+      "url": "https://gnicpm.ru/articles/paczientam-articles/podgotovka-kishechnika-k-videokolonoskopii.html",
+      "published_on": "2020-01-03",
+      "verified_on": "2026-10-16",
+      "jurisdiction": "RU",
+      "retrieval_note": "16.10.2026: direct browser open still fails; official search extraction confirms the 2-3 day interval. Published in 2020; clinical owner must obtain a current complete local protocol.",
+      "evidence_role": "Диета начинается за 2–3 дня; схема очищения зависит от времени процедуры. Названия препаратов, дозировки и отмены лекарств в каталог не перенесены.",
+      "license": "Права владельца сайта; исходный текст не включён.",
+      "verification": {
+        "checked_on": "2026-10-16",
+        "method": "official_search_excerpt",
+        "direct_page_readable": false,
+        "content_facts_confirmed": true,
+        "clinical_currency_for_target_clinic": "not_established"
+      }
+    },
+    {
+      "id": "gstt_colonoscopy_2025",
+      "organization": "Guy's and St Thomas' NHS Foundation Trust",
+      "title": "Colonoscopy diet advice and bowel preparation — Overview",
+      "url": "https://www.guysandstthomas.nhs.uk/health-information/colonoscopy-diet-advice-and-bowel-preparation",
+      "last_reviewed": "2025-12",
+      "next_review": "2028-12",
+      "verified_on": "2026-10-16",
+      "jurisdiction": "GB",
+      "evidence_role": "Пример более длинного организационного срока: прочитать памятку за 5 дней, получить раствор минимум за 3 дня; лекарства обсуждаются заранее; ограничения жидкости и болезни почек требуют оценки.",
+      "license": "Права владельца сайта; исходный текст не включён.",
+      "verification": {
+        "checked_on": "2026-10-16",
+        "method": "official_page_open_and_relevant_text",
+        "direct_page_readable": true,
+        "content_facts_confirmed": true,
+        "clinical_currency_for_target_clinic": "not_established"
+      }
+    },
+    {
+      "id": "nmic_rk_udino_preparation",
+      "organization": "ЛРКЦ «Юдино», филиал ФГБУ «НМИЦ реабилитации и курортологии» Минздрава России",
+      "title": "Подготовка к исследованиям",
+      "url": "https://udino.nmicrk.ru/pacientam/podgotovka-k-issledovaniya",
+      "verified_on": "2026-10-16",
+      "jurisdiction": "RU",
+      "evidence_role": "Для УЗИ брюшной полости указаны трёхдневные ограничения газообразующих продуктов и исследование натощак. Для УЗИ поверхностных структур специальная подготовка не требуется. Лекарственные пункты исключены из каталога.",
+      "license": "Права владельца сайта; исходный текст не включён.",
+      "verification": {
+        "checked_on": "2026-10-16",
+        "method": "official_page_open_and_relevant_text",
+        "direct_page_readable": true,
+        "content_facts_confirmed": true,
+        "clinical_currency_for_target_clinic": "not_established"
+      }
+    },
+    {
+      "id": "gstt_abdominal_us_2024",
+      "organization": "Guy's and St Thomas' NHS Foundation Trust",
+      "title": "Abdominal ultrasound scan — Overview",
+      "url": "https://www.guysandstthomas.nhs.uk/health-information/abdominal-ultrasound-scan",
+      "published_on": "2024-03",
+      "next_review": "2027-03",
+      "verified_on": "2026-10-16",
+      "jurisdiction": "GB",
+      "evidence_role": "Другой локальный протокол: 6 часов без пищи, прозрачные жидкости разрешены с исключениями; при диабете 1 типа — ранний приём и согласование времени.",
+      "license": "Права владельца сайта; исходный текст не включён.",
+      "verification": {
+        "checked_on": "2026-10-16",
+        "method": "official_page_open_and_relevant_text",
+        "direct_page_readable": true,
+        "content_facts_confirmed": true,
+        "clinical_currency_for_target_clinic": "not_established"
+      }
+    },
+    {
+      "id": "ekhuft_fasting_blood_2025",
+      "organization": "East Kent Hospitals University NHS Foundation Trust",
+      "title": "Fasting for your blood test",
+      "url": "https://leaflets.ekhuft.nhs.uk/fasting-for-your-blood-test/html/",
+      "last_reviewed": "2025-04",
+      "next_review": "2028-08",
+      "verified_on": "2026-10-16",
+      "jurisdiction": "GB",
+      "retrieval_note": "16.10.2026: direct HTML and PDF opens fail in the browser tool; official search extraction confirms test-specific fasting examples and April 2025 review. HTTP availability is tested independently, not presumed.",
+      "evidence_role": "Длительность зависит от анализа: например, глюкоза 8 часов, липиды 12–14 часов. Во время назначенного голодания — только вода; лекарства не менять самостоятельно; при диабете обсудить голодание с врачом.",
+      "license": "Права владельца сайта; исходный текст не включён.",
+      "verification": {
+        "checked_on": "2026-10-16",
+        "method": "official_search_excerpt",
+        "direct_page_readable": false,
+        "content_facts_confirmed": true,
+        "clinical_currency_for_target_clinic": "not_established"
+      }
+    },
+    {
+      "id": "nhs_blood_tests_2023",
+      "organization": "NHS",
+      "title": "Blood tests",
+      "url": "https://www.nhs.uk/tests-and-treatments/blood-tests/",
+      "last_reviewed": "2023-11-02",
+      "next_review": "2026-11-02",
+      "verified_on": "2026-10-16",
+      "jurisdiction": "GB",
+      "evidence_role": "Специальная подготовка нужна только для некоторых анализов и должна быть сообщена назначившим медицинским специалистом.",
+      "license": "Исходный текст не включён; ссылка и краткий пересказ.",
+      "verification": {
+        "checked_on": "2026-10-16",
+        "method": "official_page_open_and_relevant_text",
+        "direct_page_readable": true,
+        "content_facts_confirmed": true,
+        "clinical_currency_for_target_clinic": "not_established"
+      }
+    }
+  ],
+  "procedures": [
+    {
+      "id": "gastroscopy",
+      "name_ru": "Гастроскопия / ЭГДС / ФГДС",
+      "aliases": [
+        "фгдс",
+        "эгдс",
+        "фгс",
+        "гастроскопия",
+        "эзофагогастродуоденоскопия"
+      ],
+      "enabled": false,
+      "review_required": true,
+      "requires_individual_plan": true,
+      "lead_time_hours": 24,
+      "lead_time_basis": "Консервативный черновой порог по 24-часовой диете памятки НМИЦ радиологии; местные правила могут быть другими. Не универсальный запрет ФГДС завтра.",
+      "source_preparation_intervals": [
+        {
+          "kind": "diet",
+          "hours": 24,
+          "source_id": "nmic_radiology_egds_2024"
+        },
+        {
+          "kind": "solid_food_fast",
+          "hours": 6,
+          "source_id": "gstt_gastroscopy"
+        },
+        {
+          "kind": "water_cutoff_example",
+          "hours": 2,
+          "source_id": "gstt_gastroscopy"
+        },
+        {
+          "kind": "drink_cutoff_conflicting_local_example",
+          "hours": 4,
+          "source_id": "cuh_gastroscopy"
+        }
+      ],
+      "preparation_steps": [
+        "Проверить выданную клиникой диету и точные сроки еды и питья.",
+        "Уточнить, согласованы ли лекарства и седация; при седации проверить организацию сопровождения."
+      ],
+      "clinical_restrictions": [
+        "Не объединять сроки питья разных клиник.",
+        "Диабет, лекарства, влияющие на свёртывание крови, беременность, особые риски анестезии и отсутствие инструкции требуют сотрудника.",
+        "Ассистент не решает, безопасно ли отменить/продолжить препарат и допустима ли процедура."
+      ],
+      "reminder_text_ru": "Напоминаем о подготовке к гастроскопии по выданной памятке клиники. Проверьте ограничения пищи и питья и согласованный с врачом приём лекарств. Если памятки нет или подготовка не выполнена, нажмите 2 — сотрудник уточнит возможность переноса.",
+      "source_ids": [
+        "nmic_radiology_egds_2024",
+        "gstt_gastroscopy",
+        "cuh_gastroscopy"
+      ],
+      "clinic_id": null,
+      "approved_by": null,
+      "approved_at": null,
+      "review_due_on": null
+    },
+    {
+      "id": "colonoscopy",
+      "name_ru": "Колоноскопия",
+      "aliases": [
+        "колоноскопия",
+        "видеоколоноскопия",
+        "фкс"
+      ],
+      "enabled": false,
+      "review_required": true,
+      "requires_individual_plan": true,
+      "lead_time_hours": 72,
+      "lead_time_basis": "Верхняя граница 2–3 дней диеты памятки НМИЦ ТПМ. Это нижний организационный фильтр, а не гарантия готовности: иной локальный протокол может требовать более раннего контакта.",
+      "source_preparation_intervals": [
+        {
+          "kind": "diet",
+          "min_hours": 48,
+          "max_hours": 72,
+          "source_id": "nmic_tpm_colonoscopy_2020"
+        },
+        {
+          "kind": "read_instructions_example",
+          "hours": 120,
+          "source_id": "gstt_colonoscopy_2025"
+        }
+      ],
+      "preparation_steps": [
+        "Выдать и проверить индивидуальную памятку диеты и очищения кишечника до начала подготовки.",
+        "Подтвердить наличие назначенного средства и схемы именно для времени новой процедуры; при переносе схему проверяет сотрудник."
+      ],
+      "clinical_restrictions": [
+        "Не приглашать неподготовленного пациента автоматически на завтра.",
+        "Болезни почек, ограничения жидкости, диабет, беременность, антикоагулянты, побочные эффекты подготовки или отсутствие назначения — сотруднику.",
+        "Не назначать слабительное, объём жидкости, дозировку, отмену или замену лекарств."
+      ],
+      "reminder_text_ru": "Для колоноскопии нужна подготовка по вашей памятке: заранее соблюдаемая диета и назначенная врачом схема очищения. При переносе времени схему должен проверить сотрудник. Если подготовка не начата, нет средства или есть вопросы, нажмите 2.",
+      "source_ids": [
+        "nmic_tpm_colonoscopy_2020",
+        "gstt_colonoscopy_2025"
+      ],
+      "clinic_id": null,
+      "approved_by": null,
+      "approved_at": null,
+      "review_due_on": null
+    },
+    {
+      "id": "abdominal_ultrasound",
+      "name_ru": "УЗИ органов брюшной полости",
+      "aliases": [
+        "узи брюшной полости",
+        "узи обп",
+        "узи печени и желчного пузыря"
+      ],
+      "enabled": false,
+      "review_required": true,
+      "requires_individual_plan": true,
+      "lead_time_hours": 72,
+      "lead_time_basis": "Черновой порог трёхдневной диеты ЛРКЦ Юдино; не переносится на другие УЗИ и не является универсальной нормой для всех клиник.",
+      "source_preparation_intervals": [
+        {
+          "kind": "diet",
+          "hours": 72,
+          "source_id": "nmic_rk_udino_preparation"
+        },
+        {
+          "kind": "food_fast_other_local_protocol",
+          "hours": 6,
+          "source_id": "gstt_abdominal_us_2024"
+        }
+      ],
+      "preparation_steps": [
+        "Проверить точный орган, возраст, локальную диету и сроки еды/питья.",
+        "Для сочетанного исследования с мочевым пузырём получить отдельную инструкцию; не заменять её правилами для брюшной полости."
+      ],
+      "clinical_restrictions": [
+        "Детям и пациентам с диабетом не применять взрослые сроки голодания автоматически.",
+        "Не назначать симетикон, ферменты, сорбенты или иной препарат.",
+        "Отсутствие локальной инструкции либо ограничения голодания/жидкости — сотруднику."
+      ],
+      "reminder_text_ru": "К УЗИ брюшной полости подготовьтесь по памятке вашей клиники: проверьте диету и назначенные ограничения еды и питья. Для других видов УЗИ правила отличаются. Если инструкция не выдана или вы не успеваете подготовиться, нажмите 2.",
+      "source_ids": [
+        "nmic_rk_udino_preparation",
+        "gstt_abdominal_us_2024"
+      ],
+      "clinic_id": null,
+      "approved_by": null,
+      "approved_at": null,
+      "review_due_on": null
+    },
+    {
+      "id": "fasting_blood_test",
+      "name_ru": "Анализ крови натощак — только при назначенном голодании",
+      "aliases": [
+        "анализ крови натощак",
+        "глюкоза натощак",
+        "липиды натощак"
+      ],
+      "enabled": false,
+      "review_required": true,
+      "requires_individual_plan": true,
+      "lead_time_hours": 14,
+      "lead_time_basis": "Планировочный запас по наибольшему примеру 14 часов; НЕ команда голодать 14 часов всем. Конкретный анализ и срок обязательны в локальной инструкции.",
+      "source_preparation_intervals": [
+        {
+          "kind": "fasting_glucose_example",
+          "hours": 8,
+          "source_id": "ekhuft_fasting_blood_2025"
+        },
+        {
+          "kind": "fasting_lipids_example",
+          "min_hours": 12,
+          "max_hours": 14,
+          "source_id": "ekhuft_fasting_blood_2025"
+        }
+      ],
+      "required_context": [
+        "exact_test_code",
+        "fasting_ordered_by_clinician",
+        "local_fasting_duration_hours",
+        "individual_restrictions_checked"
+      ],
+      "preparation_steps": [
+        "Уточнить, назначено ли голодание именно для этого анализа; не считать каждый анализ крови исследованием натощак.",
+        "Озвучивать только срок из утверждённой инструкции для конкретного анализа."
+      ],
+      "clinical_restrictions": [
+        "Диабет, беременность, дети, необходимость еды с лекарством и непереносимость голодания требуют индивидуальной проверки.",
+        "Не менять лекарства и не продлевать голодание по общему шаблону.",
+        "Правила для одного анализа не применять к другим гормонам, лекарственному мониторингу или нагрузочным пробам."
+      ],
+      "reminder_text_ru": "Проверьте, нужно ли сдавать ваш анализ натощак, и соблюдайте срок из выданной лабораторией инструкции. Самостоятельно не меняйте лекарства. Если вы не получили инструкцию или голодание вам противопоказано, нажмите 2.",
+      "source_ids": [
+        "ekhuft_fasting_blood_2025",
+        "nhs_blood_tests_2023"
+      ],
+      "clinic_id": null,
+      "approved_by": null,
+      "approved_at": null,
+      "review_due_on": null
+    },
+    {
+      "id": "thyroid_ultrasound",
+      "name_ru": "УЗИ щитовидной железы без дополнительных вмешательств",
+      "aliases": [
+        "узи щитовидной железы",
+        "узи щитовидки"
+      ],
+      "enabled": false,
+      "review_required": true,
+      "requires_individual_plan": false,
+      "lead_time_hours": 0,
+      "lead_time_basis": "В памятке Юдино для УЗИ поверхностных структур специальная подготовка не требуется; 0 означает отсутствие диетического барьера, а не разрешение автоматического переноса.",
+      "source_preparation_intervals": [
+        {
+          "kind": "no_special_preparation",
+          "hours": 0,
+          "source_id": "nmic_rk_udino_preparation"
+        }
+      ],
+      "preparation_steps": [
+        "Проверить, что назначено обычное УЗИ без пункции, седации или сочетанного исследования; взять документы по правилам клиники."
+      ],
+      "clinical_restrictions": [
+        "Не применять к биопсии, пункции, операции, анализам гормонов или сочетанному УЗИ других органов."
+      ],
+      "reminder_text_ru": "Для обычного УЗИ щитовидной железы специальная подготовка по выбранной памятке не требуется. Если вместе с УЗИ назначены другие процедуры, проверьте их отдельную инструкцию у сотрудника.",
+      "source_ids": [
+        "nmic_rk_udino_preparation"
+      ],
+      "clinic_id": null,
+      "approved_by": null,
+      "approved_at": null,
+      "review_due_on": null
+    }
+  ],
+  "clinic_identity": "unknown; +7 (000) 700-07-07 and the organizers city do not identify the clinic"
+}

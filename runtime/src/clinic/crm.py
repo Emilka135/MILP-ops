@@ -115,6 +115,9 @@ class ClinicCrm:
         from .planner_store import SCHEMA as PLAN_SCHEMA
 
         self.reg._conn.executescript(PLAN_SCHEMA)
+        from .queueing import WaitingQueue
+
+        self.waiting = WaitingQueue(self)
         from . import hours
 
         hours.initialize(self.reg)
@@ -132,6 +135,8 @@ class ClinicCrm:
         try:
             if op.startswith("learning."):
                 return self.learning.handle(op, args, now(), not self.hours.is_open(self.reg, now()))
+            if op.startswith(("waiting.", "backfill.", "preparation.")):
+                return self.waiting.handle(op, args, now())
             if op == "agent_slots":
                 from .planner_store import slots
 
