@@ -1,0 +1,28 @@
+flow feedback
+  rate 1.5
+  entry ask
+
+state ask
+  say "Что, по вашему мнению, нужно исправить в тестовом варианте помощника? Можно оставить предложение или просто попрощаться."
+  listen 8s
+  intent emergency|medical|complaint|operator -> operator reason=feedback_requires_person
+  intent gratitude -> done
+  no -> done
+  any -> save
+  silence -> done
+  timeout 8s -> done
+
+state save
+  call crm.feedback.submit call_id=$call_id registrar=$registrar_number text=$last_utterance
+  ok -> done
+  empty -> done
+  error -> done
+
+state done
+  say "Спасибо за помощь. Всего доброго!"
+  end booked
+
+state operator
+  say "Передаю ваше обращение сотруднику."
+  transfer reason=$reason
+  end transfer

@@ -116,8 +116,10 @@ class ClinicCrm:
 
         self.reg._conn.executescript(PLAN_SCHEMA)
         from .queueing import WaitingQueue
+        from .insights import Insights
 
         self.waiting = WaitingQueue(self)
+        self.insights = Insights(self.reg)
         from . import hours
 
         hours.initialize(self.reg)
@@ -133,10 +135,22 @@ class ClinicCrm:
 
     def handle(self, op, args):
         try:
+            if op == "control.insights":
+                from .insights_access import AccessError, verify_request
+                try:
+                    controlled_op, controlled_args, actor = verify_request(args)
+                except AccessError:
+                    return "error", {"error": "control_access_denied"}
+                return self.insights.handle(controlled_op, controlled_args, now(), not self.hours.is_open(self.reg, now()), actor=actor)
             if op.startswith("learning."):
                 return self.learning.handle(op, args, now(), not self.hours.is_open(self.reg, now()))
             if op.startswith(("waiting.", "backfill.", "preparation.")):
                 return self.waiting.handle(op, args, now())
+            if op.startswith(
+                ("feedback.", "insights.", "complaint.", "profile.", "nightly.")
+            ):
+                closed = not self.hours.is_open(self.reg, now())
+                return self.insights.handle(op, args, now(), closed)
             if op == "agent_slots":
                 from .planner_store import slots
 

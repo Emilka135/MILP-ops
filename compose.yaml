@@ -21,12 +21,21 @@ x-module: &module
       limits: {memory: 512M}
 
 services:
+  control-init:
+    build: {context: ., dockerfile: docker/control-init.Dockerfile}
+    network_mode: none
+    user: "0:0"
+    read_only: true
+    cap_drop: [ALL]
+    volumes: ["control-data:/control"]
+    restart: "no"
   crm:
     <<: *module
     build: {context: ., dockerfile: docker/module.Dockerfile, args: {MODULE: crm}}
     environment:
       <<: *environment
       CRM_DB: /data/clinic.sqlite
+      CONTROL_KEY_FILE: /control/editor-rpc.key
       STAND_URL: ${STAND_URL:-}
       STAND_TOKEN: ${STAND_TOKEN:-${DBI_API_TOKEN:-}}
       CRM_SCHEDULE: ${CRM_SCHEDULE:-}
@@ -35,7 +44,9 @@ services:
       CRM_ASSIGNMENTS: ${CRM_ASSIGNMENTS:-}
       CRM_SERVICE_HOURS: ${CRM_SERVICE_HOURS:-}
       CRM_SERVICE_CALENDAR: ${CRM_SERVICE_CALENDAR:-}
-    volumes: ["clinic-data:/data", "./imports:/imports:ro"]
+    volumes: ["clinic-data:/data", "./imports:/imports:ro", "control-data:/control:ro"]
+    depends_on:
+      control-init: {condition: service_completed_successfully}
   nlu:
     <<: *module
     build: {context: ., dockerfile: docker/module.Dockerfile, args: {MODULE: nlu, WITH_ML: "${WITH_BGE:-0}"}}
@@ -159,6 +170,7 @@ services:
     networks: [clinic]
     environment:
       APP_MODE: ${APP_MODE:-demo}
+      CONTROL_KEY_FILE: /control/editor-rpc.key
       EDITOR_HOST: 0.0.0.0
       EDITOR_PORT: 8090
       EDITOR_DATA: /data
@@ -169,7 +181,10 @@ services:
       CRM_URL: http://crm:8080
       ASR_URL: http://asr:8080
     ports: ["127.0.0.1:${EDITOR_PORT:-8090}:8090"]
-    volumes: ["./scenarios:/workspace/scenarios", "editor-data:/data", "editor-cargo:/workspace/target", "audio-bank:/audio:ro"]
+    volumes: ["./scenarios:/workspace/scenarios", "editor-data:/data", "editor-cargo:/workspace/target", "audio-bank:/audio:ro", "control-data:/control:ro"]
+    depends_on:
+      control-init: {condition: service_completed_successfully}
+      crm: {condition: service_healthy}
     healthcheck:
       test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8090/health')"]
       interval: 5s
@@ -249,6 +264,7 @@ services:
 networks:
   clinic:
 volumes:
+  control-data:
   clinic-data:
   stand-data:
   audio-bank:

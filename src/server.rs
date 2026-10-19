@@ -260,6 +260,9 @@ impl App {
                     self.drive(id, &mut c, a).await;
                     return Ok(c.snapshot());
                 }
+                if op != "call.partial" && r.payload["intent"] == "complaint" {
+                    let _ = self.bus.call("crm", "feedback.submit", json!({"call_id":id,"registrar":c.session.vars.get("registrar_number"),"text":recognized,"kind":"complaint"}), id).await;
+                }
                 // A partial hypothesis may only escalate; it never books/cancels/confirms.
                 if op == "call.partial"
                     && !matches!(

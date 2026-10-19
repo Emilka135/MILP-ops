@@ -110,6 +110,7 @@ _LEXICON_TEXT = """
 """
 
 LEXICON: dict[str, str] = {w.replace("+", ""): w for w in _LEXICON_TEXT.split()}
+LEXICON.update({"говорите": "говор+ите", "немного": "немн+ого", "медленнее": "м+едленнее"})
 
 _WORD_RE = re.compile(r"[А-Яа-яЁё+]+(?:-[А-Яа-яЁё+]+)*")
 

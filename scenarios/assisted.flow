@@ -84,7 +84,7 @@ state success
   dtmf 0 -> operator reason=patient_disputes_booking
   dtmf 2 -> operator reason=requested
   no -> operator reason=patient_disputes_booking
-  yes -> done
+  yes -> feedback.ask
   intent gratitude -> done
   silence -> ask_more
   timeout 5s -> ask_more

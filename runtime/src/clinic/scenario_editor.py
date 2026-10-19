@@ -475,6 +475,25 @@ def make_server(repo, static, host="127.0.0.1", port=8090, token=""):
                         if not isinstance(data, dict):
                             raise ValueError("Ожидается объект проекта")
                     route = parsed.path
+                    if route.startswith('/api/insights/'):
+                        operations = {
+                            (False, '/api/insights/dashboard'): 'insights.dashboard',
+                            (True, '/api/insights/complaint/resolve'): 'complaint.resolve',
+                            (True, '/api/insights/profile/review'): 'profile.review',
+                        }
+                        operation = operations.get((post, route))
+                        if operation is None:
+                            return self.send_json(404, {'error': 'Маршрут не найден'})
+                        if identity.get('role') != 'admin':
+                            return self.send_json(403, {'error': 'Требуется администратор'})
+                        from .admin_rpc import module_call
+                        from .insights_access import sign_request
+                        arguments = data if post else {}
+                        query = parse_qs(parsed.query)
+                        if not post and query.get('registrar'):
+                            arguments = {'registrar': query['registrar'][0]}
+                        envelope = sign_request(operation, arguments, identity)
+                        return self.send_json(200, module_call('crm', 'control.insights', envelope))
                     if demo_call:
                         return self.send_json(200, demo.request(route, post, data, parse_qs(parsed.query), client=self.client_address[0]))
                     if post and route == "/api/login":

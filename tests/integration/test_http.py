@@ -277,3 +277,19 @@ def test_assisted_unknown_caller_gets_first_visit_question(stack):
     assert state["state"] == "assisted.first_visit"
     assert "Вы у нас впервые" in state["prompts"][-1]
     assert not state["vars"].get("patient_id") and not state["sms"]
+
+
+def test_assisted_optional_feedback_after_explicit_details_confirmation(stack):
+    post, _ = stack
+    call = "assisted-feedback"
+    post("call.start", call_id=call, flow="assisted", caller_phone="79165550000", registrar_number="100")
+    for digit in "1003#": post("call.dtmf", call_id=call, digit=digit)
+    post("call.dtmf", call_id=call, digit="1")
+    state = post("call.dtmf", call_id=call, digit="1")
+    assert state["state"] == "assisted.success"
+    state = post("call.speech", call_id=call, text="Да, данные верны")
+    assert state["state"] == "feedback.ask"
+    assert "Что, по вашему мнению" in state["prompts"][-1]
+    state = post("call.speech", call_id=call, text="Пожалуйста, говорите немного медленнее")
+    assert state["finished"] and state["status"] == "booked" and state["vars"]["feedback_id"] > 0
+    assert state["vars"]["night_processing"] == "queued" and not state["errors"]

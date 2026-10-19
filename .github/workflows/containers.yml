@@ -47,7 +47,7 @@ jobs:
           upload-artifact: false
       - name: SBOM for every module image
         run: |
-          for module in nlu sms operator tts asr; do
+          for module in nlu sms operator tts asr agent scenario-editor audio-init audio-check control-init nightly; do
             docker run --rm -v /var/run/docker.sock:/var/run/docker.sock anchore/syft:latest clinic-voice-$module:latest -o cyclonedx-json > debug/runs/security/$module.cdx.json
           done
       - uses: actions/upload-artifact@v4

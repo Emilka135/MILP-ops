@@ -68,6 +68,7 @@ def collect_prompts(scenarios: Path | None = None) -> list[dict]:
         {"source": "diagnostic.real_patient_input", "text": text, "kind": "acceptance_input"}
         for text in (
             "Хочу записаться к кардиологу.",
+            "Пожалуйста, говорите немного медленнее.",
             "Да, конечно.",
             "Позовите оператора.",
             "Завтра в пятнадцать часов.",
