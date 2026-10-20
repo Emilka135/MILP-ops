@@ -56,6 +56,16 @@ class StrictStand:
         self.lock = threading.Lock()
 
     def request(self, method, path, body=None, query=None):
+        from .mis_contract import lookup_http
+        try:
+            plan = lookup_http(method, path, body, query)
+        except ValueError as error:
+            raise MisError("Неизвестная операция МИС", 400, "MIS_UNKNOWN_OPERATION") from error
+        if plan['missing_fields']:
+            raise MisError("Не хватает полей МИС: " + ', '.join(plan['missing_fields']), 400, "MIS_MISSING_FIELDS")
+        if plan['invalid_fields']:
+            raise MisError("Некорректные поля МИС: " + ', '.join(plan['invalid_fields']), 400, "MIS_INVALID_FIELDS")
+        method, path, body, query = plan['method'], plan['path'], plan['body'], plan['query']
         with self.lock:
             if not self.bucket.acquire(timeout=60):
                 raise MisError("Лимит МИС: повторите позже", 429, "ПРЕВЫШЕН_ЛИМИТ")
@@ -136,6 +146,17 @@ class ClinicCrm:
 
     def handle(self, op, args):
         try:
+            if op == "prepare_mis":
+                from .mis_contract import prepare
+                operation = str(args.get('operation_id', ''))
+                values = {key: value for key, value in args.items()
+                          if key not in {'operation_id', 'call_id', 'request_id', 'operation_key'}}
+                draft = prepare(operation)
+                path_parameters = {'id': values.pop('id')} if 'id' in values else {}
+                plan = prepare(operation, body=values if draft['method'] != 'GET' else None,
+                               query=values if draft['method'] == 'GET' else None,
+                               path_parameters=path_parameters)
+                return ('ready' if plan['complete'] else 'missing' if plan['missing_fields'] else 'invalid'), plan
             if op == "control.insights":
                 from .insights_access import AccessError, verify_request
                 try:
