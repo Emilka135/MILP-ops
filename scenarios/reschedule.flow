@@ -88,7 +88,7 @@ state rs_nearest_in_part
   error -> operator reason=crm_error
 
 state rs_offer_time
-  say "Ближайшее время {slot_date_spoken} — {slot_time_spoken}, врач {doctor}. Подходит? Нажмите 1 — да, 2 — другое время."
+  say "Ближайшее время {slot_date_spoken} — {slot_time_spoken}, врач {doctor}, кабинет {cabinet}. Подходит? Нажмите 1 — да, 2 — другое время."
   listen 8s
   dtmf 1 -> rs_do
   dtmf 2 -> rs_list_slots
@@ -121,7 +121,7 @@ state rs_say_slots
 
 state rs_pick_time
   call crm.pick_time specialty=$specialty day=$day said_time=$said_time
-  ok -> rs_do
+  ok -> rs_offer_time
   near -> rs_offer_time
   empty -> rs_say_slots
   error -> operator reason=crm_error
@@ -133,7 +133,7 @@ state rs_part_other_day
   error -> operator reason=crm_error
 
 state rs_offer_datetime
-  say "Ближайшее время {said_daypart_spoken}: {slot_date_spoken}, в {slot_time_spoken}, врач {doctor}. Подходит? Нажмите 1 — да, 2 — нет."
+  say "Ближайшее время {said_daypart_spoken}: {slot_date_spoken}, в {slot_time_spoken}, врач {doctor}, кабинет {cabinet}. Подходит? Нажмите 1 — да, 2 — нет."
   listen 8s
   dtmf 1 -> rs_do
   dtmf 2 -> operator reason=none_suitable

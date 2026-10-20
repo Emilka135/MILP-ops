@@ -4,7 +4,7 @@ flow feedback
 
 state ask
   say "Что, по вашему мнению, нужно исправить в тестовом варианте помощника? Можно оставить предложение или просто попрощаться."
-  listen 8s
+  listen 8s field=free_text
   intent emergency|medical|complaint|operator -> operator reason=feedback_requires_person
   intent gratitude -> done
   no -> done

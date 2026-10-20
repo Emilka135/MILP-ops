@@ -221,7 +221,7 @@ def parse_flow(text: str, source: str = "<string>") -> Flow:
                 flow.options[head] = " ".join(tokens[1:])
             continue
         # --- edges: "<kind> [values] -> target [k=v]"
-        if "->" in tokens:
+        if "->" in tokens and head != "enter":
             arrow = tokens.index("->")
             lhs, rhs = tokens[:arrow], tokens[arrow + 1 :]
             if not lhs or not rhs:
@@ -293,9 +293,14 @@ def parse_flow(text: str, source: str = "<string>") -> Flow:
                 else:
                     raise FlowError(f"ask: unexpected {rest[i]!r}", source, lineno)
         elif head == "listen":
-            if len(tokens) > 2:
-                raise FlowError("usage: listen [Ns]", source, lineno)
-            st.args["timeout"] = str(_parse_seconds(tokens[1], source, lineno)) if len(tokens) == 2 else "8"
+            if len(tokens) > 3:
+                raise FlowError("usage: listen [Ns] [field=full_name|free_text]",source,lineno)
+            st.args["timeout"] = str(_parse_seconds(tokens[1],source,lineno)) if len(tokens)>=2 else "8"
+            if len(tokens)==3:
+                fields=_kv(tokens[2:],source,lineno)
+                if set(fields)!={"field"} or fields["field"] not in {"full_name","free_text"}:
+                    raise FlowError("invalid speech field",source,lineno)
+                st.args.update(fields)
         elif head == "call":
             if len(tokens) < 2 or "." not in tokens[1]:
                 raise FlowError("usage: call <module>.<op> [k=v ...]", source, lineno)

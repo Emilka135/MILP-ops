@@ -1,3 +1,3 @@
--r base.txt
+-r nlu-semantic.txt
 pytest==9.1.0
 pytest-timeout==2.4.0

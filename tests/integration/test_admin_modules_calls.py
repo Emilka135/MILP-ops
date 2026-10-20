@@ -13,13 +13,14 @@ from test_demo_call import wav
 
 
 @pytest.fixture
-def app(tmp_path):
+def app(tmp_path,semantic_nlu):
     settings=ModuleSettings(tmp_path/'modules.json')
     store=SandboxStore(tmp_path/'stand')
     heard=['К глазнику']
     def rpc(mod,op,args):
         if mod=='tts':return {'sample_rate':48000,'pcm_b64':base64.b64encode(b'\0\1'*100).decode()}
         if mod=='asr':return {'text':heard[0],'engine':'explicit test dependency'}
+        if mod=='nlu':return semantic_nlu.handle(op,args)[1]
         raise AssertionError('No live CRM or external messages')
     demo=DemoCalls(rpc=rpc,store=store,settings=settings,tmp=tmp_path/'tmp')
     def req(op,**args):return demo.request('/api/demo-call/'+op,True,args,client='browser')
@@ -61,10 +62,10 @@ def test_abuse_has_system_flag_even_when_client_tags_off(app):
     assert not store.tables()['tables']['client_tags']
 
 
-def test_operation_does_not_become_surgical_appointment(app):
+def test_procedure_word_never_becomes_a_completed_appointment(app):
     _,store,_,req,_=app
     key=req('start')['call_id'];r=req('text',call_id=key,text='К хирургу на операцию лучезапястного сустава')
-    assert r['state']=='demo.operator'
+    assert r['state'] in {'demo.operator','demo.confirm'} and not r['sandbox_booking']
     assert not store.tables()['tables']['bookings']
 
 
@@ -89,7 +90,11 @@ def test_unknown_patient_never_gets_slot(app):
     key=req('start')['call_id'];req('dtmf',call_id=key,digit='1');req('dtmf',call_id=key,digit='1')
     req('text',call_id=key,text='Иванов Иван Иванович')
     r=req('text',call_id=key,text='13.04.1985')
-    assert r['state']=='demo.operator' and 'patient_not_found' in r['flags']
+    assert r['state']=='demo.identity_name' and not r['offers']
+    req('text',call_id=key,text='Иванов Иван Иванович')
+    assert req('text',call_id=key,text='13.04.1985')['state']=='demo.identity_policy'
+    r=req('text',call_id=key,text='9999999999999999')
+    assert r['state']=='demo.operator' and 'patient_not_found_after_oms' in r['flags']
     assert not store.tables()['tables']['bookings']
 
 
@@ -318,3 +323,65 @@ def test_imported_full_conversation_maps_without_accessing_patient_or_slot_table
     assert result['state']=='demo.done' and result['sandbox_booking'] is None
     assert result['title']=='Подтверждение со слов участников'
     assert 'booking_status_not_verified' in result['flags']
+
+
+def test_continue_and_identity_question_do_not_reselect_specialty(app):
+    _,_,_,req,_=app
+    key=req('start')['call_id'];req('text',call_id=key,text='Офтальмолог')
+    r=req('text',call_id=key,text='Продолжить.')
+    assert r['state']=='demo.identity_name'
+    r=req('text',call_id=key,text='Имя-отчество офтальмолога?')
+    assert r['state']=='demo.identity_name' and 'пациента' in r['prompt']
+    assert r['selection']['id']=='ophthalmology'
+
+
+def test_birth_queries_and_no_century_guess_or_age_cutoff(app):
+    _,store,_,req,_=app
+    with store.db:
+        store.db.execute("DELETE FROM patients WHERE id=4")
+        store.db.execute("INSERT INTO patients(id,full_name,birth_date) VALUES(99,'Иванов Сергей Владимирович','1915-10-05')")
+    key=req('start')['call_id'];req('text',call_id=key,text='К глазнику');req('text',call_id=key,text='Продолжить')
+    req('text',call_id=key,text='Иванов Сергей Владимирович')
+    for phrase in ['Ноль три, ноль пять девяносто шесть.','Двенадцатое 09.81','5 сентября восьмого года.']:
+        r=req('text',call_id=key,text=phrase)
+        assert r['state']=='demo.identity_birth' and 'год рождения полностью' in r['prompt'] and not r['queries']
+    r=req('text',call_id=key,text='5 октября 1915')
+    assert r['state']=='demo.slots' and r['patient']['id']==99
+    query=next(q for q in r['queries'] if 'FROM patients' in q['sql'])
+    assert query['params']==['Иванов Сергей Владимирович','1915-10-05'] and query['result'][0]['id']==99
+    assert query['state']=='demo.identity_birth' and store.call(key)['queries']==r['queries']
+
+
+def test_initial_name_is_retained_but_requires_confirmation(app):
+    _,_,_,req,_=app
+    key=req('start')['call_id']
+    req('text',call_id=key,text='К участковому терапевту Евгений Петрович Замязин 059364')
+    r=req('text',call_id=key,text='Продолжить')
+    assert r['state']=='demo.identity_confirm' and 'Замязин Евгений Петрович' in r['prompt']
+    assert req('text',call_id=key,text='Да')['state']=='demo.identity_birth'
+
+
+def test_multiple_doctors_and_unknown_district_must_be_resolved(app):
+    _,store,_,req,_=app
+    with store.db:
+        store.db.execute('UPDATE patients SET district=NULL WHERE id=1')
+        store.db.execute("INSERT INTO doctors VALUES(9,'Другой тестовый врач','therapist','14')")
+    key=req('start')['call_id'];req('dtmf',call_id=key,digit='1');req('text',call_id=key,text='Продолжить')
+    req('text',call_id=key,text='Иванов Иван Иванович')
+    r=req('text',call_id=key,text='12.04.1985')
+    assert r['state']=='demo.district' and not r['offers']
+    r=req('text',call_id=key,text='четырнадцать')
+    assert r['state']=='demo.doctor' and 'Другой тестовый врач' in r['prompt'] and not r['offers']
+    r=req('text',call_id=key,text='1')
+    assert r['state']=='demo.slots' and all(s['doctor']==r['doctor']['full_name'] for s in r['offers'])
+
+
+@pytest.mark.parametrize('reply',['нет','Нет, не хочу','0'])
+def test_specialty_confirmation_denial_transfers_to_operator(app,reply):
+    _,store,_,req,_=app
+    key=req('start')['call_id']
+    r=req('text',call_id=key,text='Офтальмолог')
+    assert r['prompt']=='Вы хотите записаться к офтальмологу? Да — один. Нет — ноль, переведу на оператора.'
+    r=req('text',call_id=key,text=reply)
+    assert r['state']=='demo.operator' and 'specialty_not_confirmed' in r['flags']
+    assert not store.tables()['tables']['bookings']

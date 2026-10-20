@@ -61,6 +61,9 @@ def queue(tmp_path, monkeypatch):
         reg._x("INSERT INTO slots(doctor_id,starts_at) VALUES(?,?)", (doctor, stamp))
     stand = LocalStand(tmp_path / "stand.json", doctor)
     crm = ClinicCrm(reg, stand)
+    # Synthetic remote fixture starts with a verified empty occupancy snapshot.
+    import time
+    crm._last_slots_sync=time.monotonic()
     for patient, slot in ((1, 2), (2, 3)):
         assert (
             crm.handle(

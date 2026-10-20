@@ -79,7 +79,25 @@ class CrmModule:
     # --- identification ------------------------------------------------------------------
 
     def _patient_payload(self, p: Patient) -> dict:
-        return {"patient_id": p.id, "patient_name": p.short_name, "patient_full_name": p.full_name}
+        return {"patient_id": p.id, "patient_name": p.short_name, "patient_full_name": p.full_name, "patient_birth_date": p.birth_date.isoformat() if p.birth_date else None}
+
+    def op_identify(self, full_name='', birth_date='', card_no='', locked_patient_id=None, **_):
+        import re
+        bd=_parse_birth(birth_date)
+        if bd is None:return 'empty',{}
+        if card_no:
+            rows=self.reg.find_patient(card_no=str(card_no),birth_date=bd)
+        else:
+            name=re.sub(r'^(?:меня зовут|моя фамилия|это)\s+','',str(full_name).casefold().strip()).strip(' .!')
+            name=' '.join(name.replace('ё','е').split())
+            if len(name.split())!=3:return 'empty',{}
+            candidates=self.reg._q('SELECT id FROM patients WHERE birth_date=?',(bd.isoformat(),))
+            rows=[self.reg.patient_by_id(r['id']) for r in candidates]
+            rows=[p for p in rows if p.full_name.casefold().replace('ё','е')==name]
+        if len(rows)!=1:return ('many' if rows else 'empty'),{}
+        p=rows[0]
+        if locked_patient_id and p.id!=int(locked_patient_id):return 'mismatch',{}
+        return 'ok',self._patient_payload(p)
 
     def op_lookup_phone(self, phone: str = "", **_: object) -> Result:
         pats = self.reg.find_patient(phone=phone) if phone else []
@@ -103,7 +121,7 @@ class CrmModule:
         bd = _parse_birth(birth_date)
         if p is None or bd is None:
             return "error", {"error": "no patient or bad date"}
-        return ("ok", {}) if p.birth_date == bd else ("mismatch", {})
+        return ("ok", self._patient_payload(p)) if p.birth_date == bd else ("mismatch", {})
 
     # --- slots -----------------------------------------------------------------------------
 
@@ -204,15 +222,30 @@ class CrmModule:
         self._write("book", {"booking_id": b.id, "patient_id": b.patient_id, "slot_id": b.slot_id, "doctor_id": b.doctor_id, "starts_at": b.starts_at.isoformat(), "call_id": call_id})
         return "ok", {"booking_id": b.id, **slot_payload(self.reg.slot(b.slot_id))}
 
-    def op_my_booking(self, patient_id: int, **_: object) -> Result:
-        b = self.reg.upcoming_booking(int(patient_id))
-        if b is None:
-            return "empty", {}
-        return "ok", {
+    def _booking_payload(self,b):
+        return {
             "booking_id": b.id, "doctor": b.doctor, "specialty": b.specialty, "specialty_dative": specialty_dative(b.specialty), "cabinet": b.cabinet,
             "slot_id": b.slot_id, "slot_date": b.starts_at.date().isoformat(), "slot_time": b.starts_at.strftime("%H:%M"),
             "slot_date_spoken": date_to_words(b.starts_at.date()), "slot_time_spoken": time_to_words(b.starts_at.time()), "confirmed": b.confirmed,
         }
+
+    def op_my_booking(self, patient_id: int, **_: object) -> Result:
+        rows=self.reg._q("SELECT id FROM bookings WHERE patient_id=? AND status='booked' AND starts_at>=? ORDER BY starts_at,id LIMIT 4",
+            (int(patient_id),self.reg.now().isoformat(timespec='minutes')))
+        if not rows:return 'empty',{}
+        if len(rows)>1:
+            options=[self.reg.booking(r['id']) for r in rows[:3]]
+            return 'many',{'booking_candidate_ids':[b.id for b in options], 'booking_id':None,
+                'booking_options':'. '.join(f'{i+1}: {b.specialty}, {date_to_words(b.starts_at.date())}, {time_to_words(b.starts_at.time())}' for i,b in enumerate(options))}
+        return 'ok',self._booking_payload(self.reg.booking(rows[0]['id']))
+
+    def op_select_booking(self,patient_id,choices,index,**_):
+        if not isinstance(choices,list) or not 1<=len(choices)<=3:return 'error',{}
+        position=int(index)-1
+        if position<0 or position>=len(choices):return 'error',{}
+        b=self.reg.booking(int(choices[position]))
+        if not b or b.patient_id!=int(patient_id) or b.status!='booked' or b.starts_at<self.reg.now():return 'error',{}
+        return 'ok',self._booking_payload(b)
 
     def op_cancel(self, booking_id: int, call_id: str = "", **_: object) -> Result:
         b = self.reg.cancel(int(booking_id))

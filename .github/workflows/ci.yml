@@ -20,6 +20,7 @@ jobs:
       - run: pip install -r requirements/asr.txt omegaconf==2.3.0
       - run: python tools/download_models.py --tts --asr
         env: {HF_HUB_DISABLE_TELEMETRY: '1'}
+      - run: python tools/download_nlu.py
       - run: python debug/run_checks.py
       - run: python tools/capacity.py --output debug/runs/capacity/estimate.md
       - uses: actions/upload-artifact@v4

@@ -353,6 +353,8 @@ class SlotAgent:
         excluded.append(selected["id"])
         return "ok", {
             "slot_id": selected["id"],
+            "doctor":selected["doctor"], "doctor_id":selected["doctor_id"],
+            "specialty":selected["specialty"], "cabinet":selected["cabinet"],
             "agent_text": text,
             "agent_attempt": attempt + 1,
             "agent_excluded": excluded,

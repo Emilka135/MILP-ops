@@ -39,7 +39,7 @@ def analyze(demo, data, owner):
         turns.append({'role':role,'text':value.strip(),'source':'imported_transcript'})
     if not turns or len(turns)>500:raise ValueError('Нужно от 1 до 500 размеченных реплик')
     key=secrets.token_urlsafe(32)
-    call=Call(owner,0,key=key,analysis=True,modules=demo.settings.read())
+    call=Call(owner,0,key=key,analysis=True,registrar=str(data.get('_line') or '100'),modules=demo.settings.read())
     mapping=[]
     for turn in turns:
         before=call.state

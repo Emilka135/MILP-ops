@@ -43,7 +43,7 @@ def neighbor_view(project, state=None):
     return {'current':card(state),'parents':parents,'next':connections(state),'intent_options':INTENT_LABELS,'revision':project['revision']}
 
 
-def request(repo, route, post, data, query, identity):
+def request(repo, route, post, data, query, identity, store=None):
     registrar=identity.get('registrar') if identity['role']=='registrar' else (data.get('registrar') or query.get('registrar',['100'])[0])
     if route=='/api/workshop/preview' and post:
         if identity['role']=='observer':raise ValueError('Наблюдатель может слушать готовые записи')
@@ -58,8 +58,14 @@ def request(repo, route, post, data, query, identity):
     if route=='/api/workshop/step'  and not post:
         return neighbor_view(repo.read(),query.get('state',[None])[0])
     if route=='/api/workshop/calls' and not post:
+        if store is not None:
+            from .call_archive import CallArchive
+            return CallArchive(store,module_call,repo.read()).list(registrar,identity)
         return module_call('crm','learning.calls',{'registrar':registrar})
     if route=='/api/workshop/call' and not post:
+        if store is not None:
+            from .call_archive import CallArchive
+            return CallArchive(store,module_call,repo.read()).detail(query.get('id',[''])[0],registrar,identity,query.get('source',[None])[0])
         result=module_call('crm','learning.call',{'registrar':registrar,'call_id':query.get('id',[''])[0]})
         if not result:raise ValueError('Звонок не найден на вашем номере')
         return result

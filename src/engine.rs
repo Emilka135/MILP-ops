@@ -18,6 +18,7 @@ pub struct Edge {
     pub kind: String,
     pub values: Vec<String>,
     pub target: String,
+    pub target_index: usize,
     pub sets: HashMap<String, String>,
     pub seconds: Option<f64>,
     pub count: Option<usize>,
@@ -87,6 +88,14 @@ impl Event {
         }
     }
 }
+type NavigationSnapshot = (
+    String,
+    Map<String, Value>,
+    Option<Value>,
+    Option<Value>,
+    Option<Value>,
+);
+
 #[derive(Debug)]
 pub struct Session {
     pub flow: String,
@@ -103,6 +112,15 @@ pub struct Session {
     stack: Vec<(String, String)>,
     digits: String,
     ask: Option<HashMap<String, String>>,
+    input_kind: Option<String>,
+    index: usize,
+    verified_patient: Option<Value>,
+    verified_slot: Option<Value>,
+    verified_booking: Option<Value>,
+    approval: Option<Value>,
+    mutation_succeeded: bool,
+    pending_call: Option<(String, String, Value)>,
+    navigation: Vec<NavigationSnapshot>,
 }
 impl Session {
     pub fn new(flow: &str, vars: Map<String, Value>) -> Result<Self, String> {
@@ -122,6 +140,15 @@ impl Session {
             stack: vec![],
             digits: String::new(),
             ask: None,
+            input_kind: None,
+            index: generated::state_index(flow, entry).unwrap(),
+            verified_patient: None,
+            verified_slot: None,
+            verified_booking: None,
+            approval: None,
+            mutation_succeeded: false,
+            pending_call: None,
+            navigation: vec![],
         })
     }
     pub fn state_name(&self) -> String {
@@ -130,13 +157,22 @@ impl Session {
     pub fn input_field(&self) -> Option<&str> {
         self.ask
             .as_ref()
-            .and_then(|ask| ask.get("var").map(String::as_str))
+            .and_then(|ask| {
+                ask.get("var").map(|v| {
+                    if v == "identity_card_no" {
+                        "card_no"
+                    } else {
+                        v.as_str()
+                    }
+                })
+            })
+            .or(self.input_kind.as_deref())
     }
     pub fn start(&mut self) -> Vec<Action> {
         self.enter(self.state.clone(), false)
     }
     fn current(&self) -> &'static Node {
-        node(&self.flow, &self.state).expect("compiled target")
+        &nodes()[self.index]
     }
     fn value(&self, raw: &str) -> Value {
         if let Some(key) = raw.strip_prefix('$') {
@@ -214,14 +250,27 @@ impl Session {
             self.set(k, self.value(v));
         }
         let same = e.target == self.state;
-        self.enter(e.target.clone(), same)
+        self.enter_index(e.target_index, same)
     }
     fn enter(&mut self, reference: String, same: bool) -> Vec<Action> {
-        if let Some((flow, state)) = reference.split_once('.') {
-            self.flow = flow.into();
-            self.state = state.into();
-        } else {
-            self.state = reference;
+        let (flow, state) = reference
+            .split_once('.')
+            .unwrap_or((&self.flow, &reference));
+        let Some(index) = generated::state_index(flow, state) else {
+            return self.finish("invalid_target");
+        };
+        self.enter_index(index, same)
+    }
+    fn enter_index(&mut self, index: usize, same: bool) -> Vec<Action> {
+        self.index = index;
+        self.flow = nodes()[index].flow.clone();
+        self.state = nodes()[index].name.clone();
+        if self.flow == "reschedule" && self.state == "rs_start" && self.verified_patient.is_none()
+        {
+            self.set("requested_action", json!("reschedule"));
+            self.set("intent", json!("existing"));
+            self.stack.push(("inbound".into(), "id_done".into()));
+            return self.enter("identity.name".into(), false);
         }
         let key = self.state_name();
         if !same {
@@ -240,8 +289,25 @@ impl Session {
         {
             return self.follow(e);
         }
+        if !self.mutation_succeeded
+            && n.statements.iter().any(|s| {
+                s.kind == "sms"
+                    && matches!(
+                        s.args.get("template").map(String::as_str),
+                        Some("booked" | "rescheduled" | "cancelled" | "confirmed")
+                    )
+                    || s.kind == "end"
+                        && matches!(
+                            s.args.get("status").map(String::as_str),
+                            Some("booked" | "rescheduled" | "cancelled" | "confirmed")
+                        )
+            })
+        {
+            return self.escalate("missing_write_receipt");
+        }
         self.digits.clear();
         self.ask = None;
+        self.input_kind = None;
         self.pending = None;
         self.listening = false;
         let mut actions = vec![];
@@ -249,18 +315,26 @@ impl Session {
             let a = &st.args;
             match st.kind.as_str() {
                 "set" => self.set(&a["var"], self.value(&a["value"])),
-                "say" => { let mut action = Action::new("say", json!({"scenario_state": self.state_name()})); action.text = self.render(&st.text);
+                "say" => { let mut action = Action::new("say", json!({"scenario_state": self.state_name(),"step_index":self.history.len().saturating_sub(1)})); action.text = self.render(&st.text);
                     action.rate = a.get("rate").and_then(|s| s.parse().ok()).unwrap_or(n.rate); actions.push(action); }
                 "sms" => actions.push(Action::new("sms", json!({"template": a["template"], "vars": self.vars}))),
                 "transfer" => actions.push(Action::new("transfer", json!({"reason": self.value(a.get("reason").map(String::as_str).unwrap_or("$reason")), "vars": self.vars, "history": self.history}))),
                 "call" => {
+                    if a["module"] == "crm" && matches!(a["op"].as_str(), "book"|"cancel"|"reschedule"|"confirm") {
+                        if !self.write_allowed(&a["op"]) { return self.escalate("incomplete_booking_contract"); }
+                        self.approval=None;
+                    }
                     self.sequence += 1; self.pending = Some(self.sequence);
                     let mut args = Map::new();
                     for (k, v) in a { if let Some(arg) = k.strip_prefix("arg:") { args.insert(arg.into(), self.value(v)); } }
+                    if a["module"] == "crm" && matches!(a["op"].as_str(), "cancel"|"reschedule"|"confirm") {
+                        args.insert("patient_id".into(),self.verified_patient.clone().unwrap_or(Value::Null));
+                    }
+                    self.pending_call=Some((a["module"].clone(),a["op"].clone(),Value::Object(args.clone())));
                     actions.push(Action { request_id: self.pending, ..Action::new("call", json!({"module": a["module"], "op": a["op"], "args": args})) });
                 }
                 "ask" => { self.ask = Some(a.clone()); actions.push(Action::new("timer", json!({"seconds": a.get("timeout").and_then(|s| s.parse::<f64>().ok()).unwrap_or(60.0)}))); }
-                "listen" => { self.listening = true; actions.push(Action::new("timer", json!({"seconds": a["timeout"].parse::<f64>().unwrap_or(8.0)}))); }
+                "listen" => { self.input_kind=a.get("field").cloned(); self.listening = true; actions.push(Action::new("timer", json!({"seconds": a["timeout"].parse::<f64>().unwrap_or(8.0)}))); }
                 "end" => { actions.extend(self.finish(&a["status"])); return actions; }
                 "goto" => { let same = self.state == a["target"]; actions.extend(self.enter(a["target"].clone(), same)); return actions; }
                 "enter" => { self.stack.push((self.flow.clone(), a["return"].clone())); actions.extend(self.enter(a["target"].clone(), false)); return actions; }
@@ -289,7 +363,87 @@ impl Session {
                 json!({"seconds": e.seconds.unwrap_or(10.0)}),
             ));
         }
+        if self.listening || self.ask.is_some() || n.edges.iter().any(|e| e.kind == "dtmf") {
+            let key = self.state_name();
+            if self.navigation.last().is_none_or(|x| x.0 != key) {
+                self.navigation.push((
+                    key,
+                    self.vars.clone(),
+                    self.verified_patient.clone(),
+                    self.verified_slot.clone(),
+                    self.verified_booking.clone(),
+                ));
+                if self.navigation.len() > 64 {
+                    self.navigation.remove(0);
+                }
+            }
+        }
         actions
+    }
+    fn notice(&mut self, message: &str) -> Vec<Action> {
+        let mut notice = Action::new("say", json!({"scenario_state":self.state_name()}));
+        notice.text = message.into();
+        let mut actions = vec![notice];
+        actions.extend(self.enter(self.state.clone(), true));
+        actions
+    }
+    fn fingerprint(&self, op: &str) -> Value {
+        json!([
+            op,
+            self.vars.get("patient_id"),
+            self.vars.get("booking_id"),
+            self.vars.get("slot_id"),
+            self.vars.get("specialty")
+        ])
+    }
+    fn write_allowed(&self, op: &str) -> bool {
+        self.verified_patient.is_some()
+            && self.verified_patient.as_ref() == self.vars.get("patient_id")
+            && self.approval.as_ref() == Some(&self.fingerprint(op))
+            && (op == "book"
+                || self.verified_booking.as_ref() == self.vars.get("booking_id")
+                    && self.verified_booking.is_some())
+            && (!matches!(op, "book" | "reschedule")
+                || self.verified_slot.is_some()
+                    && self.verified_slot.as_ref() == self.vars.get("slot_id"))
+    }
+    fn follow_input(&mut self, e: &Edge) -> Vec<Action> {
+        // Only a positive answer to the currently displayed summary authorizes a write.
+        if let Some(st) = nodes()[e.target_index].statements.iter().find(|st| {
+            st.kind == "call"
+                && st.args["module"] == "crm"
+                && matches!(
+                    st.args["op"].as_str(),
+                    "book" | "cancel" | "reschedule" | "confirm"
+                )
+        }) && (e.kind == "yes"
+            || e.kind == "intent" && e.values.iter().any(|v| v == "confirm")
+            || e.kind == "dtmf" && e.values.iter().any(|v| v == "1"))
+        {
+            self.approval = Some(self.fingerprint(&st.args["op"]));
+        }
+        self.follow(e)
+    }
+    fn back(&mut self) -> Vec<Action> {
+        self.approval = None;
+        if self.mutation_succeeded {
+            return self.escalate("change_after_completed_operation");
+        }
+        if self
+            .navigation
+            .last()
+            .is_some_and(|x| x.0 == self.state_name())
+        {
+            self.navigation.pop();
+        }
+        if let Some((state, vars, patient, slot, booking)) = self.navigation.pop() {
+            self.vars = vars;
+            self.verified_patient = patient;
+            self.verified_slot = slot;
+            self.verified_booking = booking;
+            return self.enter(state, false);
+        }
+        self.enter(self.state.clone(), true)
     }
     pub fn handle(&mut self, ev: Event) -> Vec<Action> {
         if self.finished {
@@ -304,6 +458,52 @@ impl Session {
                 return vec![];
             }
             self.pending = None;
+            if let Some((module, op, args)) = self.pending_call.take() {
+                if ev.value == "ok" {
+                    if module == "crm"
+                        && matches!(
+                            op.as_str(),
+                            "identify" | "verify_card" | "verify_birth" | "find_patient"
+                        )
+                        && (op != "find_patient"
+                            || args.get("birth_date").is_some_and(|v| !v.is_null()))
+                        && ev.payload["patient_full_name"]
+                            .as_str()
+                            .is_some_and(|v| v.split_whitespace().count() >= 2)
+                        && ev.payload["patient_birth_date"]
+                            .as_str()
+                            .is_some_and(|v| !v.is_empty())
+                    {
+                        self.verified_patient = ev.payload.get("patient_id").cloned();
+                    }
+                    if module == "crm"
+                        && matches!(op.as_str(), "my_booking" | "select_booking" | "verify_card")
+                    {
+                        self.verified_booking = ev.payload.get("booking_id").cloned();
+                    }
+                    if module == "crm"
+                        && matches!(op.as_str(), "book" | "cancel" | "reschedule" | "confirm")
+                    {
+                        self.mutation_succeeded = ev.payload.get("booking_id").is_some();
+                        if !self.mutation_succeeded {
+                            return self.escalate("missing_write_receipt");
+                        }
+                    }
+                }
+                if matches!(ev.value.as_str(), "ok" | "relaxed" | "near" | "single")
+                    && (module == "crm" || module == "agent" && op == "offer")
+                    && ev.payload["slot_date"]
+                        .as_str()
+                        .is_some_and(|v| !v.is_empty())
+                    && ev.payload["slot_time"]
+                        .as_str()
+                        .is_some_and(|v| !v.is_empty())
+                    && ev.payload["doctor"].as_str().is_some_and(|v| !v.is_empty())
+                {
+                    self.verified_slot = ev.payload.get("slot_id").cloned();
+                    self.approval = None;
+                }
+            }
             if let Some(p) = ev.payload.as_object() {
                 for (k, v) in p {
                     self.set(k, v.clone());
@@ -367,7 +567,7 @@ impl Session {
         n.edges
             .iter()
             .find(|e| e.kind == "dtmf" && e.values.iter().any(|v| v == value))
-            .map(|e| self.follow(e))
+            .map(|e| self.follow_input(e))
             .unwrap_or_else(|| self.invalid())
     }
     fn speech(&mut self, ev: Event) -> Vec<Action> {
@@ -386,16 +586,77 @@ impl Session {
         }
         if let Some(vars) = ev.payload["vars"].as_object() {
             for (k, v) in vars {
-                if !v.is_null() {
+                if !v.is_null()
+                    && matches!(
+                        k.as_str(),
+                        "specialty"
+                            | "specialty_candidate"
+                            | "specialty_candidate_label"
+                            | "said_date"
+                            | "said_time"
+                            | "said_daypart"
+                            | "for_other"
+                            | "doctor_surname"
+                    )
+                {
+                    if matches!(
+                        k.as_str(),
+                        "specialty" | "said_date" | "said_time" | "said_daypart"
+                    ) && self.vars.get(k) != Some(v)
+                    {
+                        self.verified_slot = None;
+                        self.approval = None;
+                        self.vars.remove("slot_id");
+                    }
                     self.set(k, v.clone());
                 }
             }
         }
         if matches!(
             intent.as_str(),
-            "emergency" | "complaint" | "medical" | "operator"
+            "home_visit" | "results" | "paid" | "waitlist" | "attachment"
         ) {
-            return self.escalate("human_only");
+            self.set("source_scenario", ev.payload["source_scenario"].clone());
+            return self.escalate("scenario_integration_not_enabled");
+        }
+        if intent == "for_other" || ev.payload["vars"]["for_other"] == true {
+            return self.escalate("representative_verification_required");
+        }
+        if intent == "record_opt_out" {
+            self.set("recording_consent", json!(false));
+            return self.notice("Хорошо, аудиозапись разговора отключена.");
+        }
+        if intent == "self_identity" {
+            return self.notice("Я виртуальный помощник поликлиники. Если хотите поговорить с сотрудником, скажите об этом.");
+        }
+        if ev.payload["flags"]
+            .as_array()
+            .is_some_and(|flags| flags.contains(&json!("abusive_language")))
+        {
+            self.set("client_flags", json!(["abusive_language"]));
+        }
+        if intent == "emergency" {
+            let mut notice = Action::new("say", json!({"scenario_state":"С-14"}));
+            notice.text =
+                "Немедленно звоните сто три или сто двенадцать. Не ждите приёма в поликлинике."
+                    .into();
+            let mut actions = vec![notice];
+            actions.extend(self.escalate("emergency"));
+            return actions;
+        }
+        if intent == "medical" {
+            return self.enter("inbound.medical_boundary".into(), false);
+        }
+        if intent == "complaint" {
+            let mut notice = Action::new("say", json!({"scenario_state":"С-15"}));
+            notice.text =
+                "Мне жаль, что так вышло. Передам обращение старшему администратору.".into();
+            let mut actions = vec![notice];
+            actions.extend(self.escalate("complaint"));
+            return actions;
+        }
+        if intent == "operator" {
+            return self.escalate("requested");
         }
         if self
             .vars
@@ -404,9 +665,60 @@ impl Session {
         {
             return self.escalate("specific_doctor");
         }
-        // On the initial 60-second DTMF fallback speech goes to a person, as requested.
-        if self.state == "listen_free" {
-            return self.escalate("speech_after_dtmf_timeout");
+        if intent == "back" {
+            return self.back();
+        }
+        if matches!(intent.as_str(), "repeat" | "greeting")
+            && self.input_kind.as_deref() != Some("free_text")
+        {
+            return self.enter(self.state.clone(), true);
+        }
+        if matches!(
+            intent.as_str(),
+            "book" | "cancel" | "reschedule" | "my_booking"
+        ) {
+            let confirming_cancel = self.state == "cancel_confirm"
+                && intent == "cancel"
+                && ev.payload["affirmative_action"] == true;
+            if !confirming_cancel {
+                self.set("requested_action", json!(intent));
+                self.set(
+                    "intent",
+                    json!(if intent == "book" { "book" } else { "existing" }),
+                );
+                if self.verified_patient.is_none() && self.flow != "identity" {
+                    self.stack.push(("inbound".into(), "id_done".into()));
+                    return self.enter("identity.name".into(), false);
+                }
+                if self.flow == "identity" {
+                    return self.enter(self.state.clone(), true);
+                }
+                if intent != "book"
+                    && !self
+                        .current()
+                        .edges
+                        .iter()
+                        .any(|e| e.kind == "intent" && e.values.contains(&intent))
+                {
+                    return self.enter("inbound.existing_start".into(), false);
+                }
+            }
+        }
+        if self.flow == "identity"
+            && self.state == "name"
+            && ev.value.split_whitespace().count() < 3
+        {
+            return self.invalid();
+        }
+        if self.verified_patient.is_some()
+            && ev.payload["vars"]["specialty"].is_string()
+            && self.flow != "identity"
+            && !matches!(
+                self.state.as_str(),
+                "ask_request" | "book_start" | "book_ask_specialty"
+            )
+        {
+            return self.enter("inbound.book_referral_check".into(), false);
         }
         if let Some(a) = &self.ask
             && let Some(d) = ev.payload["digits"].as_str()
@@ -418,7 +730,7 @@ impl Session {
         }
         let n = self.current();
         let cancel_confirmation = self.state == "cancel_confirm"
-            && intent == "cancel"
+            && matches!(intent.as_str(), "cancel" | "unknown")
             && ev.payload["affirmative_action"] == true;
         // Never interpret an action request as a generic yes at another action's
         // confirmation. In particular, cancellation must not create a booking.
@@ -444,14 +756,29 @@ impl Session {
                     e.values.contains(&intent)
                         && ev.payload["confidence"].as_f64().unwrap_or(0.0) >= 0.6
                 }
-                "any" => true,
+                "any" => {
+                    if self.input_kind.as_deref() == Some("free_text") {
+                        return self.follow_input(e);
+                    }
+                    ev.payload["vars"]["said_date"].is_string()
+                        || ev.payload["vars"]["said_time"].is_string()
+                        || ev.payload["vars"]["said_daypart"].is_string()
+                        || (self.flow == "identity"
+                            && self.state == "name"
+                            && intent == "unknown"
+                            && ev.payload["yes_no"].is_null())
+                        || ev.payload["vars"]["specialty"].is_string()
+                        || ev.payload["vars"]["specialty_candidate"].is_string()
+                        || intent != "unknown"
+                            && !matches!(intent.as_str(), "answer_yes" | "answer_no")
+                }
                 _ => false,
             };
             if matches {
                 if e.kind == "digits" {
                     self.set("said_digits", ev.payload["digits"].clone());
                 }
-                return self.follow(e);
+                return self.follow_input(e);
             }
         }
         self.invalid()
@@ -496,9 +823,102 @@ impl Session {
     }
 }
 
+/// Same graph, branch sequence and checksum for both dispatch representations.
+/// Measures dispatch only, excluding speech inference, RPC and graph loading.
+pub fn benchmark_dispatch(linked: bool, iterations: u64) -> (u128, usize) {
+    use std::{hint::black_box, time::Instant};
+    let graph = nodes();
+    let mut index = generated::state_index("inbound", "welcome").unwrap();
+    let mut random = 7u64;
+    let mut checksum = 0usize;
+    let began = Instant::now();
+    for _ in 0..iterations {
+        random = random.wrapping_mul(6364136223846793005).wrapping_add(1);
+        let current = &graph[index];
+        if current.edges.is_empty() {
+            index = (random as usize) % graph.len();
+            continue;
+        }
+        let edge = black_box(&current.edges[(random as usize) % current.edges.len()]);
+        index = if linked {
+            black_box(edge.target_index)
+        } else {
+            let (f, s) = edge
+                .target
+                .split_once('.')
+                .unwrap_or((&current.flow, &edge.target));
+            generated::state_index(black_box(f), black_box(s)).unwrap()
+        };
+        checksum = checksum.wrapping_add(black_box(index));
+    }
+    (began.elapsed().as_nanos(), black_box(checksum))
+}
+
+/// Store one immutable graph per compiled scenario revision in the call archive.
+pub fn scenario_revision() -> &'static str {
+    generated::SCENARIO_REVISION
+}
+pub fn scenario_graph() -> &'static Value {
+    static GRAPH: OnceLock<Value> = OnceLock::new();
+    GRAPH.get_or_init(|| {
+        let mut cards = Map::new();
+        let mut branches = Map::new();
+        let mut titles = Map::new();
+        for n in nodes() {
+            let key = format!("{}.{}", n.flow, n.name);
+            let lines: Vec<&str> = n
+                .statements
+                .iter()
+                .filter(|s| s.kind == "say")
+                .map(|s| s.text.as_str())
+                .collect();
+            let title = lines
+                .first()
+                .map(|s| s.chars().take(85).collect::<String>())
+                .unwrap_or_else(|| key.clone());
+            let mut targets: Vec<String> = n
+                .edges
+                .iter()
+                .map(|e| {
+                    format!(
+                        "{}.{}",
+                        nodes()[e.target_index].flow,
+                        nodes()[e.target_index].name
+                    )
+                })
+                .collect();
+            for s in &n.statements {
+                if matches!(s.kind.as_str(), "goto" | "enter") {
+                    let target = &s.args["target"];
+                    targets.push(if target.contains('.') {
+                        target.clone()
+                    } else {
+                        format!("{}.{}", n.flow, target)
+                    });
+                }
+            }
+            targets.sort();
+            targets.dedup();
+            cards.insert(
+                key.clone(),
+                json!({"id":key,"title":title,"lines":lines,"flow":n.flow}),
+            );
+            titles.insert(key.clone(), json!(title));
+            branches.insert(key, json!(targets));
+        }
+        json!({"version":scenario_revision(),"nodes":cards,"titles":titles,"branches":branches})
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn typed_free_text_field_is_preserved() {
+        let mut s = Session::new("feedback", Map::new()).unwrap();
+        s.start();
+        assert_eq!(s.input_field(), Some("free_text"));
+    }
     #[test]
     fn stale_result_does_not_cross_calls() {
         let mut s = Session::new("inbound", Map::new()).unwrap();
@@ -530,8 +950,14 @@ mod tests {
     fn reminder_cancel_requires_explicit_confirmation() {
         let mut s = Session::new("reminder", Map::new()).unwrap();
         s.start();
+        s.vars.insert("patient_id".into(), json!(1));
+        s.vars.insert("booking_id".into(), json!(2));
+        s.verified_patient = Some(json!(1));
+        s.verified_booking = Some(json!(2));
         s.enter("start".into(), false);
         s.handle(Event::new("dtmf", "0"));
+        assert_eq!(s.state, "cancel_offer");
+        s.handle(Event::new("dtmf", "2"));
         assert_eq!(s.state, "cancel_confirm");
         assert!(s.pending.is_none());
         let actions = s.handle(Event::new("dtmf", "1"));
@@ -545,8 +971,13 @@ mod tests {
     fn spoken_cancel_yes_is_contextual() {
         let mut s = Session::new("reminder", Map::new()).unwrap();
         s.start();
+        s.vars.insert("patient_id".into(), json!(1));
+        s.vars.insert("booking_id".into(), json!(2));
+        s.verified_patient = Some(json!(1));
+        s.verified_booking = Some(json!(2));
         s.enter("start".into(), false);
         s.handle(Event::new("dtmf", "0"));
+        s.handle(Event::new("dtmf", "2"));
         let mut ev = Event::new("speech", "Да, отмените.");
         ev.payload = json!({"intent":"cancel","yes_no":false,"affirmative_action":true});
         let actions = s.handle(ev);
@@ -555,5 +986,77 @@ mod tests {
                 .iter()
                 .any(|a| a.kind == "call" && a.args["op"] == "cancel")
         );
+    }
+    #[test]
+    fn all_mutations_and_receipts_reject_unverified_entry() {
+        for n in nodes() {
+            if n.statements.iter().any(|st| {
+                st.kind == "call"
+                    && st.args["module"] == "crm"
+                    && matches!(
+                        st.args["op"].as_str(),
+                        "book" | "cancel" | "reschedule" | "confirm"
+                    )
+            }) {
+                let mut session = Session::new(&n.flow, Map::new()).unwrap();
+                let actions = session.enter(format!("{}.{}", n.flow, n.name), false);
+                assert!(
+                    !actions.iter().any(|a| a.kind == "call"
+                        && matches!(
+                            a.args["op"].as_str(),
+                            Some("book" | "cancel" | "reschedule" | "confirm")
+                        )),
+                    "{}",
+                    n.name
+                );
+            }
+        }
+    }
+    #[test]
+    fn speech_does_not_inject_trusted_identifiers() {
+        let mut s = Session::new("inbound", Map::new()).unwrap();
+        s.start();
+        let mut ev = Event::new("speech", "Запишите к хирургу");
+        ev.payload = json!({"intent":"book","confidence":0.95,"vars":{"specialty":"хирург","patient_id":99,"slot_id":77,"has_referral":true}});
+        let actions = s.handle(ev);
+        assert_eq!(s.state_name(), "identity.name");
+        assert!(!s.vars.contains_key("patient_id"));
+        assert!(!s.vars.contains_key("slot_id"));
+        assert!(!actions.iter().any(|a| a.kind == "call"));
+    }
+    #[test]
+    fn changed_offer_invalidates_consent() {
+        let mut s = Session::new("inbound", Map::new()).unwrap();
+        s.vars = json!({"patient_id":1,"slot_id":5,"specialty":"хирург"})
+            .as_object()
+            .unwrap()
+            .clone();
+        s.verified_patient = Some(json!(1));
+        s.verified_slot = Some(json!(5));
+        s.approval = Some(s.fingerprint("book"));
+        assert!(s.write_allowed("book"));
+        s.vars.insert("slot_id".into(), json!(6));
+        assert!(!s.write_allowed("book"));
+    }
+    #[test]
+    fn linked_targets_equal_reference_dispatch() {
+        for n in nodes() {
+            for e in &n.edges {
+                let (f, st) = e.target.split_once('.').unwrap_or((&n.flow, &e.target));
+                assert_eq!(generated::state_index(f, st), Some(e.target_index));
+            }
+        }
+    }
+    #[test]
+    fn back_does_not_replay_write() {
+        let mut s = Session::new("inbound", Map::new()).unwrap();
+        s.start();
+        s.handle(Event::new("dtmf", "1"));
+        assert_eq!(s.state_name(), "identity.name");
+        let mut back = Event::new("speech", "Вернуться назад");
+        back.payload = json!({"intent":"back"});
+        let actions = s.handle(back);
+        assert_eq!(s.state_name(), "inbound.welcome");
+        assert!(!actions.iter().any(|a| a.kind == "call"));
     }
 }

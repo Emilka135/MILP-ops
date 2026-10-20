@@ -38,14 +38,16 @@ def build(request, data, root=ROOT):
         source_hash=hashlib.sha256()
         for name in ['Cargo.toml','Cargo.lock','build.rs',*sorted(str(p.relative_to(work)) for p in (work/'src').rglob('*.rs'))]:
             source_hash.update(name.encode());source_hash.update((work/name).read_bytes())
+        # Share job dependencies without replacing the developer/runtime binary.
+        target_dir=Path(os.environ.get('CARGO_TARGET_DIR',str(work/'target'))).resolve()/'scenario-jobs'
+        build_env={**os.environ,'CARGO_TARGET_DIR':str(target_dir)}
         log_path=work/'build.log'
         with log_path.open('w') as log:
             done=subprocess.run(['cargo','build','--offline','--locked','--bin','clinic-voice'],cwd=work,
-                stdout=log,stderr=subprocess.STDOUT,timeout=300,check=False)
+                stdout=log,stderr=subprocess.STDOUT,timeout=300,check=False,env=build_env)
         job['log']=log_path.read_text()[-20000:]
         if done.returncode:raise ValueError('Компилятор отклонил сборку; смотрите журнал')
         artifact=data/'artifacts'/job_id;artifact.mkdir(parents=True,exist_ok=True)
-        target_dir=Path(os.environ.get('CARGO_TARGET_DIR',str(work/'target')))
         shutil.copy2(target_dir/'debug/clinic-voice',artifact/'clinic-voice')
         (artifact/'project.json').write_text(json.dumps(item['project'],ensure_ascii=False,indent=2))
         job.update(status='succeeded',artifact=job_id,engine_source_sha256=source_hash.hexdigest(),

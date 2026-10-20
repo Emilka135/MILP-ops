@@ -1,5 +1,6 @@
 """Validate the shared flow DSL and emit real Rust match dispatch at build time."""
 
+import hashlib
 import dataclasses
 import importlib.util
 import json
@@ -34,9 +35,15 @@ def compile_to(directory: Path):
                 f"        ({json.dumps(name)}, {json.dumps(state_name)}) => Some({len(nodes)}),"
             )
             nodes.append({**dataclasses.asdict(state), "rate": flow.rate, "flow": name})
-    # JSON is embedded once, parsed once. Transitions use generated Rust match.
+    indexes={(n['flow'],n['name']):i for i,n in enumerate(nodes)}
+    for n in nodes:
+        for edge in n['edges']:
+            target=edge['target'].split('.',1) if '.' in edge['target'] else (n['flow'],edge['target'])
+            edge['target_index']=indexes[tuple(target)]
+    # Immutable linked graph, parsed once. No per-call graph construction.
     data = json.dumps(nodes, ensure_ascii=False, separators=(",", ":"))
     code = 'pub const NODES_JSON: &str = r####"' + data + '"####;\n'
+    code += f'pub const SCENARIO_REVISION: &str = "{hashlib.sha256(data.encode()).hexdigest()}";\n'
     code += "pub fn state_index(flow: &str, state: &str) -> Option<usize> {\n    match (flow, state) {\n"
     code += "\n".join(cases) + "\n        _ => None,\n    }\n}\n"
     code += "pub fn entry(flow: &str) -> Option<&'static str> {\n    match flow {\n"

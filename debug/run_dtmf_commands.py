@@ -71,7 +71,7 @@ def execute(base, output_dir="debug/runs/dtmf-only", *, operator_available=True)
             tone(None, digit)
         call = prefix + "-book"
         post("call.start", call_id=call, caller_phone="79165550000")
-        for digit in "112311199211":
+        for digit in "121003#2311199211":
             state = tone(call, digit)
         assert state["status"] == "booked", state
         bid = state["vars"]["booking_id"]
@@ -97,6 +97,7 @@ def execute(base, output_dir="debug/runs/dtmf-only", *, operator_available=True)
                 ) != original
             else:
                 tone(call, "0")
+                tone(call, "2")
                 state = tone(call, "1")
                 assert state["status"] == "cancelled", state
         # Star must interrupt identity, and OOB/inband duplicate must not repeat input.

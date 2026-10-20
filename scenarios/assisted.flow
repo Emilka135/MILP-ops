@@ -1,48 +1,15 @@
 # Standard demonstration: prepared prompts + bounded slot agent + confirmed CRM write.
 flow assisted
   rate 1.5
-  entry lookup_phone
-
-state lookup_phone
-  call crm.lookup_phone phone=$caller_phone
-  ok -> identify
-  many -> identify
-  empty -> first_visit
-  error -> operator reason=crm_error
-
-state first_visit
-  say "Вы у нас впервые? Если да, нажмите один. Если нет, нажмите ноль. Для оператора нажмите два. Можно ответить голосом."
-  listen 20s
-  dtmf 1 -> operator reason=first_visit_registration
-  dtmf 0 -> identify
-  dtmf 2 -> operator reason=requested
-  yes -> operator reason=first_visit_registration
-  no -> identify
-  timeout 20s -> operator reason=identity_failed
-  retry 2 -> operator reason=identity_failed
-
-state identify
-  say "Назовите номер карты поликлиники по одной цифре или введите его и нажмите решётку."
-  ask card_no digits 3-10 timeout 25s terminator "#"
-  listen 25s
-  ok -> find_patient
-  timeout -> identify
-  retry 2 -> operator reason=identity_failed
-
-state find_patient
-  call crm.find_patient card_no=$card_no
-  ok -> ask_request
-  empty -> operator reason=patient_not_found
-  many -> operator reason=ambiguous_identity
-  error -> operator reason=crm_error
+  entry identify_full
 
 state ask_request
   say "К какому специалисту вас записать? Для терапевта нажмите один. Для другого специалиста назовите его. Для оператора нажмите два."
   listen 15s
-  dtmf 1 -> offer_fetch specialty="терапевт"
+  dtmf 1 -> requirements specialty="терапевт"
   dtmf 2 -> operator reason=requested
   intent emergency|medical|complaint|operator -> operator reason=human_only
-  any -> offer_fetch
+  any -> requirements
   timeout 15s -> ask_request
   retry 2 -> operator reason=no_valid_input
 
@@ -109,3 +76,18 @@ state operator
   say "Перевожу звонок на оператора. История разговора сохранена."
   transfer reason=$reason
   end transfer
+
+state identify_full
+  enter identity.name -> ask_request
+
+state requirements
+  call crm.referral_required specialty=$specialty
+  required -> verify_referral
+  not_required -> offer_fetch
+  error -> operator reason=unknown_specialty
+
+state verify_referral
+  call crm.check_referral patient_id=$patient_id specialty=$specialty
+  ok -> offer_fetch
+  missing -> operator reason=referral_not_verified
+  error -> operator reason=crm_error

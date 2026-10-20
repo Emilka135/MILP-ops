@@ -77,3 +77,16 @@ def test_night_worker_uses_same_crm_hours_and_only_prepares(learning):
     row=learning.handle('learning.cases',{'registrar':'101'},AT)[1]['cases'][0]
     assert row['status']=='prepared' and not row['report']['neural_training']
     assert learning.handle('learning.review',{'id':case['case_id'],'approve':True,'validated_revision':'arbitrary'},AT)[0]=='blocked'
+
+
+def test_scenario_version_snapshot_is_immutable_deduplicated_and_preserves_occurrence(learning):
+    revision='a'*64
+    graph={'nodes':{'old.a':{'id':'old.a','lines':['Старая реплика']}},'branches':{'old.a':['old.b']},'version':revision}
+    args={'call_id':'versioned','registrar':'101','scenario_revision':revision,'graph':graph,'trace':['old.a','old.b','old.a'],'transcript':[{'role':'patient','text':'Повторный шаг','state':'old.a','step_index':2,'source':'runtime_text'}]}
+    assert learning.handle('learning.archive',args,AT)[0]=='ok'
+    assert learning.handle('learning.archive',{**args,'call_id':'same-version'},AT)[0]=='ok'
+    assert learning.reg.execute('SELECT count(*) AS n FROM learning_graphs')[0]['n']==1
+    data=learning.handle('learning.call',{'call_id':'versioned','registrar':'101'},AT)[1]
+    assert data['graph']==graph and data['transcript'][0]['step_index']==2 and data['transcript'][0]['source']=='runtime_text'
+    assert learning.handle('learning.archive',{**args,'graph':{'nodes':{}}},AT)[0]=='error'
+    assert learning.handle('learning.archive',{**args,'scenario_revision':'b'*64,'graph':None},AT)[0]=='error'

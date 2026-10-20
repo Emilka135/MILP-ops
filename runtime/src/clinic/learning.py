@@ -8,6 +8,7 @@ import unicodedata
 
 SCHEMA='''
 CREATE TABLE IF NOT EXISTS learning_calls(call_id TEXT PRIMARY KEY,registrar TEXT NOT NULL,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,finished INTEGER NOT NULL,outcome TEXT NOT NULL,duration_s REAL NOT NULL,transcript TEXT NOT NULL,trace TEXT NOT NULL,experiment_id INTEGER);
+CREATE TABLE IF NOT EXISTS learning_graphs(revision TEXT PRIMARY KEY,graph TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS learning_cases(id INTEGER PRIMARY KEY,registrar TEXT NOT NULL,call_id TEXT NOT NULL,source_state TEXT NOT NULL,title TEXT NOT NULL,intent TEXT NOT NULL,examples TEXT NOT NULL,response TEXT NOT NULL,earlier_state TEXT,status TEXT NOT NULL DEFAULT 'queued',created_at TEXT NOT NULL,effective_at TEXT NOT NULL,expires_at TEXT NOT NULL,reviewed_at TEXT,report TEXT NOT NULL DEFAULT '{}');
 CREATE TABLE IF NOT EXISTS learning_labels(id INTEGER PRIMARY KEY,case_id INTEGER NOT NULL,call_id TEXT NOT NULL,registrar TEXT NOT NULL,user_text TEXT NOT NULL,correct_intent TEXT NOT NULL,correct_response TEXT NOT NULL,created_at TEXT NOT NULL,UNIQUE(case_id,user_text));
 '''
@@ -29,6 +30,8 @@ class Learning:
         self.reg=reg
         self.lock=threading.RLock()
         reg._conn.executescript(SCHEMA)
+        if 'scenario_revision' not in {r['name'] for r in reg._q('PRAGMA table_info(learning_calls)')}:
+            reg._x("ALTER TABLE learning_calls ADD COLUMN scenario_revision TEXT NOT NULL DEFAULT ''")
 
     def handle(self,op,args,at,closed=False):
         with self.lock:return self._handle(op,args,at,closed)
@@ -38,25 +41,42 @@ class Learning:
             registrar=number(args.get('registrar') or '100')
             existing=self.reg.execute('SELECT registrar FROM learning_calls WHERE call_id=?',(str(args['call_id'])[:128],))
             if existing and existing[0]['registrar']!=registrar:return 'error',{'error':'Номер звонка уже принадлежит другому рабочему месту'}
+            revision=str(args.get('scenario_revision') or '')
+            graph=args.get('graph')
+            if revision:
+                if not re.fullmatch('[a-f0-9]{64}',revision):return 'error',{'error':'Invalid scenario revision'}
+                if graph is not None:
+                    if not isinstance(graph,dict) or not isinstance(graph.get('nodes'),dict):return 'error',{'error':'Invalid archived scenario graph'}
+                    raw=json.dumps(graph,ensure_ascii=False,sort_keys=True,separators=(',',':'))
+                    if len(raw.encode())>2*1024*1024:return 'error',{'error':'Scenario graph too large'}
+                    saved=self.reg._q('SELECT graph FROM learning_graphs WHERE revision=?',(revision,))
+                    if saved and saved[0]['graph']!=raw:return 'error',{'error':'Scenario revision is immutable'}
+                    self.reg._x('INSERT OR IGNORE INTO learning_graphs VALUES(?,?)',(revision,raw))
+                if not self.reg._q('SELECT revision FROM learning_graphs WHERE revision=?',(revision,)):return 'error',{'error':'Scenario graph missing'}
             turns=args.get('transcript',[])[:500]
             transcript=[]
             for turn in turns:
                 text=str(turn.get('text',''))[:4000]
                 # Call training never needs full phone/SNILS/account-like digit strings.
                 text=re.sub(r'(?<!\d)(?:\d[ -]?){7,}(?!\d)','[скрытый номер]',text)
-                transcript.append({'role':str(turn.get('role',''))[:20],'text':text,'state':str(turn.get('state',''))[:120]})
+                clean={'role':str(turn.get('role',''))[:20],'text':text,'state':str(turn.get('state',''))[:120]}
+                if type(turn.get('step_index')) is int and 0<=turn['step_index']<500:clean['step_index']=turn['step_index']
+                if turn.get('source'):clean['source']=str(turn['source'])[:40]
+                transcript.append(clean)
             trace=[str(x)[:120] for x in args.get('trace',[])[:500]]
             call_id=str(args['call_id'])[:128]
-            self.reg._x('''INSERT INTO learning_calls VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT(call_id) DO UPDATE SET updated_at=excluded.updated_at,finished=excluded.finished,outcome=excluded.outcome,duration_s=excluded.duration_s,transcript=excluded.transcript,trace=excluded.trace,experiment_id=excluded.experiment_id''',
-                (call_id,registrar,at.isoformat(),at.isoformat(),int(bool(args.get('finished'))),str(args.get('outcome',''))[:50],max(0,float(args.get('duration_s',0))),json.dumps(transcript,ensure_ascii=False),json.dumps(trace),args.get('experiment_id')))
+            self.reg._x('''INSERT INTO learning_calls(call_id,registrar,created_at,updated_at,finished,outcome,duration_s,transcript,trace,experiment_id,scenario_revision) VALUES(?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(call_id) DO UPDATE SET updated_at=excluded.updated_at,finished=excluded.finished,outcome=excluded.outcome,duration_s=excluded.duration_s,transcript=excluded.transcript,trace=excluded.trace,experiment_id=excluded.experiment_id,scenario_revision=excluded.scenario_revision''',
+                (call_id,registrar,at.isoformat(),at.isoformat(),int(bool(args.get('finished'))),str(args.get('outcome',''))[:50],max(0,float(args.get('duration_s',0))),json.dumps(transcript,ensure_ascii=False),json.dumps(trace),args.get('experiment_id'),revision))
             return 'ok',{}
         if op=='learning.calls':
             registrar=number(args['registrar'])
-            return 'ok',{'calls':self.reg.execute('SELECT call_id,created_at,finished,outcome,duration_s,experiment_id FROM learning_calls WHERE registrar=? ORDER BY updated_at DESC LIMIT 100',(registrar,))}
+            return 'ok',{'calls':self.reg.execute('SELECT call_id,created_at,finished,outcome,duration_s,experiment_id,updated_at,scenario_revision FROM learning_calls WHERE registrar=? ORDER BY updated_at DESC LIMIT 100',(registrar,))}
         if op=='learning.call':
             rows=self.reg.execute('SELECT * FROM learning_calls WHERE call_id=? AND registrar=?',(str(args['call_id']),number(args['registrar'])))
             if not rows:return 'empty',{}
             row=rows[0];row['transcript']=json.loads(row['transcript']);row['trace']=json.loads(row['trace'])
+            graphs=self.reg._q('SELECT graph FROM learning_graphs WHERE revision=?',(row.get('scenario_revision',''),))
+            if graphs:row['graph']=json.loads(graphs[0]['graph'])
             return 'ok',row
         if op=='learning.propose':
             registrar=number(args['registrar'])

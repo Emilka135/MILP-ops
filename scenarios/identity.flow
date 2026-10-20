@@ -1,0 +1,53 @@
+# Shared speech identity subroutine; names are data, never transition commands.
+flow identity
+  rate 1.3
+  entry name
+
+state name
+  say "Назовите фамилию, имя и отчество пациента полностью. Если удобнее номер карты, нажмите два."
+  listen 20s field=full_name
+  dtmf 2 -> card
+  any -> remember_name
+  timeout 20s -> name
+  retry 2 -> operator reason=identity_name_unclear
+
+state remember_name
+  set identity_full_name = $last_utterance
+  goto birth
+
+state birth
+  say "Назовите дату рождения пациента: день, месяц и год. Можно ввести восемь цифр."
+  ask birth_date digits 8 timeout 25s
+  listen 25s
+  ok -> lookup
+  timeout -> birth
+  retry 2 -> operator reason=identity_birth_unclear
+
+state lookup
+  call crm.identify full_name=$identity_full_name birth_date=$birth_date card_no=$identity_card_no locked_patient_id=$locked_patient_id
+  ok -> verified
+  empty -> not_found
+  many -> operator reason=ambiguous_identity
+  mismatch -> operator reason=identity_conflict
+  error -> operator reason=identity_failed
+
+state not_found
+  say "Карточку с такими данными не удалось найти. Проверим имя и дату рождения ещё раз."
+  loop 1 -> operator reason=patient_not_found
+  goto name
+
+state card
+  say "Введите номер карты и нажмите решётку или назовите номер по одной цифре."
+  ask identity_card_no digits 3-10 timeout 25s terminator "#"
+  listen 25s
+  ok -> birth
+  timeout -> card
+  retry 2 -> operator reason=identity_failed
+
+state verified
+  return
+
+state operator
+  say "Передаю обращение сотруднику."
+  transfer reason=$reason
+  end transfer

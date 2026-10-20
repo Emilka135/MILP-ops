@@ -7,7 +7,13 @@ flow inbound
 
 # ---------------------------------------------------------------- 0. приветствие (только DTMF)
 state welcome
-  say "Здравствуйте. Записаться — один. Изменить запись — два. Часы работы — три. Регистратор — ноль."
+  say "Здравствуйте. Чем могу помочь? Записаться можно голосом или нажать один. Изменить запись — два. Регистратор — ноль."
+  listen 20s
+  intent book -> intent_book
+  intent medical -> medical_boundary
+  intent cancel|reschedule|my_booking|confirm -> intent_existing
+  intent info_schedule -> info_schedule
+  intent info_address|info_docs -> info_other
   dtmf 1 -> intent_book
   dtmf 2 -> intent_existing
   dtmf 3 -> info_menu
@@ -80,143 +86,7 @@ state intent_existing
   goto id_start
 
 state id_start
-  call crm.lookup_phone phone=$caller_phone
-  ok -> id_self_or_other
-  many -> id_self_or_other
-  empty -> id_first_visit
-  error -> operator reason=crm_error
-
-state id_first_visit
-  say "Вы у нас впервые? Если да, нажмите один. Если уже обращались — ноль. Для оператора — два. Можно ответить голосом."
-  listen 20s
-  dtmf 1 -> operator reason=first_visit_registration
-  dtmf 0 -> id_ask_method
-  dtmf 2 -> operator reason=requested
-  yes -> operator reason=first_visit_registration
-  no -> id_ask_method
-  timeout 20s -> id_ask_method
-  retry 2 -> operator reason=identity_failed
-
-state id_self_or_other
-  say "Вы обращаетесь по поводу себя или другого человека? Нажмите 1 — себя, 2 — другого. Оператор — ноль."
-  dtmf 1 -> id_self
-  dtmf 2 -> id_other
-  dtmf 0 -> operator reason=requested
-  timeout 15s -> id_self_or_other
-  retry 2 -> operator reason=no_valid_input
-
-state id_self
-  set for_other = false
-  goto id_birth_check
-
-state id_other
-  set for_other = true
-  goto id_ask_method
-
-# Телефон известен → подтверждаем личность датой рождения (ДДММГГГГ).
-state id_birth_check
-  say "Для подтверждения назовите вашу дату рождения: день, месяц и год. Или введите восемь цифр."
-  ask birth_date digits 8 timeout 25s
-  listen 25s
-  ok -> id_verify_birth
-  timeout -> id_birth_check
-  retry 2 -> operator reason=identity_failed
-
-state id_verify_birth
-  call crm.find_patient phone=$caller_phone birth_date=$birth_date
-  ok -> id_done
-  empty -> id_birth_mismatch
-  many -> operator reason=ambiguous_identity
-  error -> operator reason=crm_error
-
-state id_birth_mismatch
-  say "Дата рождения не совпадает с данными поликлиники."
-  goto id_ask_method
-
-# Телефон неизвестен или звонят за другого: СНИЛС / номер карты / телефон из карты.
-state id_ask_method
-  say "Назовите пациента одним из способов. Нажмите 1, чтобы ввести номер СНИЛС, 2 — номер карты поликлиники, 3 — номер телефона, указанный в карте пациента."
-  dtmf 1 -> id_ask_snils
-  dtmf 2 -> id_ask_card
-  dtmf 3 -> id_ask_phone
-  timeout 15s -> id_ask_method
-  retry 2 -> operator reason=identity_failed
-
-state id_ask_snils
-  say "Введите одиннадцать цифр СНИЛС."
-  ask snils digits 11 timeout 30s
-  ok -> id_lookup_snils
-  timeout -> id_ask_snils
-  retry 2 -> operator reason=identity_failed
-
-state id_lookup_snils
-  call crm.find_patient snils=$snils
-  ok -> id_snils_birth
-  empty -> id_not_found
-  many -> operator reason=ambiguous_identity
-  error -> operator reason=crm_error
-
-state id_snils_birth
-  say "Теперь назовите дату рождения пациента: день, месяц и год. Или введите восемь цифр."
-  ask birth_date digits 8 timeout 30s
-  listen 30s
-  ok -> id_snils_verify
-  timeout -> id_snils_birth
-  retry 2 -> operator reason=identity_failed
-
-state id_snils_verify
-  call crm.verify_birth patient_id=$patient_id birth_date=$birth_date
-  ok -> id_done
-  mismatch -> operator reason=identity_failed
-  error -> operator reason=identity_failed
-
-state id_ask_card
-  say "Введите номер карты поликлиники и нажмите решётку."
-  ask card_no digits 3-10 timeout 30s terminator "#"
-  ok -> id_lookup_card
-  timeout -> id_ask_card
-  retry 2 -> operator reason=identity_failed
-
-state id_lookup_card
-  call crm.find_patient card_no=$card_no
-  ok -> id_done
-  empty -> id_not_found
-  many -> operator reason=ambiguous_identity
-  error -> operator reason=crm_error
-
-state id_ask_phone
-  say "Введите номер телефона, указанный в карте пациента: десять цифр, начиная с кода оператора."
-  ask phone digits 10-11 timeout 30s
-  ok -> id_lookup_phone
-  timeout -> id_ask_phone
-  retry 2 -> operator reason=identity_failed
-
-state id_lookup_phone
-  call crm.find_patient phone=$phone
-  ok -> id_done
-  many -> id_birth_for_phone
-  empty -> id_not_found
-  error -> operator reason=crm_error
-
-state id_birth_for_phone
-  say "На этот номер записано несколько пациентов. Назовите дату рождения: день, месяц и год. Или введите восемь цифр."
-  ask birth_date digits 8 timeout 25s
-  listen 25s
-  ok -> id_verify_birth_phone
-  timeout -> id_birth_for_phone
-  retry 2 -> operator reason=identity_failed
-
-state id_verify_birth_phone
-  call crm.find_patient phone=$phone birth_date=$birth_date
-  ok -> id_done
-  empty -> id_not_found
-  many -> operator reason=ambiguous_identity
-  error -> operator reason=crm_error
-
-state id_not_found
-  say "Пациент с такими данными не найден."
-  loop 1 -> operator reason=patient_not_found
-  goto id_ask_method
+  enter identity.name -> id_done
 
 state id_done
   switch intent
@@ -248,7 +118,7 @@ state book_diagnostic
   say "Какое исследование или анализ вам назначили?"
   listen 8s
   dtmf 0 -> operator reason=requested
-  any -> operator reason=diagnostic_schedule_required
+  any -> book_specialty_from_speech
   silence -> book_diagnostic
   timeout 8s -> book_diagnostic
   retry 2 -> operator reason=no_diagnostic
@@ -269,7 +139,7 @@ state book_ask_specialty
 
 state book_specialty_from_speech
   switch specialty
-  case none -> book_specialty_unknown
+  case none -> candidate_check
   default -> book_referral_check
 
 # Конкретный врач по фамилии — автомат не рискует, передаём человеку со всем контекстом.
@@ -280,33 +150,15 @@ state book_specialty_unknown
 
 state book_referral_check
   call crm.referral_required specialty=$specialty
-  required -> book_ask_referral
+  required -> book_has_referral
   not_required -> book_find_slot
   error -> operator reason=crm_error
 
-state book_ask_referral
-  say "Для записи к {specialty_dative} нужно направление терапевта. У вас есть направление? Если да, нажмите 1. Если нет — нажмите 2, я соединю с оператором. Для связи с оператором нажмите ноль или звёздочку в любой момент."
-  dtmf 1 -> book_referral_date
-  dtmf 2 -> operator reason=referral_missing
-  dtmf 0 -> operator reason=referral_question
-  yes -> book_referral_date
-  no -> operator reason=referral_missing
-  timeout 20s -> book_ask_referral
-  retry 2 -> operator reason=referral_unclear
-
-state book_referral_date
-  say "Направление получено за последний месяц? Если да, нажмите один. Если нет, нажмите два. Для оператора нажмите ноль."
-  dtmf 1 -> book_has_referral
-  dtmf 2 -> operator reason=referral_expired
-  dtmf 0 -> operator reason=requested
-  yes -> book_has_referral
-  no -> operator reason=referral_expired
-  timeout 20s -> book_referral_date
-  retry 2 -> operator reason=referral_unclear
-
 state book_has_referral
-  set has_referral = true
-  goto book_find_slot
+  call crm.check_referral patient_id=$patient_id specialty=$specialty
+  ok -> book_find_slot
+  missing -> book_no_referral
+  error -> operator reason=crm_error
 
 state book_find_slot
   call crm.find_slots specialty=$specialty said_date=$said_date said_daypart=$said_daypart said_time=$said_time
@@ -320,7 +172,7 @@ state book_offer_relaxed
   goto book_offer
 
 state book_offer
-  say "Ближайшая запись к {specialty_dative}: {slot_date_spoken}, в {slot_time_spoken}, врач {doctor}. Подходит? Нажмите 1 — да, 2 — предложить другой день, 0 — оператор. Можно назвать удобный день."
+  say "Ближайшая запись к {specialty_dative}: {slot_date_spoken}, в {slot_time_spoken}, врач {doctor}, кабинет {cabinet}. Подходит? Нажмите 1 — да, 2 — предложить другой день, 0 — оператор. Можно назвать удобный день."
   dtmf 1 -> book_do
   dtmf 2 -> book_next_day
   dtmf 0 -> operator reason=requested
@@ -377,13 +229,14 @@ state book_done
 state existing_start
   call crm.my_booking patient_id=$patient_id
   ok -> existing_route
+  many -> existing_choose
   empty -> existing_none
   error -> operator reason=crm_error
 
 # Намерение уже прозвучало («отмените запись») → сразу к подтверждению, меню не нужно.
 state existing_route
-  switch last_intent
-  case cancel -> cancel_confirm
+  switch requested_action
+  case cancel -> cancel_offer
   case reschedule -> reschedule.rs_start
   default -> existing_menu
 
@@ -399,12 +252,12 @@ state existing_none
 state existing_menu
   say "{patient_name}: запись к {specialty_dative}, {slot_date_spoken}, в {slot_time_spoken}, врач {doctor}. Подтвердить — нажмите 1. Отменить — 0. Перенести — 2. Оператор — 9."
   dtmf 1 -> confirm_do
-  dtmf 0 -> cancel_confirm
+  dtmf 0 -> cancel_offer
   dtmf 2 -> reschedule.rs_start
   dtmf 9 -> operator reason=requested
   intent emergency|complaint|medical|operator -> operator reason=human_only
   intent confirm -> confirm_do
-  intent cancel -> cancel_confirm
+  intent cancel -> cancel_offer
   intent reschedule -> reschedule.rs_start
   yes -> confirm_do
   silence -> existing_menu
@@ -417,8 +270,8 @@ state cancel_confirm
   dtmf 2 -> existing_menu
   yes -> cancel_do
   no -> existing_menu
-  silence -> cancel_confirm
-  timeout 15s -> cancel_confirm
+  silence -> cancel_offer
+  timeout 15s -> cancel_offer
   retry 2 -> operator reason=no_valid_input
 
 state cancel_do
@@ -446,3 +299,72 @@ state operator
   say "Перевожу на регистратора."
   transfer reason=$reason
   end transfer
+
+state candidate_check
+  switch specialty_candidate
+  case none -> book_specialty_unknown
+  default -> candidate_confirm
+
+state candidate_confirm
+  say "Вы имеете в виду специальность {specialty_candidate_label}? Один — да. Два — назвать иначе."
+  listen 15s
+  dtmf 1 -> candidate_accept
+  dtmf 2 -> book_ask_specialty
+  yes -> candidate_accept
+  no -> book_ask_specialty
+  timeout 15s -> candidate_confirm
+  retry 2 -> operator reason=specialty_unclear
+
+state candidate_accept
+  set specialty = $specialty_candidate
+  goto book_referral_check
+
+# Source DOCX paragraphs 0821/1106: offer rescheduling once, never insist.
+state cancel_offer
+  say "Вместо отмены можно перенести запись на другой день. Хотите перенести? Один — перенести. Два — продолжить отмену."
+  listen 15s
+  dtmf 1 -> reschedule.rs_start
+  dtmf 2 -> cancel_confirm
+  yes -> reschedule.rs_start
+  no -> cancel_confirm
+  intent reschedule -> reschedule.rs_start
+  intent cancel -> cancel_confirm
+  timeout 15s -> cancel_offer
+  retry 2 -> operator reason=cancel_unclear
+
+# Source C-02: ask about GP when a verified electronic referral is absent.
+state book_no_referral
+  say "Действующее направление в картотеке не найдено. Записать вас к участковому терапевту? Один — да. Два — регистратор."
+  listen 15s
+  dtmf 1 -> book_set_1
+  dtmf 2 -> operator reason=referral_not_verified
+  yes -> book_set_1
+  no -> operator reason=referral_not_verified
+  timeout 15s -> book_no_referral
+  retry 2 -> operator reason=referral_unclear
+
+# Source C-03/C-04: never silently select the first appointment.
+state existing_choose
+  say "У вас несколько записей. {booking_options} Назовите номер нужной записи. Для других вариантов — звёздочка."
+  ask booking_choice digits 1 timeout 20s
+  listen 20s
+  ok -> existing_select
+  timeout -> existing_choose
+  retry 2 -> operator reason=booking_not_selected
+
+state existing_select
+  call crm.select_booking patient_id=$patient_id choices=$booking_candidate_ids index=$booking_choice
+  ok -> existing_route
+  error -> existing_start
+
+# Source section 3.8 / I-13: boundary response; only a consultation can follow.
+state medical_boundary
+  say "Я не могу назначать лечение или советовать лекарства. Могу помочь записаться к врачу. Записать вас? Один — да. Два — регистратор."
+  listen 15s
+  dtmf 1 -> intent_book
+  dtmf 2 -> operator reason=medical_question
+  yes -> intent_book
+  no -> operator reason=medical_question
+  intent operator -> operator reason=requested
+  timeout 15s -> medical_boundary
+  retry 2 -> operator reason=medical_question

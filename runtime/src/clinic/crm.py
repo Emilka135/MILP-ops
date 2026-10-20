@@ -90,6 +90,7 @@ class StrictStand:
 
 
 EXTRA_SCHEMA = """
+CREATE TABLE IF NOT EXISTS verified_referrals(patient_id INTEGER NOT NULL, specialty TEXT NOT NULL, valid_until TEXT NOT NULL, source TEXT NOT NULL, PRIMARY KEY(patient_id,specialty));
 CREATE TABLE IF NOT EXISTS operations (
  key TEXT PRIMARY KEY, op TEXT NOT NULL, fingerprint TEXT NOT NULL, state TEXT NOT NULL,
  args TEXT NOT NULL, result TEXT, remote_id INTEGER, created_at TEXT NOT NULL);
@@ -157,6 +158,15 @@ class ClinicCrm:
                 if set(args) - fields - {"call_id", "request_id", "operation_key", "locked_patient_id"}:
                     return "error", {"error": "invalid_identity_fields"}
                 return IdentityLookup(self.reg).lookup({key: value for key, value in args.items() if key in fields}, locked_patient_id=args.get("locked_patient_id"), today=now().date())
+            if op == "referral_required":
+                from .specialty_dictionary import SpecialtyDictionary
+                policy=SpecialtyDictionary().policy(str(args.get("specialty", "")))
+                if policy is None:return "error", {"error":"unknown_specialty"}
+                required=policy.get("referral_required")
+                if required is None:return "error",{"error":"specialty_policy_not_configured"}
+                return ("required" if required else "not_required"), {"needs_referral":required,"specialty_dative":policy['label'].lower()}
+            if op == "check_referral":
+                return ("ok" if self.referral_verified(args.get("patient_id"),args.get("specialty")) else "missing"), {}
             if op == "agent_slots":
                 from .planner_store import slots
 
@@ -165,6 +175,10 @@ class ClinicCrm:
                 with self.reg._lock:
                     if self.stand and (self._last_slots_sync is None or time.monotonic() - self._last_slots_sync > 300):
                         return "error", {"error": "availability_not_synchronized"}
+                    from .specialty_dictionary import SpecialtyDictionary
+                    policy=SpecialtyDictionary().policy(str(args.get('specialty','')))
+                    if policy is None or policy.get('referral_required') is None:return 'error',{'error':'specialty_policy_not_configured'}
+                    args={**args,"referral_verified":self.referral_verified(args.get("patient_id"),args.get("specialty"))}
                     status, result = slots(self.reg, args, now())
                     result["availability_source"] = "imported_schedule_and_synced_visits" if self.stand else "local_demo_schedule"
                     return status, result
@@ -256,11 +270,13 @@ class ClinicCrm:
                 supplied = str(args.get("card_no", ""))
                 if patient is None or not supplied or supplied != str(patient.card_no):
                     return "mismatch", {}
+                booking=self.reg.booking(int(args.get("booking_id") or 0))
+                if not booking or booking.patient_id!=patient.id or booking.status!="booked":return "mismatch", {}
                 self.reg._x(
                     "UPDATE dial_attempts SET outcome='verified' WHERE booking_id=? AND outcome IN ('dialing','answered')",
                     (int(args.get("booking_id", 0)),),
                 )
-                return "ok", {}
+                return "ok", {**self.module._patient_payload(patient), "booking_id":booking.id}
             if op in ("book", "cancel", "reschedule", "confirm"):
                 with self.mutations:
                     return self.mutate(op, args)
@@ -373,6 +389,13 @@ class ClinicCrm:
         except (RegistryError, ValueError, TypeError, KeyError) as exc:
             return "error", {"error": type(exc).__name__}
 
+    def referral_verified(self, patient, specialty):
+        from .specialty_dictionary import SpecialtyDictionary
+        policy=SpecialtyDictionary().policy(str(specialty or ""))
+        if policy is None:return False
+        return bool(self.reg._q("SELECT 1 FROM verified_referrals WHERE patient_id=? AND specialty=? AND valid_until>=? AND source<>''",
+            (patient,policy['id'],now().date().isoformat())))
+
     def mutate(self, op, args):
         key = str(args.get("operation_key") or "")
         if not key:
@@ -415,10 +438,25 @@ class ClinicCrm:
             )[0]
             if not doctor["active"] or slot.starts_at <= now().replace(tzinfo=None):
                 return "error", {"error": "doctor inactive or slot in past"}
-        pid = int(clean.get("patient_id") or old.patient_id)
+        if old and clean.get("patient_id") is not None and int(clean["patient_id"])!=old.patient_id:
+            return "error", {"error":"booking_patient_mismatch"}
+        pid = int(clean.get("patient_id") or (old.patient_id if old else 0))
         p = self.reg.patient_by_id(pid)
         if p is None:
             return "error", {"error": "patient not found"}
+        if not p.birth_date or not p.first_name or not p.last_name:
+            return "error", {"error":"incomplete_patient_identity"}
+        if slot:
+            from .specialty_dictionary import SpecialtyDictionary
+            policy=SpecialtyDictionary().policy(slot.specialty)
+            doctors=self.reg._q("SELECT needs_referral FROM doctors WHERE id=?",(slot.doctor_id,))
+            if policy is None:return "error", {"error":"unknown_specialty"}
+            if policy.get('referral_required') is None:return 'error',{'error':'specialty_policy_not_configured'}
+            required=policy['referral_required'] or bool(doctors[0]['needs_referral'])
+            if required and not self.referral_verified(pid,slot.specialty):
+                return "error", {"error":"referral_not_verified"}
+            if self.stand and (self._last_slots_sync is None or time.monotonic()-self._last_slots_sync>300):
+                return "error", {"error":"availability_not_synchronized"}
         # Persist intent and reserve the target BEFORE contacting the remote API.
         with self.reg._lock:
             conn = self.reg._conn

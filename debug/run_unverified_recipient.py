@@ -15,7 +15,7 @@ def execute(base, tts_url, folder="debug/runs/answering-machine"):
     (folder / "audio").mkdir(parents=True, exist_ok=True)
     prefix = "recipient-" + uuid.uuid4().hex
     request(base, "call.start", {"call_id": prefix, "caller_phone": "79165550000"})
-    for digit in "112311199211":
+    for digit in "121003#2311199211":
         state = request(base, "call.dtmf", {"call_id": prefix, "digit": digit})
     assert state["status"] == "booked", state
     bid = state["vars"]["booking_id"]
@@ -81,7 +81,7 @@ def execute(base, tts_url, folder="debug/runs/answering-machine"):
         "call.start",
         {"call_id": call, "flow": "reminder", "vars": {"booking_id": bid}},
     )
-    for digit in "1003#01":
+    for digit in "1003#021":
         state = request(base, "call.dtmf", {"call_id": call, "digit": digit})
     assert state["status"] == "cancelled", state
     report = {

@@ -16,24 +16,20 @@ import wave
 
 from .admin_rpc import module_call
 from .module_settings import configured
-from .sandbox_store import SandboxStore
-from calls.nlu.normalize import parse_yes_no
+from .sandbox_store import SandboxStore,clinic_now
+from .specialty_dictionary import SpecialtyDictionary
+from .dialogue_plan import compile_plan
 
 CATALOG_SOURCE = 'docs/requirements/clinic-regulation.txt, раздел 2.3'
-POLICY_VERSION = 'sandbox-booking-2'
-SPECIALISTS = (
- ('cardiology','Кардиолог','кардиолог',True), ('neurology','Невролог','невролог',True),
- ('surgery','Хирург','хирург',False), ('ophthalmology','Офтальмолог','офтальмолог|окулист|глазни[кцч]',False),
- ('ent','Оториноларинголог',r'\bлор\b|оториноларинголог|ухо.?горло',False),
- ('endocrinology','Эндокринолог','эндокринолог',True), ('gastroenterology','Гастроэнтеролог','гастроэнтеролог',True),
- ('urology','Уролог','уролог',True), ('pulmonology','Пульмонолог','пульмонолог',True),
-)
-TITLES = dict(menu='Куда записаться?',specialist='Выбираем специалиста',referral='Уточняем направление',
+POLICY_VERSION = 'sandbox-booking-3'
+TITLES = dict(identity_policy='Полис ОМС',identity_confirm='Проверяем уже названное ФИО',district='Уточняем участок',doctor='Выбираем врача',menu='Куда записаться?',specialist='Выбираем специалиста',referral='Уточняем направление',
  therapist_first='Сначала участковый врач',confirm='Проверяем выбранный вариант',identity_name='Фамилия, имя и отчество',
  identity_birth='Дата рождения',slots='Свободные талоны',booking_confirm='Подтверждение записи',
  done='Запись в тестовой таблице',operator='Помощь регистратора',emergency='Экстренное обращение',closed='Звонок завершён')
 PROMPTS = {
  'menu':'Здравствуйте! Куда хотите записаться? К участковому врачу — один. К специалисту — два. На исследование или анализы — три. Можно ответить голосом.',
+ 'identity_policy':'Не удалось найти пациента по ФИО и дате рождения. Назовите номер полиса ОМС: шестнадцать цифр. Для помощи регистратора нажмите звёздочку.',
+ 'district':'Номер участка в картотеке отсутствует. Назовите свой участок. Если не знаете, переведу на регистратора: нажмите звёздочку.',
  'specialist':'Назовите специалиста. Для помощи регистратора нажмите ноль.',
  'referral':'Есть направление? Да — один. Нет — ноль. Регистратор — два.',
  'therapist_first':'Без направления сначала обратитесь к участковому врачу. Выбрать участкового врача — один. Назад — ноль. Регистратор — два.',
@@ -47,8 +43,9 @@ TERMINAL = {'done','operator','emergency','closed'}
 BRANCHES = {
  'menu':['specialist','referral','confirm','operator','emergency'], 'specialist':['referral','confirm','operator'],
  'referral':['confirm','therapist_first','operator'], 'therapist_first':['confirm','menu','operator'],
- 'confirm':['identity_name','menu','operator'], 'identity_name':['identity_birth','operator'],
- 'identity_birth':['slots','operator'], 'slots':['booking_confirm','operator'], 'booking_confirm':['done','slots','operator'],
+ 'district':['doctor','slots','operator'],'doctor':['slots','district','operator'],'identity_policy':['district','doctor','slots','operator'],'identity_confirm':['identity_birth','identity_name','operator'],
+ 'confirm':['identity_confirm','identity_name','menu','operator'], 'identity_name':['identity_birth','operator'],
+ 'identity_birth':['identity_name','identity_policy','district','doctor','slots','operator'], 'slots':['booking_confirm','operator'], 'booking_confirm':['done','slots','operator'],
 }
 MAX_SECONDS = 12
 MAX_WAV_BYTES = MAX_SECONDS*48000*2+4096
@@ -66,6 +63,11 @@ class Call:
     consent: bool = False
     flags: list = field(default_factory=list)
     patient_name: str = ''
+    name_offered: bool = False
+    identity_misses: int = 0
+    doctor: dict | None = None
+    doctors: list = field(default_factory=list)
+    district: str | None = None
     patient: dict | None = None
     offers: list = field(default_factory=list)
     slot: dict | None = None
@@ -73,6 +75,8 @@ class Call:
     queries: list = field(default_factory=list)
     key: str = ''
     analysis: bool = False
+    registrar: str = '100'
+    started: float = field(default_factory=time.monotonic)
     modules: dict = field(default_factory=dict)
     extensions: list = field(default_factory=list)
     lock: threading.Lock = field(default_factory=threading.Lock)
@@ -81,6 +85,7 @@ class Call:
 class DemoCalls:
     def __init__(self,rpc=None,clock=None,limit=32,ttl=900,store=None,settings=None,tmp=None):
         self.rpc=rpc or module_call
+        self.dictionary=SpecialtyDictionary()
         self.clock=clock or time.monotonic
         self.limit,self.ttl=limit,ttl
         self.calls={};self.lock=threading.Lock();self.voice_cache={}
@@ -96,7 +101,7 @@ class DemoCalls:
         op=route[len(prefix):]
         if op=='catalog' and not post:
             return {'source':CATALOG_SOURCE,'items':[{'id':'therapist','label':'Участковый терапевт'},
-                {'id':'specialist','label':'Врач-специалист','details':[{'id':v[0],'label':v[1],'referral_required':v[3]} for v in SPECIALISTS]}]}
+                {'id':'specialist','label':'Врач-специалист','details':self.dictionary.read()['specialties']}]}
         if not post or op not in {'start','audio','text','dtmf','end','inspect'}:raise ValueError('Неизвестное действие пробного звонка')
         if op=='start':
             if type(data.get('consent_audio',False)) is not bool:raise ValueError('Укажите согласие на аудиозапись')
@@ -106,7 +111,7 @@ class DemoCalls:
                 for k in expired:self.calls.pop(k)
                 if len(self.calls)>=self.limit or sum(c.owner==client for c in self.calls.values())>=4:raise ValueError('Слишком много пробных звонков. Завершите предыдущий.')
                 key=secrets.token_urlsafe(32)
-                call=Call(client,now+self.ttl,consent=data.get('consent_audio',False),key=key,modules=self.settings.read())
+                call=Call(client,now+self.ttl,registrar=str(data.get('_line') or '100'),consent=data.get('consent_audio',False),key=key,modules=self.settings.read())
                 if call.modules['scenario_extensions']['enabled']:
                     from .scenario_extensions import snapshot
                     call.extensions=snapshot(self.store,data.get('_line','100'))
@@ -156,7 +161,10 @@ class DemoCalls:
             source['state']='demo.'+call.state
             source['step_index']=len(call.trace)-1
             call.transcript.append(source)
+            source_step=len(call.trace)-1
             prompt=self._advance(call,text,digit)
+            seen={q['id'] for q in call.queries}
+            call.queries.extend({**q,'step_index':source_step,'state':source['state']} for q in self.store.queries(key) if q['id'] not in seen)
             call.expires=self.clock()+self.ttl
             result=self._result(key,call,prompt)
             result['recognized']=source if op=='audio' else None
@@ -197,40 +205,133 @@ class DemoCalls:
         return call.modules[module]['enabled'] and self.settings.read()[module]['enabled']
 
     def _choose(self,call,item):
+        doc=self.dictionary.read()
+        call.plan=compile_plan(doc['revision'],item['id'],item.get('referral_required'))
+        call.dictionary_revision=doc['revision']
         call.selection=item
-        self._move(call,'referral' if item['referral_required'] else 'confirm')
+        call.patient=None;call.slot=None;call.offers=[];call.doctor=None;call.doctors=[];call.district=None
+        if item.get('referral_required') is None:return self._handoff(call,'specialty_policy_not_configured')
+        self._move(call,'referral' if any(n.name=='referral_lookup' for n in call.plan) else 'confirm')
+        return self._prompt(call)
+
+    def _back(self,call):
+        if call.booking:return self._handoff(call,'change_after_completed_operation')
+        previous={'identity_birth':'identity_name','doctor':'identity_birth','district':'identity_birth','identity_policy':'identity_name','identity_confirm':'confirm','slots':'doctor' if call.doctors else 'identity_birth','booking_confirm':'slots','identity_name':'confirm','confirm':'specialist','referral':'specialist','therapist_first':'referral'}
+        target=previous.get(call.state,'menu')
+        if call.state=='confirm' and call.selection and call.selection['id'] in {'therapist','pediatrician'}:target='menu'
+        if target in {'identity_name','identity_birth'}:call.patient=None;call.slot=None;call.offers=[];call.doctor=None;call.doctors=[];call.district=None
+        self._move(call,target)
         return self._prompt(call)
 
     def _prompt(self,call):
-        if call.state=='confirm':return 'Выбрано: '+call.selection['label']+'. Продолжить — один. Назад — ноль. Регистратор — два.'
+        if call.state=='identity_confirm':return 'Вы уже назвали: '+call.patient_name+'. Это ФИО пациента? Да — один. Исправить — ноль.'
+        if call.state=='doctor':return 'Выберите врача: '+'. '.join(f'{i+1}: {d["full_name"]}' for i,d in enumerate(call.doctors))+'. Назовите номер варианта или ФИО врача.'
+        if call.state=='confirm':
+            label=call.selection['label'].lower()
+            words=label.split()
+            if call.selection.get('id')=='diagnostic' or label in {'исследования','исследование или лабораторные анализы'}:target='на исследование или анализы'
+            elif words[-1].endswith(('лог','евт','атр','ург')):
+                words[-1]+='у'
+                words=[w[:-2]+'ому' if w.endswith(('ый','ий')) else w for w in words]
+                target='к '+' '.join(words)
+            else:target='к врачу по специальности «'+label+'»'
+            return 'Вы хотите записаться '+target+'? Да — один. Нет — ноль, переведу на оператора.'
         if call.analysis and call.state in {'slots','booking_confirm'}:
             return 'В разговоре обсуждается выбор времени.' if call.state=='slots' else 'В разговоре требуется подтверждение выбранного времени.'
         if call.state=='slots':
-            return 'Доступные тестовые талоны. '+'. '.join(f'{i+1}: {s["starts_at"][:16].replace("T"," в ")}' for i,s in enumerate(call.offers))+'. Назовите номер варианта. Для регистратора нажмите звёздочку.'
-        if call.state=='booking_confirm':return 'Тестовая запись: '+call.selection['label']+', '+call.slot['starts_at'][:16].replace('T',' в ')+'. Подтвердить — один. Выбрать другое время — ноль.'
+            return 'Доступные тестовые талоны. '+'. '.join(f'{i+1}: {s["doctor"]}, {self._spoken_slot(s)}' for i,s in enumerate(call.offers))+'. Назовите номер варианта. Для регистратора нажмите звёздочку.'
+        if call.state=='booking_confirm':return 'Тестовая запись: '+call.selection['label']+', '+call.slot['doctor']+', '+self._spoken_slot(call.slot)+'. Подтвердить — один. Выбрать другое время — ноль.'
         return PROMPTS[call.state]
+
+    @staticmethod
+    def _spoken_slot(slot):
+        from calls.tts.verbalize import date_to_words,time_to_words
+        starts=datetime.fromisoformat(slot['starts_at'])
+        return date_to_words(starts.date())+', в '+time_to_words(starts.time())
 
     def _handoff(self,call,reason):
         call.flags.append(reason)
         self._move(call,'operator')
         return PROMPTS['operator']
 
+    def _availability(self,call):
+        if not self.enabled(call,'crm'):return self._handoff(call,'crm_disabled')
+        if call.selection['referral_required'] and not self.store.has_referral(call.key,call.patient['id'],call.selection['id']):return self._handoff(call,'referral_not_verified')
+        district=call.district or (None if self.store.source_path else call.patient.get('district'))
+        if call.selection['id'] in {'therapist','pediatrician'} and not district:
+            self._move(call,'district');return self._prompt(call)
+        call.doctors=self.store.doctors(call.key,call.selection['id'],district if call.selection['id'] in {'therapist','pediatrician'} else None)
+        if len(call.doctors)>1:
+            self._move(call,'doctor');return self._prompt(call)
+        if len(call.doctors)==1:call.doctor=call.doctors[0]
+        elif call.selection['id'] in {'therapist','pediatrician'}:
+            return ('В исходной выгрузке нет связи этого участка с врачом. Уточнить её поможет регистратор. ' if self.store.source_path else '')+self._handoff(call,'district_doctor_not_found')
+        elif self.store.source_path:return self._handoff(call,'specialty_doctor_not_found_in_source')
+        return self._offer_slots(call)
+
+    def _offer_slots(self,call):
+        preference=self.store.saved_preference(call.patient['id']) if self.enabled(call,'preferences') else None
+        call.offers=self.store.slots(call.key,call.selection['id'],preference,call.doctor['full_name'] if call.doctor else None)
+        if not call.offers:return self._handoff(call,'no_slots')
+        self._move(call,'slots');return self._prompt(call)
+
     def _advance(self,call,text,digit):
         low=re.sub(r'[^а-яё0-9\s]',' ',text.lower()).replace('ё','е').strip()
         low=re.sub(r'\s+',' ',low)
-        # Global interruptions precede both number parsing and slot collection.
-        if re.search(r'задыха|не могу дышать|потер[а-я]+ сознани|скорая помощь|очень сильн[а-я]* бол',low):
-            call.flags.append('emergency');self._move(call,'emergency');return PROMPTS['emergency']
-        if re.search(r'\b(?:нах[уе][йр]|на\s+х[уе][йр]|хуй|хер|бля[дт][ьб]?|ебан\w*|пош[ео]л\w*|идиот\w*|заткнись)\b',low):return self._handoff(call,'abusive_language')
-        if digit=='*' or re.search(r'оператор|регистратор|жив[а-я]+\s+человек',low):return self._handoff(call,'requested_operator')
-        if re.search(r'операци|сустав|диагноз|лечени|какие таблетки|жалоб',low):return self._handoff(call,'nonstandard_medical_request')
-        if re.fullmatch(r'(?:здравствуйте|здравствуй|добрый (?:день|вечер)|доброе утро|алло|ало|привет)(?: пожалуйста)?',low):return 'Я вас слышу. '+self._prompt(call)
-        if re.fullmatch(r'(?:что|че|чего|а|повтори\w*|не понял\w*|не слыш\w*|и че ты от меня хочешь|что ты от меня хочешь)',low):return 'Повторю вопрос. '+self._prompt(call)
-        if re.search(r'пицц|пепперони|доставк[ау]|не хочу.*запис',low):
-            call.attempts+=1
-            if call.attempts>=2:return self._handoff(call,'out_of_scope')
-            return 'Вы позвонили в регистратуру поликлиники. Я помогаю с записью к врачу. '+self._prompt(call)
-        if digit=='#':self._move(call,'menu');return PROMPTS['menu']
+        meaning=None
+        yes_no=None
+        if text:
+            if not self.enabled(call,'nlu'):return self._handoff(call,'nlu_disabled')
+            context={'text':text,'today':clinic_now().date().isoformat(),'state':call.state,'identity_field':'birth_date' if call.state=='identity_birth' else 'full_name' if call.state=='identity_name' else None}
+            try:result=self.rpc('nlu','interpret',context)
+            except ValueError:return self._handoff(call,'nlu_unavailable')
+            meaning=result.get('semantic')
+            if not meaning:raise ValueError('Модуль понимания речи не вернул семантический результат')
+            call.transcript[-1]['interpretation']=result
+            intent=result.get('intent','unknown');yes_no=result.get('yes_no')
+            if intent=='record_opt_out':
+                import shutil
+                call.consent=False;shutil.rmtree(self.store.audio/call.key,ignore_errors=True)
+                return 'Хорошо, аудиозапись разговора отключена. '+self._prompt(call)
+            if intent=='self_identity':return 'Я виртуальный помощник поликлиники. '+self._prompt(call)
+            if intent in {'home_visit','results','paid','waitlist','attachment'}:return self._handoff(call,'scenario_integration_not_enabled:'+str(result.get('source_scenario')))
+            if intent=='emergency':call.flags.append('emergency');self._move(call,'emergency');return PROMPTS['emergency']
+            if intent in {'operator','medical','complaint'}:return self._handoff(call,'abusive_language' if 'abusive_language' in result.get('flags',[]) else 'human_only_'+intent)
+            if intent=='identity_question' and call.state in {'identity_name','identity_birth','identity_policy'}:
+                return 'Назовите данные пациента, которого нужно записать. '+self._prompt(call)
+            if intent=='already_said':
+                return ('Сохранил названное ФИО: '+call.patient_name+'. ' if call.patient_name else 'Не удалось надёжно выделить ФИО пациента из предыдущей фразы. ')+self._prompt(call)
+            if call.state in {'menu','specialist'}:
+                # Capture structured data without treating it as verified identity.
+                match=re.search(r"(?<![А-Яа-яЁё])([А-ЯЁ][а-яё'-]+)\s+([А-ЯЁ][а-яё'-]+)\s+([А-ЯЁ][а-яё'-]+)(?![А-Яа-яЁё])",text)
+                if match and any(w.casefold().endswith(('вич','вна','ична','оглы')) for w in match.groups()):
+                    words=list(match.groups())
+                    if words[1].casefold().endswith(('вич','вна','ична','оглы')):words=[words[2],words[0],words[1]]
+                    call.patient_name=' '.join(words);call.name_offered=True
+            if intent in {'greeting','repeat'}:return self._prompt(call)
+            if intent=='back':
+                return self._back(call)
+            if intent in {'cancel','reschedule','my_booking'}:return self._handoff(call,'existing_booking_request')
+            specialty=meaning.get('specialty',{})
+            if specialty.get('status')=='ambiguous' and call.state in {'menu','specialist'}:
+                return 'Вы назвали несколько специальностей. Уточните, к какому врачу нужна запись.'
+            if specialty.get('status')=='candidate' and call.state in {'menu','specialist'}:
+                item=next((x for x in self.dictionary.read()['specialties'] if x['id']==specialty['id']),None)
+                if item:
+                    call.candidate=item
+                    return 'Вы имеете в виду '+item['label']+'? Подтвердите или назовите иначе.'
+            if getattr(call,'candidate',None) and yes_no is True:
+                item=call.candidate;call.candidate=None
+                return self._choose(call,item)
+            if getattr(call,'candidate',None) and yes_no is False:call.candidate=None;return self._prompt(call)
+            if specialty.get('status')=='resolved' and call.state in {'menu','specialist'}:
+                item=self.dictionary.policy(specialty['id'])
+                if result.get('vars',{}).get('patient_group')=='child':item={**item,'label':'Детский '+item['label'].lower(),'patient_group':'child'}
+                return self._choose(call,item)
+        if getattr(call,'candidate',None) and digit=='1':
+            item=call.candidate;call.candidate=None;return self._choose(call,item)
+        if digit=='*':return self._handoff(call,'requested_operator')
+        if digit=='#':return self._back(call)
         if self.enabled(call,'scenario_extensions'):
             for version in sorted(call.extensions,key=lambda v:v['scope']=='global'):
                 for event in version['events']:
@@ -240,28 +341,54 @@ class DemoCalls:
             digit={'один':'1','одна':'1','первый':'1','первое':'1','два':'2','две':'2','второй':'2','три':'3','третий':'3','ноль':'0'}.get(low)
             if low in set('0123456789'):digit=low
         if call.state=='specialist' and digit=='0':return self._handoff(call,'requested_operator')
-        if call.state=='identity_name':
+        if call.state=='identity_confirm':
+            if digit=='1' or yes_no is True:self._move(call,'identity_birth');return self._prompt(call)
+            if digit=='0' or yes_no is False:call.patient_name='';call.name_offered=False;self._move(call,'identity_name');return self._prompt(call)
+        elif call.state=='identity_name':
             name=re.sub(r'^(?:меня зовут|это|фио)\s+','',text.strip(),flags=re.I).strip(' .!')
-            if re.fullmatch(r"[А-Яа-яЁё'-]+(?:\s+[А-Яа-яЁё'-]+){2}",name):
+            if '?' not in text and re.fullmatch(r"[А-Яа-яЁё'-]+(?:\s+[А-Яа-яЁё'-]+){2}",name):
                 call.patient_name=' '.join(name.split());self._move(call,'identity_birth');return self._prompt(call)
         elif call.state=='identity_birth':
-            from .identity import normalize_birth_date
-            try:birth=normalize_birth_date(text,today=date.today()).isoformat()
-            except (ValueError,TypeError):birth=None
-            if birth:
-                if call.analysis:
-                    call.flags.append('identity_and_referral_not_verified')
-                    self._move(call,'slots');return self._prompt(call)
-                call.patient=self.store.lookup_patient(call.key,call.patient_name,birth)
-                if not call.patient:return self._handoff(call,'patient_not_found')
-                if call.selection['referral_required'] and not self.store.has_referral(call.key,call.patient['id'],call.selection['id']):return self._handoff(call,'referral_not_verified')
-                if not self.enabled(call,'crm'):return self._handoff(call,'crm_disabled')
-                preference=self.store.saved_preference(call.patient['id']) if self.enabled(call,'preferences') else None
-                call.offers=self.store.slots(call.key,call.selection['id'],preference)
-                if not call.offers:return self._handoff(call,'no_slots')
+            from .identity import birth_date_input
+            parsed=birth_date_input(text,today=clinic_now().date())
+            call.transcript[-1]['date_field']=parsed
+            if parsed['status']!='valid':
+                # Clarifying a century does not consume the unrecognized-intent budget.
+                return parsed['message']
+            birth=parsed['value']
+            if call.analysis:
+                call.flags.append('identity_and_referral_not_verified')
                 self._move(call,'slots');return self._prompt(call)
+            if not self.enabled(call,'crm'):return self._handoff(call,'crm_disabled')
+            call.patient=self.store.lookup_patient(call.key,call.patient_name,birth)
+            if not call.patient:
+                call.identity_misses+=1
+                if call.identity_misses==1:
+                    self._move(call,'identity_name')
+                    return 'Пациент не найден по ФИО и дате рождения. Уточните ФИО, при необходимости по буквам. Затем я повторно уточню дату рождения.'
+                self._move(call,'identity_policy');return self._prompt(call)
+            return self._availability(call)
+        elif call.state=='identity_policy':
+            from .identity import DIGIT_WORDS
+            words=text.casefold().strip(' .!').split()
+            policy=''.join(DIGIT_WORDS.get(w,w) for w in words)
+            if re.fullmatch(r'[0-9]{16}',policy):
+                if not self.enabled(call,'crm'):return self._handoff(call,'crm_disabled')
+                call.patient=self.store.lookup_policy(call.key,policy)
+                if call.patient:return self._availability(call)
+                return self._handoff(call,'patient_not_found_after_oms')
+        elif call.state=='district':
+            if digit and digit.isdigit():number=digit
+            else:
+                from calls.nlu.normalize import numberize,Num
+                values=numberize(text.lower().strip(' .!').split())
+                number=str(values[0].value) if len(values)==1 and isinstance(values[0],Num) else None
+            if number and int(number)>0:call.district=number;return self._availability(call)
+        elif call.state=='doctor':
+            selected=call.doctors[int(digit)-1] if digit and digit.isdigit() and 1<=int(digit)<=len(call.doctors) else next((d for d in call.doctors if d['full_name'].casefold().replace('ё','е')==low),None)
+            if selected:call.doctor=selected;return self._offer_slots(call)
         elif call.state=='slots':
-            if call.analysis and (digit in {'1','2','3'} or parse_yes_no(text) is True or re.search(r'\b\d{1,2}[:.]\d{2}\b|утр|вечер|завтра',low)):
+            if call.analysis and (digit in {'1','2','3'} or yes_no is True or re.search(r'\b\d{1,2}[:.]\d{2}\b|утр|вечер|завтра',low)):
                 self._move(call,'booking_confirm');return self._prompt(call)
             if digit and digit.isdigit() and 1<=int(digit)<=len(call.offers):
                 call.slot=call.offers[int(digit)-1];self._move(call,'booking_confirm');return self._prompt(call)
@@ -272,44 +399,36 @@ class DemoCalls:
                     call.offers=self.store.slots(call.key,call.selection['id'],preference)
                     return 'Предпочтение сохранено. '+(self._prompt(call) if call.offers else self._handoff(call,'no_slots_for_preference'))
         elif call.state=='booking_confirm':
-            yes_no=parse_yes_no(text) if text else None
             if digit=='0' or yes_no is False:self._move(call,'slots');return self._prompt(call)
             if digit=='1' or yes_no is True:
                 if call.analysis:
                     call.flags.append('booking_status_not_verified')
                     self._move(call,'done');return 'В разговоре прозвучало подтверждение. Результат в МИС не проверен.'
                 if not self.enabled(call,'crm'):return self._handoff(call,'crm_disabled')
-                try:call.booking=self.store.book(call.key,call.patient['id'],call.slot['id'],call.selection['id'],call.selection['referral_required'])
+                policy=self.dictionary.policy(call.selection['id'])
+                if not policy or policy.get('referral_required') is None:return self._handoff(call,'specialty_policy_not_configured')
+                required=policy['referral_required'] or call.selection['referral_required']
+                try:call.booking=self.store.book(call.key,call.patient['id'],call.slot['id'],call.selection['id'],required)
                 except ValueError as exc:
                     call.flags.append('booking_rejected');self._move(call,'slots');call.offers=self.store.slots(call.key,call.selection['id'])
                     return str(exc)+' '+(self._prompt(call) if call.offers else self._handoff(call,'no_slots'))
                 self._move(call,'done');return PROMPTS['done']
         elif call.state in {'referral','confirm','therapist_first'}:
-            yes_no=parse_yes_no(text) if text else None
-            if call.state=='referral' and re.search('направлен',low):
-                yes_no=False if re.search(r'\b(?:нет|не|без)\b',low) else (True if re.search(r'\b(?:есть|имеется|получил[аи]?|дали|выдали)\b|на руках',low) else yes_no)
             if digit=='2':return self._handoff(call,'requested_operator')
             if digit=='1' or (digit is None and yes_no is True):
-                if call.state=='confirm':self._move(call,'identity_name');return self._prompt(call)
+                if call.state=='confirm':self._move(call,'identity_confirm' if call.name_offered else 'identity_name');return self._prompt(call)
                 if call.state=='therapist_first':
-                    child=bool(call.selection and call.selection['label'].startswith('Детский '))
+                    child=bool(call.selection and call.selection.get('patient_group')=='child')
                     return self._choose(call,{'id':'pediatrician' if child else 'therapist','label':'Участковый педиатр' if child else 'Участковый терапевт','referral_required':False})
                 self._move(call,'confirm');return self._prompt(call)
             if digit=='0' or (digit is None and yes_no is False):
+                if call.state=='confirm':return self._handoff(call,'specialty_not_confirmed')
                 self._move(call,'therapist_first' if call.state=='referral' else 'menu');return self._prompt(call)
         else:
-            if re.search(r'анализ|исследован|узи|экг|рентген',low) or (call.state=='menu' and digit=='3'):
-                return self._choose(call,{'id':'diagnostic','label':'Исследование или лабораторные анализы','referral_required':True})
-            if re.search('педиатр',low):return self._choose(call,{'id':'pediatrician','label':'Участковый педиатр','referral_required':False})
-            if re.search('терапевт|участков',low) or (call.state=='menu' and digit=='1'):
-                child=bool(re.search('ребен|детск|доч|сын',low))
-                return self._choose(call,{'id':'pediatrician' if child else 'therapist','label':'Участковый педиатр' if child else 'Участковый терапевт','referral_required':False})
-            selected=next((s for s in SPECIALISTS if re.search(s[2],low)),None)
-            if selected:
-                child=bool(re.search('ребен|детск|доч|сын',low))
-                label=('Детский '+selected[1].lower()) if child else selected[1]
-                return self._choose(call,{'id':selected[0],'label':label,'referral_required':selected[3]})
-            if (call.state=='menu' and digit=='2') or re.search('специалист|врач',low):
+            if call.state=='menu' and digit in {'1','3'}:
+                item=self.dictionary.policy('therapist' if digit=='1' else 'diagnostic')
+                return self._choose(call,item)
+            if call.state=='menu' and digit=='2':
                 self._move(call,'specialist');return PROMPTS['specialist']
         call.attempts+=1
         if call.attempts>=3:return self._handoff(call,'unrecognized_repeatedly')
@@ -317,14 +436,15 @@ class DemoCalls:
 
     def document(self,call):
         titles={**TITLES,**({'done':'Подтверждение со слов участников'} if call.analysis else {})}
-        return {'call_id':call.key,'sandbox':True,'executed':False,'sandbox_booking':call.booking,'state':'demo.'+call.state,
+        return {'call_id':call.key,'registrar':call.registrar,'duration_s':max(0,time.monotonic()-call.started),'sandbox':True,'executed':False,'sandbox_booking':call.booking,'state':'demo.'+call.state,
             'title':titles[call.state],'selection':call.selection,'prompt':call.transcript[-1]['text'] if call.transcript else '',
             'transcript':list(call.transcript),'trace':['demo.'+s for s in call.trace],
             'steps':[{'id':'demo.'+s,'title':titles[s]} for s in call.trace],
             'graph':{'version':POLICY_VERSION,'titles':titles,'branches':BRANCHES},'flags':list(call.flags),
             'consent_audio':call.consent,'finished':call.state in TERMINAL,'catalog_source':CATALOG_SOURCE,
+            'source_data':self.store.source_info(),'queries':list(call.queries),'doctor':call.doctor,'district':call.district,
             'offers':list(call.offers),'patient':call.patient,'analysis':call.analysis,'modules':call.modules,
-            'extensions':call.extensions,
+            'extensions':call.extensions,'dictionary_revision':getattr(call,'dictionary_revision',None),'compiled_plan':[vars(n) for n in getattr(call,'plan',())],
             'audio_files':[p.name for p in sorted((self.store.audio/call.key).glob('*.wav'))] if call.consent else [],
             'proposed_action':'Создана запись только в тестовой SQLite' if call.booking else 'Запись ещё не создана'}
 
@@ -359,6 +479,6 @@ class DemoCalls:
 
 def speech_phrases():
     demo=DemoCalls();phrases=set(PROMPTS.values())
-    for label in ['Участковый терапевт','Участковый педиатр','Исследование или лабораторные анализы']+[v[1] for v in SPECIALISTS]:
+    for label in ['Участковый терапевт','Участковый педиатр','Исследование или лабораторные анализы']+[v['label'] for v in SpecialtyDictionary().read()['specialties']]:
         phrases.add(demo._prompt(Call('',0,state='confirm',selection={'label':label})))
     return sorted(phrases)

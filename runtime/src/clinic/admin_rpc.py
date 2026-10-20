@@ -7,9 +7,9 @@ from calls.services.netutil import open_http
 
 
 def module_call(module, operation, args):
-    if module not in {'crm', 'tts', 'asr'}:
+    if module not in {'crm', 'tts', 'asr', 'nlu'}:
         raise ValueError('Unsupported administration module')
-    url = os.environ.get(module.upper()+'_URL', 'http://127.0.0.1:'+{'crm':'8081','tts':'8085','asr':'8086'}[module])
+    url = os.environ.get(module.upper()+'_URL', 'http://127.0.0.1:'+{'crm':'8081','nlu':'8082','tts':'8085','asr':'8086'}[module])
     request = urllib.request.Request(url.rstrip('/')+'/v1/'+operation,
         data=json.dumps(args,ensure_ascii=False).encode(),headers={'Content-Type':'application/json'},method='POST')
     try:

@@ -102,7 +102,7 @@ def _number_items(tokens):
     return [item.value for item in items]
 
 
-def normalize_birth_date(value, *, today=None):
+def normalize_birth_date(value, *, today=None, minimum=date.min):
     today = today or date.today()
     text = text_value(value).casefold().replace("ё", "е").rstrip(".!?").strip()
     text = re.sub(r"^(?:дата рождения|я родился|я родилась)\s*:?\s+", "", text)
@@ -112,6 +112,19 @@ def normalize_birth_date(value, *, today=None):
         day, month, year = map(int, re.split(r"[./]", text))
         result = date(year, month, day)
     else:
+        # ASR mixes ordinal words with numeric month/year and punctuation.
+        numeric_text = re.sub(r"[.,/]", " ", text)
+        numeric_text = re.sub(r"\s+(?:года|год|г)$", "", numeric_text).strip()
+        items = numberize(numeric_text.split())
+        if len(items) == 5 and all(isinstance(item, Num) for item in items) and items[0].value==0 and items[2].value==0:
+            items=[Num(items[1].value),Num(items[3].value),items[4]]
+        if len(items) == 3 and all(isinstance(item, Num) for item in items):
+            day, month, year = [item.value for item in items]
+            if year < 1000:raise ValueError("birth_year_required")
+            result = date(year, month, day)
+            if result > today:raise ValueError("birth_date_in_future")
+            if result < minimum:raise ValueError("birth_date_before_minimum")
+            return result
         month_tokens = re.findall(r"[а-я]+", text)
         found_months = [token for token in month_tokens if token in MONTHS]
         if found_months:
@@ -144,8 +157,40 @@ def normalize_birth_date(value, *, today=None):
             result = date(int(digits[4:]), int(digits[2:4]), int(digits[:2]))
     if result > today:
         raise ValueError("birth_date_in_future")
+    if result < minimum:
+        raise ValueError("birth_date_before_minimum")
     return result
 
+
+
+def birth_date_input(value, *, today=None, minimum=date.min):
+    """Field contract: Gregorian calendar, inclusive bounds, no age/century guess."""
+    today = today or date.today()
+    bounds = {'type':'date', 'purpose':'birth_date', 'minimum':minimum.isoformat(),
+              'maximum':today.isoformat(), 'year_digits':4, 'century_inference':False}
+    try:
+        result=normalize_birth_date(value,today=today,minimum=minimum)
+        return {'status':'valid','value':result.isoformat(),'field':bounds}
+    except (ValueError,TypeError) as exc:
+        text=str(value).casefold().replace('ё','е')
+        partial = bool(re.fullmatch(r'\s*\d{1,2}[./]\d{1,2}[./]\d{2}\s*[.!]?\s*',text))
+        # A recognized partial year needs a century clarification, never a
+        # moving 100-year window that would exclude centenarians.
+        year_words = re.sub(r'\s+(?:года|год|г)[.!]?$', '', text).strip()
+        month=next((m for m in MONTHS if re.search(r'\b'+m+r'\b',year_words)),None)
+        if month:
+            try:partial = partial or 0 <= _number_items(year_words.split(month)[1].split())[0] < 100
+            except (ValueError,IndexError):pass
+        items=numberize(re.sub(r'[.,/]', ' ',year_words).split())
+        if items and all(isinstance(i,Num) for i in items):
+            values=[i.value for i in items]
+            partial=partial or (len(values)==3 and 0<=values[-1]<100) or (len(values)==5 and values[0]==0 and values[2]==0 and 0<=values[-1]<100)
+        reason='birth_year_required' if partial else str(exc)
+        message = ('Уточните год рождения полностью, с указанием века. Например: тысяча девятьсот девяносто шестой.' if partial else
+                   'Дата рождения не может быть позже сегодняшней даты. Повторите день, месяц и полный год.' if reason=='birth_date_in_future' else
+                   'Дата раньше нижней границы поля. Уточните дату или обратитесь к регистратору.' if reason=='birth_date_before_minimum' else
+                   'Не удалось разобрать календарную дату. Назовите отдельно день, месяц и полный год рождения.')
+        return {'status':'clarify','reason':reason,'message':message,'field':bounds}
 
 def checked_pronunciation(surname, pronunciation=None):
     normalize_surname(surname)

@@ -57,8 +57,9 @@ services:
     build: {context: ., dockerfile: docker/module.Dockerfile, args: {MODULE: nlu, WITH_ML: "${WITH_BGE:-0}"}}
     environment:
       <<: *environment
-      NLU_EMBEDDER: ${NLU_EMBEDDER:-hash}
+      NLU_EMBEDDER: ${NLU_EMBEDDER:-e5}
       NLU_MODEL: ${NLU_MODEL:-/models/USER-bge-m3}
+      NLU_MODEL_PATH: /models/multilingual-e5-small
     volumes: ["./modules/nlu/models:/models:ro", "editor-data:/module-config:ro", "./secrets:/run/secrets:ro"]
     deploy:
       resources:
@@ -107,6 +108,7 @@ services:
       SCENARIO_DIR: /scenarios
       PROMPT_DIR: /audio
       ASR_URL: http://asr:8080
+      NLU_URL: http://nlu:8080
     depends_on:
       audio-init: {condition: service_completed_successfully}
     volumes: ["editor-data:/module-config:ro", "./secrets:/run/secrets:ro", "./modules/tts/models:/models:ro", "./scenarios:/scenarios:ro", "audio-bank:/audio"]
@@ -185,11 +187,13 @@ services:
       EDITOR_ALLOW_BUILD: ${EDITOR_ALLOW_BUILD:-0}
       EDITOR_BUILD_QUEUE: "1"
       AUDIO_BANK_DIR: /audio
+      CLINIC_SOURCE_DB: ${CLINIC_SOURCE_DB:-}
       TTS_URL: http://tts:8080
       CRM_URL: http://crm:8080
       ASR_URL: http://asr:8080
+      NLU_URL: http://nlu:8080
     ports: ["127.0.0.1:${EDITOR_PORT:-8090}:8090"]
-    volumes: ["./scenarios:/workspace/scenarios", "editor-data:/data", "editor-cargo:/workspace/target", "audio-bank:/audio:ro", "control-data:/control:ro", "./secrets:/run/secrets:ro"]
+    volumes: ["./scenarios:/workspace/scenarios", "./imports:/imports:ro", "editor-data:/data", "editor-cargo:/workspace/target", "audio-bank:/audio:ro", "control-data:/control:ro", "./secrets:/run/secrets:ro"]
     depends_on:
       control-init: {condition: service_completed_successfully}
       crm: {condition: service_healthy}
@@ -208,6 +212,7 @@ services:
       EDITOR_DATA: /data
       CARGO_BUILD_JOBS: "2"
       AUDIO_BANK_DIR: /audio
+      CLINIC_SOURCE_DB: ${CLINIC_SOURCE_DB:-}
   nightly:
     <<: *module
     build: {context: ., dockerfile: docker/module.Dockerfile, args: {MODULE: crm}}

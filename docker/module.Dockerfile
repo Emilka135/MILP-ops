@@ -4,9 +4,10 @@ WORKDIR /app
 ENV PIP_DEFAULT_TIMEOUT=20 PIP_RETRIES=1
 COPY requirements/base.txt /app/requirements/base.txt
 RUN --mount=type=cache,id=clinic-voice-pip-base,sharing=locked,target=/root/.cache/pip pip install -r requirements/base.txt
-COPY requirements/asr.txt requirements/tts.txt requirements/nlu.txt /app/requirements/
+COPY requirements/asr.txt requirements/tts.txt requirements/nlu.txt requirements/nlu-semantic.txt /app/requirements/
 ARG MODULE=crm
 ARG WITH_ML=0
+RUN --mount=type=cache,id=clinic-voice-pip-nlu,sharing=locked,target=/root/.cache/pip if [ "$MODULE" = "nlu" ]; then pip install -r requirements/nlu-semantic.txt; fi
 RUN --mount=type=cache,id=clinic-voice-pip-modules,sharing=locked,target=/root/.cache/pip \
     if [ "$WITH_ML" = "1" ]; then \
       if [ "$MODULE" = "tts" ] || [ "$MODULE" = "nlu" ]; then pip install --index-url https://download.pytorch.org/whl/cpu torch==2.14.1; fi; \

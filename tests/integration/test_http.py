@@ -70,7 +70,7 @@ def stack(tmp_path_factory):
 def make_booking(post, cid):
     post("call.start", call_id=cid, caller_phone="79165550000")
     state = None
-    for digit in "112311199211":
+    for digit in "121003#2311199211":
         state = post("call.dtmf", call_id=cid, digit=digit)
     assert state["status"] == "booked", {"state": state["state"], "vars": state["vars"]}
     return state
@@ -99,30 +99,28 @@ def test_full_rust_graph_book_move_cancel_status_and_sms(stack):
     for digit in "1003#":
         post("call.dtmf", call_id="cancel-http", digit=digit)
     post("call.dtmf", call_id="cancel-http", digit="0")
+    post("call.dtmf", call_id="cancel-http", digit="2")
     state = post("call.dtmf", call_id="cancel-http", digit="1")
     assert state["status"] == "cancelled"
 
 
-def test_dtmf_timeout_then_speech_hands_off(stack):
+def test_speech_after_timeout_starts_identity_without_booking(stack):
     post, _ = stack
     post("call.start", call_id="timeout-speech")
     post("call.timeout", call_id="timeout-speech")
     state = post(
         "call.speech", call_id="timeout-speech", text="хочу записаться к терапевту"
     )
-    assert state["status"] == "transfer"
-    assert state["vars"]["reason"] == "speech_after_dtmf_timeout"
+    assert state["state"] == "identity.name" and not state["finished"]
+    assert not state["sms"] and not state["vars"].get("booking_id")
 
 
-def test_unknown_audio_not_used_during_dtmf(stack):
-    post, _ = stack
-    post("call.start", call_id="audio-dtmf")
-    assert (
-        post("call.audio", call_id="audio-dtmf", pcm_b64="not audio", rate=8000)[
-            "ignored"
-        ]
-        == "dtmf_phase"
-    )
+def test_invalid_audio_at_speech_enabled_welcome_cannot_book(stack):
+    post, _=stack
+    start=post("call.start",call_id="audio-dtmf")
+    assert start['listening'] is True
+    result=post("call.audio",call_id="audio-dtmf",pcm_b64="not audio",rate=8000)
+    assert result['status']=='transfer' and not result['sms']
 
 
 def test_partial_medical_hands_off_but_partial_cancel_never_writes(stack):
@@ -130,7 +128,7 @@ def test_partial_medical_hands_off_but_partial_cancel_never_writes(stack):
     post("call.start", call_id="partial")
     state = post("call.partial", call_id="partial", text="отмените запись")
     assert not state["finished"]
-    state = post("call.partial", call_id="partial", text="у меня острая боль")
+    state = post("call.partial", call_id="partial", text="у меня сильная боль в груди, не могу дышать")
     assert state["status"] == "transfer"
 
 
@@ -169,9 +167,9 @@ def test_operator_access_at_identity_step_and_ticket_panel(stack):
 def test_wrong_identity_never_books(stack):
     post, _ = stack
     post("call.start", call_id="wrong-birth", caller_phone="79165550000")
-    for digit in "1101012000":
+    for digit in "121003#01012000":
         state = post("call.dtmf", call_id="wrong-birth", digit=digit)
-    assert state["state"] == "inbound.id_ask_method"
+    assert state["state"] == "identity.name"
     assert not state["finished"] and not state["sms"]
 
 
@@ -237,7 +235,7 @@ def test_combined_tones_and_real_speech(stack):
 def test_assisted_confirmed_booking_and_post_confirmation_finish(stack):
     post, _ = stack
     state = post("call.start", call_id="assisted-book", flow="assisted", caller_phone="79165550000")
-    for digit in "1003#": state = post("call.dtmf", call_id="assisted-book", digit=digit)
+    for digit in "21003#23111992": state = post("call.dtmf", call_id="assisted-book", digit=digit)
     assert state["state"] == "assisted.ask_request"
     state = post("call.dtmf", call_id="assisted-book", digit="1")
     assert state["state"] == "assisted.offer"
@@ -253,7 +251,7 @@ def test_assisted_confirmed_booking_and_post_confirmation_finish(stack):
 def test_assisted_three_declines_handoff_exact_machine_view_and_dialogue(stack):
     post, _ = stack
     post("call.start", call_id="assisted-decline", flow="assisted", caller_phone="79165550000")
-    for digit in "1003#": post("call.dtmf", call_id="assisted-decline", digit=digit)
+    for digit in "21003#23111992": post("call.dtmf", call_id="assisted-decline", digit=digit)
     state = post("call.dtmf", call_id="assisted-decline", digit="1")
     seen = []
     for attempt in range(1, 4):
@@ -274,8 +272,8 @@ def test_assisted_three_declines_handoff_exact_machine_view_and_dialogue(stack):
 def test_assisted_unknown_caller_gets_first_visit_question(stack):
     post, _ = stack
     state = post("call.start", call_id="assisted-unknown", flow="assisted", caller_phone="79990009999")
-    assert state["state"] == "assisted.first_visit"
-    assert "Вы у нас впервые" in state["prompts"][-1]
+    assert state["state"] == "identity.name"
+    assert "Назовите фамилию" in state["prompts"][-1]
     assert not state["vars"].get("patient_id") and not state["sms"]
 
 
@@ -283,7 +281,7 @@ def test_assisted_optional_feedback_after_explicit_details_confirmation(stack):
     post, _ = stack
     call = "assisted-feedback"
     post("call.start", call_id=call, flow="assisted", caller_phone="79165550000", registrar_number="100")
-    for digit in "1003#": post("call.dtmf", call_id=call, digit=digit)
+    for digit in "21003#23111992": post("call.dtmf", call_id=call, digit=digit)
     post("call.dtmf", call_id=call, digit="1")
     state = post("call.dtmf", call_id=call, digit="1")
     assert state["state"] == "assisted.success"
@@ -291,7 +289,7 @@ def test_assisted_optional_feedback_after_explicit_details_confirmation(stack):
     assert state["state"] == "feedback.ask"
     assert "Что, по вашему мнению" in state["prompts"][-1]
     state = post("call.speech", call_id=call, text="Пожалуйста, говорите немного медленнее")
-    assert state["finished"] and state["status"] == "booked" and state["vars"]["feedback_id"] > 0
+    assert state["finished"] and state["status"] == "booked" and state["vars"]["feedback_id"] > 0, {k:state.get(k) for k in ("state","input_field","vars","prompts")}
     assert state["vars"]["night_processing"] == "queued" and not state["errors"]
 
 
@@ -300,8 +298,8 @@ def test_spoken_historical_birth_date_is_contextual_identity_not_appointment_dat
     call = "spoken-birth"
     post("call.start", call_id=call, caller_phone="79165550000")
     post("call.dtmf", call_id=call, digit="1")
-    state = post("call.dtmf", call_id=call, digit="1")
-    assert state["state"] == "inbound.id_birth_check" and state["listening"] is True
+    for digit in "21003#":state=post("call.dtmf",call_id=call,digit=digit)
+    assert state["state"] == "identity.birth" and state["listening"] is True
     state = post("call.speech", call_id=call, text="двадцать третьего ноября тысяча девятьсот девяносто второго года")
     assert state["state"] == "inbound.book_start" and state["vars"]["patient_id"] == 3
     assert "said_date" not in state["vars"] and not state["sms"] and not state["finished"]

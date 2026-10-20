@@ -1,4 +1,5 @@
 import json
+import hashlib
 import shutil
 from pathlib import Path
 from clinic.scenario_editor import Repository
@@ -19,7 +20,10 @@ def test_queue_compiles_a_validated_snapshot_and_publishes_artifact(tmp_path, mo
     job=repo.start_build(before['revision'])
     assert job['queued'] and job['status']=='running'
     path=repo.data/'build-jobs'/(job['id']+'.request.json')
+    main_binary=ROOT/'target/debug/clinic-voice'
+    before_binary=hashlib.sha256(main_binary.read_bytes()).hexdigest() if main_binary.exists() else None
     result=build(path,repo.data,ROOT)
+    if before_binary:assert hashlib.sha256(main_binary.read_bytes()).hexdigest()==before_binary
     assert result['status']=='succeeded',result
     assert repo.build_status()['status']=='succeeded'
     artifact=repo.data/'artifacts'/job['id']

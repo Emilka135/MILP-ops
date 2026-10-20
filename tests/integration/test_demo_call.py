@@ -19,14 +19,15 @@ def wav(rate=16000,seconds=.3,silent=False):
 
 
 @pytest.fixture
-def sandbox():
+def sandbox(semantic_nlu):
     calls=[]
     heard=['Хочу записаться к кардиологу.']
     def rpc(module,op,args):
         calls.append((module,op,args))
         if (module,op)==('tts','preview'):return {'pcm_b64':'explicit-unit-fixture','sample_rate':48000}
         if (module,op)==('asr','transcribe'):return {'text':heard[0],'engine':'unit-dependency'}
-        raise AssertionError('Sandbox must not call CRM, SMS, NLU, or an arbitrary operation')
+        if (module,op)==('nlu','interpret'):return semantic_nlu.handle(op,args)[1]
+        raise AssertionError('Sandbox must not call live CRM, SMS, or an arbitrary operation')
     demo=DemoCalls(rpc=rpc)
     def request(op,data=None,client='browser'):
         return demo.request('/api/demo-call/'+op,True,data or {},client=client)
@@ -56,7 +57,7 @@ def test_real_audio_route_requires_audio_and_uses_asr_before_selection(sandbox):
     heard[0]='У меня нет направления.'
     assert request('audio',{'call_id':key,'wav_b64':wav()})['state']=='demo.therapist_first'
     assert request('dtmf',{'call_id':key,'digit':'1'})['selection']['id']=='therapist'
-    assert all(module in {'asr','tts'} for module,_,_ in calls)
+    assert all(module in {'asr','tts','nlu'} for module,_,_ in calls)
 
 
 def test_referral_future_or_ambiguous_answer_is_not_claimed_as_present(sandbox):
@@ -124,7 +125,7 @@ def test_operator_and_emergency_are_explanations_not_actual_calls(sandbox):
     heard[0]='Я не могу дышать.'
     result=request('audio',{'call_id':key,'wav_b64':wav()})
     assert result['state']=='demo.emergency' and result['executed'] is False
-    assert all(module in {'tts','asr'} for module,_,_ in calls)
+    assert all(module in {'tts','asr','nlu'} for module,_,_ in calls)
 
 
 def test_back_clears_selection_and_child_without_referral_keeps_pediatric_route(sandbox):

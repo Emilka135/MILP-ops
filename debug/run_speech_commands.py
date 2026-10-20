@@ -94,11 +94,13 @@ def execute(base, tts_url, rate=1.5, mode="speech-only", output_dir=None):
         flow="voice" if mode == "speech-only" else "inbound",
     )
     if mode == "speech-only":
-        state = say(call, "Один ноль ноль три.")
+        state = say(call, "Петрова Мария Сергеевна.")
+        assert state["state"]=="identity.birth",state
+        state = say(call, "Двадцать третье ноября тысяча девятьсот девяносто второго года.")
     else:
-        for digit in "11231119922":
+        for digit in "121003#23111992":
             state = post("call.dtmf", call_id=call, digit=digit)
-    assert state["state"] == "inbound.book_ask_specialty", state["state"]
+    assert state["state"] == "inbound.book_start", state["state"]
     state = say(call, "Запишите меня к терапевту.")
     assert state["state"] == "inbound.book_offer", state["state"]
     state = say(call, "Да, подходит.")
@@ -133,13 +135,15 @@ def execute(base, tts_url, rate=1.5, mode="speech-only", output_dir=None):
     post("call.start", call_id=call, flow="reminder", vars={"booking_id": bid})
     say(call, "Один ноль ноль три.")
     state = say(call, "Отмените мою запись.")
-    assert state["state"] == "reminder.cancel_confirm", state["state"]
+    assert state["state"] == "reminder.cancel_offer", state["state"]
+    state = say(call, "Нет, отмените пожалуйста.")
+    assert state["state"]=="reminder.cancel_confirm",state
     state = say(call, "Да, отмените.")
     assert state["status"] == "cancelled" and state["sms"], state
 
     report = {
         "mode": mode,
-        "dtmf_inputs": 0 if mode == "speech-only" else 11,
+        "dtmf_inputs": 0 if mode == "speech-only" else len("121003#23111992"),
         "asr_inputs": len(records),
         "rate": rate,
         "booking_id": bid,

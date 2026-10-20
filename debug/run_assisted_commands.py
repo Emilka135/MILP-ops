@@ -170,11 +170,13 @@ class Acceptance:
         initial = self.post("call.start", call_id=call, flow="assisted",
                             caller_phone="79165550000", registrar_number="100")
         self.record(call, suffix + "-identify", initial, {"input": "start"})
-        assert initial["state"] == "assisted.identify", initial
+        assert initial["state"] == "identity.name", initial
         if self.mode == "speech-only":
-            state = self.say(call, suffix + "-spoken-card", "Один ноль ноль три.")
+            state = self.say(call, suffix + "-spoken-name", "Петрова Мария Сергеевна.")
+            assert state["state"]=="identity.birth",state
+            state = self.say(call, suffix + "-spoken-birth", "Двадцать третье ноября тысяча девятьсот девяносто второго года.")
         else:
-            for index, digit in enumerate("1003#", 1):
+            for index, digit in enumerate("21003#23111992", 1):
                 state = self.tone(call, suffix + f"-card-{index}", digit)
         assert state["state"] == "assisted.ask_request", state
         if self.mode == "tones-only":

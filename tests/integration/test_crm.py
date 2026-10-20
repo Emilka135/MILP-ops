@@ -45,7 +45,11 @@ def clinic(tmp_path, monkeypatch):
     reg = MockRegistry(str(tmp_path / "clinic.sqlite"), datetime(2026, 10, 15, 11))
     seed_demo(reg, date(2026, 10, 16))
     stand = Stand(tmp_path / "stand.json", reg)
-    return ClinicCrm(reg, stand), stand
+    crm=ClinicCrm(reg, stand)
+    # This fixture explicitly represents a freshly reconciled occupancy snapshot.
+    import time
+    crm._last_slots_sync=time.monotonic()
+    return crm, stand
 
 
 def book(c, key="first", slot=1, patient=3):

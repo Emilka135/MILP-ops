@@ -1,0 +1,11 @@
+import React,{useEffect,useState} from 'react';
+export default function QueryInspector({call}){
+ const queries=call?.queries||[],latest=queries.at(-1)?.id;
+ const [selected,setSelected]=useState(null);
+ useEffect(()=>setSelected(latest),[call?.call_id,latest]);
+ const query=queries.find(q=>q.id===selected)||queries.at(-1);
+ const result=query?.result,rows=Array.isArray(result)?result:result&&typeof result==='object'?[result]:[];
+ const columns=[...new Set(rows.flatMap(row=>Object.keys(row)))];
+ const display=value=>value==null?'NULL':typeof value==='object'?JSON.stringify(value):String(value);
+ return <section className="query-inspector" aria-label="Результат запроса к БД"><h2>Результат запроса к БД</h2><p className="query-origin">{call?.source_data?.mode==='file_snapshot'?'SQLite · исходные CSV и Excel':'Изолированная тестовая SQLite'} · запрос формирует модуль. Генерация SQL через LLM ещё не подключена.</p>{call?.source_data?.sources&&<details><summary>Источники данных</summary>{call.source_data.sources.map(s=><article key={s.kind}><p>{s.path}</p><small>Загружено: {s.imported_at} · {s.row_count} строк</small><p>SHA256: {s.sha256}</p></article>)}{call.source_data.limitations?.map(note=><p key={note}>{note}</p>)}</details>}{call&&<p className="query-call">Звонок: {call.call_id}</p>}{query?<><label>Выполненные запросы<select aria-label="Выполненные запросы" value={query.id} onChange={e=>setSelected(Number(e.target.value))}>{queries.map((q,i)=><option key={q.id} value={q.id}>{i+1}. Шаг {(q.step_index??0)+1} · {q.state}</option>)}</select></label><header className="query-sql-heading"><h3>{query.sql}</h3></header><details open><summary>Параметры запроса</summary><pre>{JSON.stringify(query.params,null,2)}</pre></details><p role="status">Результат: {rows.length} {rows.length===1?'строка':'строк'}</p><div className="query-results" tabIndex={0} aria-label="Строки результата запроса">{rows.length?<table><thead><tr>{columns.map(c=><th key={c}>{c}</th>)}</tr></thead><tbody>{rows.map((row,i)=><tr key={i}>{columns.map(c=><td key={c}>{display(row[c])}</td>)}</tr>)}</tbody></table>:<p>Запрос выполнен. Совпадений нет.</p>}</div></>:<p>Запросов пока нет. Начните звонок или откройте сохранённый разговор. После обращения к таблице здесь появится настоящий результат.</p>}</section>
+}

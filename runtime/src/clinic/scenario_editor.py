@@ -81,6 +81,8 @@ def serialize(flow):
                     body += " terminator " + quote(args["terminator"])
             elif kind == "listen":
                 body = f"listen {float(args.get('timeout', 8)):g}s"
+                if args.get("field"):
+                    body += " field=" + identifier(args["field"])
             elif kind == "call":
                 body = f"call {identifier(args['module'])}.{target_name(args['op'])}"
                 parameters = {k[4:]: v for k, v in args.items() if k.startswith("arg:")}
@@ -418,7 +420,14 @@ def make_server(repo, static, host="127.0.0.1", port=8090, token=""):
     from .sandbox_store import SandboxStore
     from .module_settings import ModuleSettings
     settings = ModuleSettings(repo.data / 'modules.json')
+    from .specialty_dictionary import SpecialtyDictionary
+    import shutil
+    dictionary_path=repo.data/'specialties.json'
+    if not dictionary_path.exists():shutil.copyfile(Path(__file__).with_name('specialty_names.json'),dictionary_path)
+    dictionary=SpecialtyDictionary(dictionary_path)
+
     demo = DemoCalls(store=SandboxStore(repo.data / 'call-log'),settings=settings)
+    demo.dictionary=dictionary
     from .call_analysis import Uploads
     demo.uploads=Uploads(demo)
     static = Path(static).resolve()
@@ -481,11 +490,19 @@ def make_server(repo, static, host="127.0.0.1", port=8090, token=""):
                         if not isinstance(data, dict):
                             raise ValueError("Ожидается объект проекта")
                     route = parsed.path
-                    if route in {'/api/settings/modules','/api/settings/models','/api/sandbox/tables','/api/calls','/api/calls/detail','/api/calls/import','/api/calls/transcribe','/api/calls/audio','/api/calls/upload'}:
+                    if route in {'/api/settings/scenarios','/api/settings/specialties','/api/settings/plans','/api/settings/modules','/api/settings/models','/api/sandbox/tables','/api/calls','/api/calls/detail','/api/calls/import','/api/calls/transcribe','/api/calls/audio','/api/calls/upload'}:
                         if identity.get('role') != 'admin':
                             return self.send_json(403,{'error':'Требуется администратор'})
                         query=parse_qs(parsed.query)
-                        if route=='/api/settings/modules':
+                        if route=='/api/settings/scenarios' and not post:
+                            from .scenario_catalog import catalog
+                            result=catalog()
+                        elif route=='/api/settings/specialties':
+                            result=dictionary.save(data.get('specialties'),data.get('revision')) if post else dictionary.read()
+                        elif route=='/api/settings/plans' and not post:
+                            from .dialogue_plan import plans
+                            result=plans(dictionary)
+                        elif route=='/api/settings/modules':
                             result=settings.save(data.get('modules')) if post else settings.public()
                         elif route=='/api/settings/models' and not post:
                             from .module_settings import model_catalog
@@ -538,7 +555,7 @@ def make_server(repo, static, host="127.0.0.1", port=8090, token=""):
                         envelope = sign_request(operation, arguments, identity)
                         return self.send_json(200, module_call('crm', 'control.insights', envelope))
                     if demo_call:
-                        data['_line']=identity.get('registrar') or '100'
+                        data['_line']=identity.get('registrar') or str(data.get('registrar') or '100')
                         return self.send_json(200, demo.request(route, post, data, parse_qs(parsed.query), client=self.client_address[0]))
                     if post and route == "/api/login":
                         session = auth.login(
@@ -582,7 +599,7 @@ def make_server(repo, static, host="127.0.0.1", port=8090, token=""):
                         return
                     if route.startswith('/api/workshop/'):
                         from .workshop import request
-                        return self.send_json(200, request(repo,route,post,data,parse_qs(parsed.query),identity))
+                        return self.send_json(200, request(repo,route,post,data,parse_qs(parsed.query),{**identity,'_client':self.client_address[0]},store=demo.store))
                     if not post and route.startswith('/api/audio/file/'):
                         from .admin_audio import recording
                         raw = recording(repo.root, route.rsplit('/', 1)[1])

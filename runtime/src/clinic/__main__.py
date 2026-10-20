@@ -86,7 +86,7 @@ def main():
         settings = configured()
         def factory(item):
             if ns.module in {'tts','asr'}: return Speech(ns.module, item if settings.path.exists() else None)
-            if ns.module == 'nlu': return Nlu((item['model'] if item['provider']=='local' else 'hash') if settings.path.exists() else None)
+            if ns.module == 'nlu': return Nlu(item['model'] if item['provider']=='local' else 'e5')
             if ns.module == 'agent':
                 # SlotAgent retains its strict schema, bounded reads and validation.
                 from .agent import SlotAgent

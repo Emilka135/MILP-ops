@@ -10,7 +10,7 @@ from urllib.parse import urlsplit
 DEFAULTS = {
     'tts': {'enabled':True,'provider':'local','model':'v5_cis_base','voice':'ru_ekaterina','base_url':'','key_env':'OPENROUTER_API_KEY'},
     'asr': {'enabled':True,'provider':'local','model':'gigaam-v3-e2e-rnnt','voice':'','base_url':'','key_env':'OPENROUTER_API_KEY'},
-    'nlu': {'enabled':True,'provider':'local','model':'hash','voice':'','base_url':'','key_env':'OPENROUTER_API_KEY'},
+    'nlu': {'enabled':True,'provider':'local','model':'e5','voice':'','base_url':'','key_env':'OPENROUTER_API_KEY'},
     'agent': {'enabled':True,'provider':'local','model':'deterministic','voice':'','base_url':'','key_env':'OPENROUTER_API_KEY'},
     'crm': {'enabled':True,'provider':'local','model':'sqlite / МИС','voice':'','base_url':'','key_env':''},
     'sms': {'enabled':True,'provider':'local','model':'gateway','voice':'','base_url':'','key_env':''},
@@ -30,6 +30,7 @@ class ModuleSettings:
     def read(self):
         with self.lock:
             stored = json.loads(self.path.read_text()) if self.path.exists() else {}
+            if stored.get('nlu',{}).get('provider','local')=='local' and stored.get('nlu',{}).get('model')=='hash':stored['nlu']['model']='e5'
             return {key:{**copy.deepcopy(value),**stored.get(key,{})} for key,value in DEFAULTS.items()}
 
     def public(self):
@@ -51,7 +52,7 @@ class ModuleSettings:
                 if not isinstance(item[field],str) or len(item[field])>300: raise ValueError('Некорректное поле '+field)
             if not item['model'].strip(): raise ValueError('Укажите модель или стек')
             if item['provider']=='local' and key in {'tts','asr','nlu','agent'}:
-                choices = {'tts':{'v5_cis_base'},'asr':{'gigaam-v3-e2e-rnnt'},'nlu':{'hash','bge'},'agent':{'deterministic'}}
+                choices = {'tts':{'v5_cis_base'},'asr':{'gigaam-v3-e2e-rnnt'},'nlu':{'e5'},'agent':{'deterministic'}}
                 if item['model'] not in choices[key]: raise ValueError('Локальная модель не установлена / не разрешена')
             if item['provider']!='local':
                 if not re.fullmatch(r'[A-Z][A-Z0-9_]{2,79}',item['key_env']): raise ValueError('Укажите имя переменной ключа')

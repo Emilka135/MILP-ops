@@ -24,6 +24,10 @@ from app.types import SafetyVerdict
 class Nlu:
     def __init__(self, model=None):
         model = model or os.environ.get("NLU_EMBEDDER", "hash")
+        self.semantic = None
+        if model == "e5":
+            from .semantic import SemanticInterpreter
+            self.semantic = SemanticInterpreter()
         embed = (
             SentenceTransformerEmbedder(
                 os.environ.get("NLU_MODEL", "deepvk/USER-bge-m3")
@@ -50,15 +54,24 @@ class Nlu:
             SafetyVerdict.COMPLAINT: "complaint",
             SafetyVerdict.OPERATOR: "operator",
         }.get(safety.verdict)
+        meaning = self.semantic.interpret(text) if self.semantic else None
+        if meaning:
+            ranked=dict(meaning['alternatives'])
+            clinical=ranked.get('medical',0)>=.90 and ranked.get('medical',0)>=meaning['confidence']-.015
+            if safety_intent=='medical' and not clinical:safety_intent=None
+            if safety_intent=='operator' and meaning['intent'] not in {'operator','abuse'}:safety_intent=None
+            if not safety_intent and clinical and not meaning.get('entity_only'):safety_intent='medical'
         intent = safety_intent or (
             rules.intent if rules.intent in HUMAN_ONLY else verified.intent
         )
         confidence = 1.0 if safety_intent else verified.confidence
+        if meaning and not safety_intent:
+            intent,confidence = meaning["intent"],meaning["confidence"]
         # Disagreement can request a person; no speculative write is executed by an embedding.
-        if verified.action == "operator" and intent not in HUMAN_ONLY:
+        if not meaning and verified.action == "operator" and intent not in HUMAN_ONLY:
             intent = "operator"
         if (
-            verified.action == "clarify"
+            not meaning and verified.action == "clarify"
             and verified.reasons
             and any("disagree" in x for x in verified.reasons)
         ):
@@ -97,28 +110,53 @@ class Nlu:
         ):
             intent = "gratitude"
             confidence = 1.0
+        flags=[]
+        if intent=="abuse":intent="operator";flags.append("abusive_language")
         identity_field = args.get("identity_field")
         identity_context = identity_field in {"birth_date", "card_no", "snils", "phone"}
+        date_field = None
         digits = it.digits
         if identity_context:
-            from .identity import normalize_birth_date, normalize_identifier
+            from .identity import birth_date_input, normalize_birth_date, normalize_identifier
+            if identity_field=="birth_date":date_field=birth_date_input(text,today=today)
             try:
                 digits = (normalize_birth_date(text, today=today).strftime("%d%m%Y")
                           if identity_field == "birth_date" else normalize_identifier(text, identity_field))
             except ValueError:
                 # Never reuse a partial number or guess a year for identification.
                 digits = ""
+        if meaning and identity_context and digits and not safety_intent:
+            intent='unknown'
+        if meaning and args.get('identity_field')=='full_name' and re.fullmatch(r"[А-Яа-яЁё'-]+(?:\s+[А-Яа-яЁё'-]+){2}",text.strip(' .!')) and confidence<.94 and not safety_intent:
+            intent='unknown'
+        semantic_yes=it.yes_no
         ent = rules.entities
         vars = {}
-        if ent.specialty:
+        if meaning:
+            specialty=meaning['specialty']
+            from .specialty_dictionary import SpecialtyDictionary
+            items={x['id']:x for x in self.semantic.dictionary.read()['specialties']}
+            if specialty['status'] in {'resolved','candidate'} and not identity_context and identity_field!='full_name':
+                item=items[specialty['id']]
+                key='specialty' if specialty['status']=='resolved' else 'specialty_candidate'
+                vars[key]=item['label'].lower()
+                if key=='specialty_candidate':vars['specialty_candidate_label']=item['label']
+                if intent=='unknown' and (specialty['status']=='resolved' or meaning['alternatives'][0][0] in {'book','confirm','my_booking'}):
+                    intent='book';confidence=.65
+            if intent=='answer_yes':intent='unknown';semantic_yes=True
+            if intent=='answer_no':intent='unknown';semantic_yes=False
+
+        if not meaning and ent.specialty:
             vars.update(specialty=ent.specialty, needs_referral=ent.needs_referral)
-        if ent.doctor_surname:
+        if not meaning and ent.doctor_surname:
             vars["doctor_surname"] = ent.doctor_surname
         # Covers a surname even if a specialty was also named.
-        if re.search(
+        if not meaning and re.search(
             r"(?:врачу|доктору|терапевту|кардиологу|хирургу)\s+[А-ЯЁ][а-яё]+", text
         ):
             vars["doctor_surname"] = text.split()[-1]
+        if re.search(r'\b(?:реб[её]н(?:ок|ка|ку)|детск\w*|сын(?:а|у)?|доч(?:ь|ери|ку))\b',text.lower()):
+            vars['patient_group']='child'
         if ent.for_other is not None:
             vars["for_other"] = ent.for_other
         if it.date and not identity_context:
@@ -127,13 +165,18 @@ class Nlu:
             vars["said_time"] = it.time.strftime("%H:%M")
         if it.daypart and not identity_context:
             vars["said_daypart"] = it.daypart
+        if meaning and intent=='greeting' and any(k in vars for k in ('said_date','said_time','said_daypart')):intent='unknown'
         return "ok", {
             "intent": intent,
             "confidence": confidence,
             "normalized": it.normalized,
-            "yes_no": it.yes_no,
+            "yes_no": semantic_yes,
+            "semantic": meaning,
+            "flags":flags,
+            "source_scenario":{'home_visit':'С-06','results':'С-08','paid':'С-09','waitlist':'С-11','for_other':'С-12','attachment':'С-13'}.get(intent),
             "affirmative_action": affirmative_action,
             "digits": digits,
+            "date_field": date_field,
             "vars": vars,
             "decision": verified.action,
             "classifier": rules.intent,

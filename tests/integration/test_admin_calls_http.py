@@ -10,10 +10,10 @@ from clinic.scenario_editor import Repository, make_server
 ROOT=Path(__file__).resolve().parents[2]
 
 @pytest.fixture
-def http(tmp_path,monkeypatch):
+def http(tmp_path,monkeypatch,semantic_nlu):
     shutil.copytree(ROOT/'scenarios',tmp_path/'scenarios')
     monkeypatch.setenv('EDITOR_PASSWORD_FILE',str(tmp_path/'password.json'))
-    monkeypatch.setattr('clinic.demo_call.module_call',lambda *a:{'sample_rate':48000,'pcm_b64':'AAE='})
+    monkeypatch.setattr('clinic.demo_call.module_call',lambda module,op,args:semantic_nlu.handle(op,args)[1] if module=='nlu' else {'sample_rate':48000,'pcm_b64':'AAE='})
     repo=Repository(tmp_path,tmp_path/'data')
     server=make_server(repo,ROOT/'scenario-editor/dist',port=0)
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()

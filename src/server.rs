@@ -40,6 +40,9 @@ impl Call {
             "phone",
             "caller_phone",
             "patient_full_name",
+            "patient_birth_date",
+            "identity_full_name",
+            "identity_card_no",
             "last_utterance",
         ];
         let vars: serde_json::Map<String, Value> = self
@@ -51,7 +54,7 @@ impl Call {
             .collect();
         json!({"state":self.session.state_name(),"finished":self.session.finished,"status":self.session.status,
             "prompts":self.prompts,"sms":self.sms,"transfer":self.transfer,"vars":vars,"errors":self.errors,
-            "listening":self.session.listening,"generation":self.generation,"duration_s":self.started.elapsed().as_secs_f64()})
+            "listening":self.session.listening,"input_field":self.session.input_field(),"generation":self.generation,"duration_s":self.started.elapsed().as_secs_f64()})
     }
 }
 #[derive(Clone)]
@@ -84,7 +87,7 @@ impl App {
                 "say" => {
                     c.prompts.push(a.text.clone());
                     c.transcript.push(
-                        json!({"role":"assistant","text":a.text,"state":a.args["scenario_state"]}),
+                        json!({"role":"assistant","text":a.text,"state":a.args["scenario_state"],"step_index":a.args["step_index"],"source":"scenario"}),
                     );
                     if c.transcript.len() > 500 {
                         c.transcript.remove(0);
@@ -175,7 +178,8 @@ impl App {
                     "call_id":id,"registrar":c.session.vars.get("registrar_number"),
                     "finished":c.session.finished,"outcome":c.session.status,
                     "duration_s":c.started.elapsed().as_secs_f64(),"transcript":c.transcript,
-                    "trace":c.session.history,"experiment_id":c.session.vars.get("experiment_id")
+                    "trace":c.session.history,"experiment_id":c.session.vars.get("experiment_id"),
+                    "scenario_revision":crate::engine::scenario_revision(),"graph":crate::engine::scenario_graph()
                 }),
                 id,
             )
@@ -213,8 +217,9 @@ impl App {
             "call.dtmf" => {
                 let digit = args["digit"].as_str().ok_or("missing digit")?;
                 let source_state = c.session.state_name();
+                let step_index = c.session.history.len().saturating_sub(1);
                 c.transcript.push(
-                    json!({"role":"dtmf","text":format!("Клавиша {digit}"),"state":source_state}),
+                    json!({"role":"dtmf","text":format!("Клавиша {digit}"),"state":source_state,"step_index":step_index,"source":"dtmf"}),
                 );
                 if c.transcript.len() > 500 {
                     c.transcript.remove(0);
@@ -241,7 +246,8 @@ impl App {
                 };
                 if op != "call.partial" {
                     let source_state = c.session.state_name();
-                    c.transcript.push(json!({"role":"patient","text":recognized.chars().take(4000).collect::<String>(),"state":source_state}));
+                    let step_index = c.session.history.len().saturating_sub(1);
+                    c.transcript.push(json!({"role":"patient","text":recognized.chars().take(4000).collect::<String>(),"state":source_state,"step_index":step_index,"source":if op=="call.audio" {"real_asr"} else {"runtime_text"}}));
                     if c.transcript.len() > 500 {
                         c.transcript.remove(0);
                     }
@@ -251,7 +257,7 @@ impl App {
                     .call(
                         "nlu",
                         "interpret",
-                        json!({"text":recognized,"today":c.session.vars.get("today"),"identity_field":c.session.input_field()}),
+                        json!({"text":recognized,"today":c.session.vars.get("today"),"identity_field":c.session.input_field(),"state":c.session.state_name()}),
                         id,
                     )
                     .await;

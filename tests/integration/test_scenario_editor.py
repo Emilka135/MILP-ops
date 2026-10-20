@@ -29,6 +29,8 @@ def test_all_flows_roundtrip_without_manual_code(repository):
     for f in project["flows"]:
         flow = clean_flow(serialize(f))
         assert flow["name"] == f["name"] and len(flow["states"]) == len(f["states"])
+        for before,after in zip(f["states"],flow["states"]):
+            assert [(s["kind"],s["args"]) for s in before["statements"]]==[(s["kind"],s["args"]) for s in after["statements"]]
 
 
 def test_quoted_hash_inside_prompt_is_not_a_comment(repository):
