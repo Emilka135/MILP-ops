@@ -10,7 +10,7 @@ fn replay(input: &Value) -> Result<Value, String> {
     let actions = session.start();
     let mut frames = vec![json!({"state":session.state_name(), "actions":actions,
         "vars":session.vars,"status":session.status,"finished":session.finished,
-        "pending":session.pending})];
+        "pending":session.pending,"input_field":session.input_field()})];
     for step in input["events"]
         .as_array()
         .ok_or("events must be an array")?
@@ -28,7 +28,7 @@ fn replay(input: &Value) -> Result<Value, String> {
         let actions = session.handle(event);
         frames.push(json!({"state":session.state_name(), "actions":actions,
             "vars":session.vars,"status":session.status,"finished":session.finished,
-            "pending":session.pending}));
+            "pending":session.pending,"input_field":session.input_field()}));
     }
     Ok(json!({"scenario_revision":scenario_revision(),"frames":frames}))
 }
