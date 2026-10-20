@@ -16,6 +16,8 @@ jobs:
       - run: pip install -r requirements/asr.txt
       - run: python tools/download_models.py --tts --asr
         env: {HF_HUB_DISABLE_TELEMETRY: '1'}
+      - name: Download pinned local NLU encoder
+        run: python tools/download_nlu.py
       - run: mkdir -p debug/runs/containers debug/runs/security
       - run: docker compose build
       - name: Real CPU startup, audio gate and public failure diagnostics
