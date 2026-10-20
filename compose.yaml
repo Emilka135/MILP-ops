@@ -193,7 +193,7 @@ services:
       ASR_URL: http://asr:8080
       NLU_URL: http://nlu:8080
     ports: ["127.0.0.1:${EDITOR_PORT:-8090}:8090"]
-    volumes: ["./scenarios:/workspace/scenarios", "./imports:/imports:ro", "editor-data:/data", "editor-cargo:/workspace/target", "audio-bank:/audio:ro", "control-data:/control:ro", "./secrets:/run/secrets:ro"]
+    volumes: ["./scenarios:/workspace/scenarios", "..:/source-files:ro", "./imports:/imports:ro", "editor-data:/data", "editor-cargo:/workspace/target", "audio-bank:/audio:ro", "control-data:/control:ro", "./secrets:/run/secrets:ro"]
     depends_on:
       control-init: {condition: service_completed_successfully}
       crm: {condition: service_healthy}

@@ -23,6 +23,7 @@ class SandboxStore:
         self.db.row_factory = sqlite3.Row
         self.db.create_function('clinic_name',1,lambda value:' '.join(str(value).casefold().replace('ё','е').split()),deterministic=True)
         source_path=source_path or os.environ.get('CLINIC_SOURCE_DB') or ('/imports/clinic-source.sqlite' if Path('/imports/clinic-source.sqlite').is_file() else None)
+        self.reference_sources=[]
         self.source_path=Path(source_path).resolve() if source_path else None
         if self.source_path:
             if not self.source_path.is_file():raise ValueError('Не найдена база исходных выгрузок. Выполните tools/import_clinic_sources.py')
@@ -86,11 +87,26 @@ class SandboxStore:
         rows=self.query(call_id,'SELECT id,full_name,birth_date,oms,district FROM patients WHERE oms=?',(policy,))
         return rows[0] if len(rows)==1 else None
 
+    def switch_source(self,path):
+        """Validate a new snapshot before replacing the attached read-only source."""
+        path=Path(path).resolve()
+        with sqlite3.connect(path.as_uri()+'?mode=ro',uri=True) as check:
+            for statement in ('SELECT * FROM sources LIMIT 0','SELECT * FROM doctors LIMIT 0','SELECT * FROM slots LIMIT 0','SELECT * FROM unavailability LIMIT 0','SELECT * FROM appointments LIMIT 0','SELECT * FROM call_events LIMIT 0'):
+                check.execute(statement)
+        with self.lock:
+            previous=self.source_path
+            if previous:self.db.execute('DETACH DATABASE source')
+            try:self.db.execute('ATTACH DATABASE ? AS source',(path.as_uri()+'?mode=ro',))
+            except Exception:
+                if previous:self.db.execute('ATTACH DATABASE ? AS source',(previous.as_uri()+'?mode=ro',))
+                raise
+            self.source_path=path
+
     def source_info(self):
-        if not self.source_path:return {'mode':'synthetic_fixture','label':'Изолированная синтетическая картотека для тестов'}
+        if not self.source_path:return {'mode':'synthetic_fixture','label':'Изолированная синтетическая картотека для тестов','reference_sources':list(self.reference_sources)}
         with self.lock:
             sources=[dict(r) for r in self.db.execute('SELECT * FROM source.sources ORDER BY kind')]
-        return {'mode':'file_snapshot','database':str(self.source_path),'sources':sources,
+        return {'mode':'file_snapshot','database':str(self.source_path),'sources':sources,'reference_sources':list(self.reference_sources),
                 'limitations':['ФИО пациентов и даты рождения в выгрузках отсутствуют: идентификация проверяется на отдельной тестовой картотеке.',
                                'Привязки участков к врачам в файлах нет; автоматическая запись к участковому требует этой связи.',
                                'Это снимок файлов, не онлайн-синхронизация с МИС. CSV звонков содержит только события, без расшифровок.']}
@@ -104,8 +120,7 @@ class SandboxStore:
     def doctors(self,call_id,specialty,district=None):
         if self.source_path:
             labels=self._source_specialty(specialty)
-            placeholders=','.join('?' for _ in labels)
-            return self.query(call_id,'SELECT d.id,d.full_name,d.specialty,d.cabinet,d.patient_group FROM source.doctors d WHERE clinic_name(d.specialty) IN ('+placeholders+') AND (? IS NULL OR EXISTS (SELECT 1 FROM district_doctors a WHERE a.doctor_id=d.id AND a.district=? AND a.specialty=?)) ORDER BY d.full_name',(*labels,district,district,specialty))
+            return self.query(call_id,'SELECT d.id,d.full_name,d.specialty,d.cabinet,d.patient_group FROM source.doctors d WHERE clinic_name(d.specialty) IN (SELECT value FROM json_each(?)) AND (? IS NULL OR EXISTS (SELECT 1 FROM district_doctors a WHERE a.doctor_id=d.id AND a.district=? AND a.specialty=?)) ORDER BY d.full_name',(json.dumps(labels,ensure_ascii=False),district,district,specialty))
         return self.query(call_id,'SELECT * FROM doctors WHERE specialty=? AND (? IS NULL OR district=?) ORDER BY full_name',(specialty,district,district))
 
     def queries(self,call_id):
@@ -117,14 +132,13 @@ class SandboxStore:
         now = clinic_now()
         if self.source_path:
             labels=self._source_specialty(specialty)
-            placeholders=','.join('?' for _ in labels)
-            rows=self.query(call_id,"SELECT s.id AS source_slot_id,s.starts_at,s.status,d.full_name AS doctor,d.cabinet FROM source.slots s JOIN source.doctors d ON d.id=s.doctor_id WHERE clinic_name(d.specialty) IN ("+placeholders+") AND s.status IN ('Свободно','Свободен') AND s.starts_at>=? AND s.starts_at<? AND (? IS NULL OR d.full_name=?) AND NOT EXISTS (SELECT 1 FROM source.unavailability u WHERE u.doctor_id=d.id AND substr(s.starts_at,1,10) BETWEEN u.starts_on AND u.ends_on) AND NOT EXISTS (SELECT 1 FROM slots local JOIN bookings b ON b.slot_id=local.id WHERE local.source_slot_id=s.id) ORDER BY s.starts_at LIMIT 3",
-                            (*labels,(now+timedelta(minutes=30)).isoformat(),(now+timedelta(days=14)).isoformat(),doctor,doctor))
+            rows=self.query(call_id,"SELECT s.id AS source_slot_id,s.starts_at,s.status,d.full_name AS doctor,d.cabinet FROM source.slots s JOIN source.doctors d ON d.id=s.doctor_id WHERE clinic_name(d.specialty) IN (SELECT value FROM json_each(?)) AND s.status IN ('Свободно','Свободен') AND s.starts_at>=? AND s.starts_at<? AND (? IS NULL OR d.full_name=?) AND NOT EXISTS (SELECT 1 FROM source.unavailability u WHERE u.doctor_id=d.id AND substr(s.starts_at,1,10) BETWEEN u.starts_on AND u.ends_on) AND NOT EXISTS (SELECT 1 FROM slots local JOIN bookings b ON b.slot_id=local.id WHERE local.source_slot_id=s.id) ORDER BY s.starts_at LIMIT 3",
+                            (json.dumps(labels,ensure_ascii=False),(now+timedelta(minutes=30)).isoformat(),(now+timedelta(days=14)).isoformat(),doctor,doctor))
             with self.lock,self.db:
                 for row in rows:
                     self.db.execute('INSERT INTO slots(id,specialty,doctor,starts_at,synced_at,source_slot_id) VALUES(?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET doctor=excluded.doctor,starts_at=excluded.starts_at,synced_at=excluded.synced_at,source_slot_id=excluded.source_slot_id',
                         (1000000+int(row['source_slot_id'][1:]),specialty,row['doctor'],row['starts_at'],now.isoformat(),row['source_slot_id']))
-            return self.query(call_id,'SELECT s.* FROM slots s WHERE s.source_slot_id IN ('+(','.join('?' for _ in rows) or 'NULL')+') AND s.id NOT IN (SELECT slot_id FROM bookings) ORDER BY s.starts_at',tuple(r['source_slot_id'] for r in rows))
+            return self.query(call_id,'SELECT s.* FROM slots s WHERE s.source_slot_id IN (SELECT value FROM json_each(?)) AND s.id NOT IN (SELECT slot_id FROM bookings) ORDER BY s.starts_at',(json.dumps([r['source_slot_id'] for r in rows]),))
         # Explicitly synthetic stand sync, visible in table; never a claim of external synchronization.
         with self.lock, self.db:
             for day in range(1, 4):
@@ -153,7 +167,7 @@ class SandboxStore:
                     (slot_id,specialty,clinic_now().isoformat(),(clinic_now()-timedelta(minutes=5)).isoformat())).fetchone()
                 referral = not referral_required or self.db.execute('SELECT 1 FROM referrals WHERE patient_id=? AND specialty=? AND valid_until>=?', (patient,specialty,clinic_now().date().isoformat())).fetchone()
                 if self.source_path and slot:
-                    actual=self.db.execute("SELECT s.id FROM source.slots s WHERE s.id=? AND s.starts_at=? AND s.status IN ('Свободно','Свободен') AND NOT EXISTS (SELECT 1 FROM source.unavailability u WHERE u.doctor_id=s.doctor_id AND substr(s.starts_at,1,10) BETWEEN u.starts_on AND u.ends_on)",(slot['source_slot_id'],slot['starts_at'])).fetchone()
+                    actual=self.db.execute("SELECT s.id FROM source.slots s JOIN source.doctors d ON d.id=s.doctor_id WHERE s.id=? AND s.starts_at=? AND d.full_name=? AND s.status IN ('Свободно','Свободен') AND NOT EXISTS (SELECT 1 FROM source.unavailability u WHERE u.doctor_id=s.doctor_id AND substr(s.starts_at,1,10) BETWEEN u.starts_on AND u.ends_on)",(slot['source_slot_id'],slot['starts_at'],slot['doctor'])).fetchone()
                     if not actual:raise ValueError('Талон не подтверждён исходным расписанием')
                 if not p or not p['full_name'] or not p['birth_date'] or not slot or not referral:
                     raise ValueError('Не подтверждены пациент, направление или актуальный слот')
@@ -188,7 +202,8 @@ class SandboxStore:
 
     def list_calls(self,registrar=None,metadata=False):
         with self.lock:
-            rows=self.db.execute('SELECT * FROM calls'+(' WHERE registrar=?' if registrar is not None else '')+' ORDER BY updated_at DESC LIMIT 100',(registrar,) if registrar is not None else ()).fetchall()
+            statement='SELECT * FROM calls ORDER BY updated_at DESC LIMIT 100' if registrar is None else 'SELECT * FROM calls WHERE registrar=? ORDER BY updated_at DESC LIMIT 100'
+            rows=self.db.execute(statement,(registrar,) if registrar is not None else ()).fetchall()
         if not metadata:return [{k:r[k] for k in ('id','created_at','updated_at')} for r in rows]
         result=[]
         for row in rows:

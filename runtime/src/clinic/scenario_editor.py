@@ -428,6 +428,9 @@ def make_server(repo, static, host="127.0.0.1", port=8090, token=""):
 
     demo = DemoCalls(store=SandboxStore(repo.data / 'call-log'),settings=settings)
     demo.dictionary=dictionary
+    from .data_sources import DataSources
+    source_roots=[repo.root/'imports',repo.root.parent,Path('/imports'),Path('/source-files')]
+    data_sources=DataSources(repo.data/'data-sources',demo.store,source_roots,flat_roots=[repo.root.parent,Path('/source-files')])
     from .call_analysis import Uploads
     demo.uploads=Uploads(demo)
     static = Path(static).resolve()
@@ -490,11 +493,17 @@ def make_server(repo, static, host="127.0.0.1", port=8090, token=""):
                         if not isinstance(data, dict):
                             raise ValueError("Ожидается объект проекта")
                     route = parsed.path
-                    if route in {'/api/settings/scenarios','/api/settings/specialties','/api/settings/plans','/api/settings/modules','/api/settings/models','/api/sandbox/tables','/api/calls','/api/calls/detail','/api/calls/import','/api/calls/transcribe','/api/calls/audio','/api/calls/upload'}:
+                    if route in {'/api/settings/sources','/api/settings/sources/check','/api/settings/sources/apply','/api/settings/scenarios','/api/settings/specialties','/api/settings/plans','/api/settings/modules','/api/settings/models','/api/sandbox/tables','/api/calls','/api/calls/detail','/api/calls/import','/api/calls/transcribe','/api/calls/audio','/api/calls/upload'}:
                         if identity.get('role') != 'admin':
                             return self.send_json(403,{'error':'Требуется администратор'})
                         query=parse_qs(parsed.query)
-                        if route=='/api/settings/scenarios' and not post:
+                        if route=='/api/settings/sources':
+                            result=data_sources.save(data.get('sources'),data.get('revision')) if post else data_sources.read()
+                        elif route=='/api/settings/sources/check' and post:
+                            result=data_sources.inspect(data.get('id'),data.get('revision'))
+                        elif route=='/api/settings/sources/apply' and post:
+                            result=data_sources.apply(data.get('revision'))
+                        elif route=='/api/settings/scenarios' and not post:
                             from .scenario_catalog import catalog
                             result=catalog()
                         elif route=='/api/settings/specialties':

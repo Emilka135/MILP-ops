@@ -26,6 +26,8 @@ CMD ["python3", "-m", "clinic.scenario_builder"]
 # Default administration image contains no Rust toolchain and no model weights.
 FROM python:3.12-slim-bookworm AS editor
 WORKDIR /workspace
+COPY requirements/editor.txt /workspace/requirements/editor.txt
+RUN --mount=type=cache,id=clinic-editor-pip,sharing=locked,target=/root/.cache/pip pip install -r requirements/editor.txt
 COPY runtime/src ./runtime/src
 COPY scenarios ./scenarios
 COPY --from=ui /ui/dist ./scenario-editor/dist

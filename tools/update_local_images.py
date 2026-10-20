@@ -15,9 +15,10 @@ def main():
         before=subprocess.check_output(['docker','image','inspect',name,'--format','{{.Id}}'],text=True).strip()
         base_tag='clinic-voice-local-base:'+module
         subprocess.run(['docker','tag',before,base_tag],check=True)
+        dockerfile={'scenario-editor':'docker/local-editor-update.Dockerfile','scenario-builder':'docker/local-builder-update.Dockerfile'}.get(module,'docker/local-update.Dockerfile')
         subprocess.run(['docker','build','--network=none','--pull=false','--build-arg','BASE_IMAGE='+base_tag,
                         '--build-arg','SOURCE_ROOT='+('/workspace' if module in {'scenario-editor','scenario-builder'} else '/app'),
-                        '-f','docker/local-builder-update.Dockerfile' if module=='scenario-builder' else 'docker/local-update.Dockerfile','-t',name,'.'],cwd=ROOT,check=True)
+                        '-f',dockerfile,'-t',name,'.'],cwd=ROOT,check=True)
         after=subprocess.check_output(['docker','image','inspect',name,'--format','{{.Id}}'],text=True).strip()
         evidence[module]={'dependency_runtime_image':before,'updated_image':after}
     out=ROOT/args.output

@@ -11,10 +11,11 @@ FILES={'appointments':'30aef650-1a0b-4238-8c14-2dba969a1a2c.csv',
        'schedule':'Расписание_врачей_25.06-31.12.2026.xlsx'}
 
 
-def import_sources(source_root,output):
+def import_sources(source_root,output,*,source_paths=None,origins=None):
     import openpyxl
     source_root=Path(source_root).resolve();output=Path(output)
-    paths={kind:source_root/name for kind,name in FILES.items()}
+    paths={kind:Path(source_paths[kind]) if source_paths else source_root/name for kind,name in FILES.items()}
+    origins=origins or {kind:str(path) for kind,path in paths.items()}
     for path in paths.values():
         if not path.is_file():raise FileNotFoundError(path)
     output.parent.mkdir(parents=True,exist_ok=True)
@@ -44,10 +45,15 @@ def import_sources(source_root,output):
             db.executemany('INSERT INTO slots VALUES(?,?,?,?,?)',((r[0],r[3],datetime.combine(r[1].date(),r[8]).isoformat(),datetime.combine(r[1].date(),r[9]).isoformat(),r[11]) for r in wb['Слоты'].iter_rows(min_row=2,values_only=True) if r[0]))
             db.executemany('INSERT INTO unavailability VALUES(?,?,?,?)',((r[0],r[4].date().isoformat(),r[5].date().isoformat(),r[3]) for r in wb['Недоступность'].iter_rows(min_row=2,values_only=True) if r[0]))
         finally:wb.close()
-        for table in ('appointments','call_events','doctors','slots','unavailability'):counts[table]=db.execute('SELECT count(*) FROM '+table).fetchone()[0]
+        statements={'appointments':'SELECT count(*) FROM appointments','call_events':'SELECT count(*) FROM call_events','doctors':'SELECT count(*) FROM doctors','slots':'SELECT count(*) FROM slots','unavailability':'SELECT count(*) FROM unavailability'}
+        counts={table:db.execute(statement).fetchone()[0] for table,statement in statements.items()}
         for kind,path in paths.items():
-            db.execute('INSERT INTO sources VALUES(?,?,?,?,?)',(kind,str(path),hashlib.sha256(path.read_bytes()).hexdigest(),at,counts[kind] if kind!='schedule' else counts['slots']))
+            db.execute('INSERT INTO sources VALUES(?,?,?,?,?)',(kind,origins[kind],hashlib.sha256(path.read_bytes()).hexdigest(),at,counts[kind] if kind!='schedule' else counts['slots']))
         db.commit()
+    except Exception:
+        db.close()
+        temporary.unlink(missing_ok=True)
+        raise
     finally:db.close()
     temporary.replace(output)
-    return {'database':str(output.resolve()),'imported_at':at,'counts':counts,'sources':{kind:str(path) for kind,path in paths.items()},'limitations':['В CSV пациентов есть только хэши; ФИО, даты рождения, полисы и участки отсутствуют.','CSV звонков не содержит расшифровок и маршрутов разговора.','Расписание является файловым снимком, не синхронизацией с МИС.']}
+    return {'database':str(output.resolve()),'imported_at':at,'counts':counts,'sources':origins,'limitations':['В CSV пациентов есть только хэши; ФИО, даты рождения, полисы и участки отсутствуют.','CSV звонков не содержит расшифровок и маршрутов разговора.','Расписание является файловым снимком, не синхронизацией с МИС.']}
