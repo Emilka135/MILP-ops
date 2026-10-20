@@ -48,6 +48,9 @@ jobs:
       - name: Probe contract self-check
         if: matrix.module == 'fsm'
         run: python -m pytest tests/contracts/test_replay.py -v --junitxml=debug/runs/docx-contracts/replay.xml
+      - name: Validate read/create/update request constructor and missing fields
+        if: matrix.module == 'mis'
+        run: python -m pytest tests/contracts/test_mis_constructor.py -v --junitxml=debug/runs/docx-contracts/mis-constructor.xml
       - name: Execute source examples against module
         if: matrix.module != 'capacity'
         run: python debug/run_docx_contracts.py --module '${{ matrix.module }}'
