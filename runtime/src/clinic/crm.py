@@ -681,6 +681,7 @@ class ClinicCrm:
         self._last_slots_sync = None
         # Cache all pages once; use explicit local/remote patient mapping.
         doctors = self.stand.pages("/doctors")
+        from .specialty_dictionary import canonical_specialty
         for d in doctors:
             self.reg._x(
                 "INSERT INTO doctors(id,last_name,full_name,specialty,active) VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET full_name=excluded.full_name,specialty=excluded.specialty,active=excluded.active",
@@ -688,7 +689,7 @@ class ClinicCrm:
                     d["id"],
                     d["full_name"].split()[0],
                     d["full_name"],
-                    d["specialty"],
+                    canonical_specialty(d["specialty"]),
                     int(d["is_active"]),
                 ),
             )

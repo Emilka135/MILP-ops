@@ -5,6 +5,35 @@ import uuid
 from clinic.telephony import Bridge, Context
 
 
+def test_ari_keeps_subscription_across_idle_longer_than_connect_timeout():
+    import socket
+    import time
+    from calls.telephony.ari_bridge import WsClient
+
+    server = socket.socket()
+    server.bind(('127.0.0.1', 0))
+    server.listen(1)
+    port = server.getsockname()[1]
+
+    def serve():
+        with server:
+            connection, _ = server.accept()
+            with connection:
+                connection.recv(4096)
+                connection.sendall(b'HTTP/1.1 101 Switching Protocols\r\n\r\n')
+                time.sleep(0.15)
+                connection.sendall(b'\x81\x02{}')
+
+    thread = threading.Thread(target=serve, daemon=True)
+    thread.start()
+    client = WsClient(f'ws://127.0.0.1:{port}/ari/events?app=calls', timeout=0.05)
+    try:
+        assert client.recv_text() == '{}'
+    finally:
+        client.sock.close()
+        thread.join(timeout=2)
+
+
 class Connection:
     def __init__(self, data):
         self.data = data

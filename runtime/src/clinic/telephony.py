@@ -130,6 +130,7 @@ class Bridge:
                 ctx.listening = listening
                 pcm = base64.b64decode(prompt.get("pcm_b64", ""))
                 if pcm and ctx.conn:
+                    print(json.dumps({'event':'audio_prompt','call_id':ctx.call_id,'pcm_bytes':len(pcm)}), flush=True)
                     epoch = ctx.generation
                     start = time.monotonic()
                     ctx.playing = True
@@ -164,7 +165,8 @@ class Bridge:
                     else:
                         self.ari.hangup(ctx.channel)
                     break
-            except (OSError, ValueError):
+            except (OSError, ValueError) as exc:
+                print(json.dumps({'event':'playback_failed','call_id':ctx.call_id,'error_type':type(exc).__name__}), flush=True)
                 break
             ctx.stop.wait(0.05)
 
@@ -243,6 +245,7 @@ class Bridge:
                     if ctx is None:
                         raise ValueError("unknown call UUID")
                     ctx.conn = conn
+                    print(json.dumps({'event':'media_connected','call_id':call_id}), flush=True)
                 elif kind == 0x10 and ctx:
                     self.audio(ctx, payload)
                 elif kind == 0x03 and ctx:

@@ -8,7 +8,7 @@ COPY app /app/app
 COPY runtime/src /app/runtime/src
 COPY data /app/data
 COPY docs/openapi.json /app/docs/openapi.json
-RUN useradd -u 10001 -m clinic && mkdir -p /data /debug && chown clinic:clinic /data /debug
+RUN chmod -R a+rX /app && useradd -u 10001 -m clinic && mkdir -p /data /debug && chown clinic:clinic /data /debug
 ENV PYTHONPATH=/app:/app/runtime/src PYTHONUNBUFFERED=1 HOST=0.0.0.0 PORT=8080 \
     NVIDIA_VISIBLE_DEVICES=all NVIDIA_DRIVER_CAPABILITIES=compute,utility \
     ASR_PROVIDER=CUDAExecutionProvider ASR_GPU_MEM_LIMIT_MIB=1024

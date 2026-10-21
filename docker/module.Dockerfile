@@ -18,7 +18,7 @@ COPY app /app/app
 COPY runtime/src /app/runtime/src
 COPY data /app/data
 COPY docs/openapi.json /app/docs/openapi.json
-RUN useradd -u 10001 -m clinic && mkdir -p /data /audio && chown clinic:clinic /data /audio
+RUN chmod -R a+rX /app && useradd -u 10001 -m clinic && mkdir -p /data /audio && chown clinic:clinic /data /audio
 ENV PYTHONPATH=/app:/app/runtime/src PYTHONUNBUFFERED=1 HOST=0.0.0.0 PORT=8080
 ENV SERVICE_MODULE=${MODULE}
 USER clinic
