@@ -278,6 +278,12 @@ impl Session {
         };
         self.enter_index(index, same)
     }
+    fn enter_identity(&mut self) -> Vec<Action> {
+        let Some(entry) = generated::entry("identity") else {
+            return self.escalate("identity_unavailable");
+        };
+        self.enter(format!("identity.{entry}"), false)
+    }
     fn enter_index(&mut self, index: usize, same: bool) -> Vec<Action> {
         self.index = index;
         self.flow = nodes()[index].flow.clone();
@@ -287,7 +293,7 @@ impl Session {
             self.set("requested_action", json!("reschedule"));
             self.set("intent", json!("existing"));
             self.stack.push(("inbound".into(), "id_done".into()));
-            return self.enter("identity.name".into(), false);
+            return self.enter_identity();
         }
         let key = self.state_name();
         if !same {
@@ -531,8 +537,45 @@ impl Session {
                 .map(|e| self.follow(e))
                 .unwrap_or_else(|| self.escalate("module_error"));
         }
+        // Human and emergency requests must interrupt an outstanding module.
+        // Ordinary speech cannot change parameters or replay an in-flight write.
+        if ev.kind == "speech" {
+            let intent = ev.payload["intent"].as_str().unwrap_or("unknown");
+            if matches!(intent, "emergency" | "complaint" | "operator") {
+                self.set("last_utterance", json!(ev.value));
+                self.set("last_intent", json!(intent));
+                let mut actions = if intent == "operator" {
+                    vec![]
+                } else {
+                    vec![system_notice(
+                        intent,
+                        if intent == "emergency" {
+                            "С-14"
+                        } else {
+                            "С-15"
+                        },
+                    )]
+                };
+                actions.extend(self.escalate(if intent == "operator" {
+                    "requested"
+                } else {
+                    intent
+                }));
+                return actions;
+            }
+            if self.pending.is_some() && matches!(intent, "record_opt_out" | "self_identity") {
+                if intent == "record_opt_out" {
+                    self.set("recording_consent", json!(false));
+                }
+                return vec![system_notice(intent, &self.state_name())];
+            }
+        }
         if self.pending.is_some() {
-            return vec![];
+            return if ev.kind == "dtmf" && ev.value == "*" {
+                self.escalate("requested")
+            } else {
+                vec![]
+            };
         }
         match ev.kind.as_str() {
             "dtmf" => self.dtmf(&ev.value),
@@ -650,23 +693,8 @@ impl Session {
         {
             self.set("client_flags", json!(["abusive_language"]));
         }
-        if intent == "emergency" {
-            let notice = system_notice("emergency", "С-14");
-            let mut actions = vec![notice];
-            actions.extend(self.escalate("emergency"));
-            return actions;
-        }
         if intent == "medical" {
             return self.enter("inbound.medical_boundary".into(), false);
-        }
-        if intent == "complaint" {
-            let notice = system_notice("complaint", "С-15");
-            let mut actions = vec![notice];
-            actions.extend(self.escalate("complaint"));
-            return actions;
-        }
-        if intent == "operator" {
-            return self.escalate("requested");
         }
         if self
             .vars
@@ -698,7 +726,7 @@ impl Session {
                 );
                 if self.verified_patient.is_none() && self.flow != "identity" {
                     self.stack.push(("inbound".into(), "id_done".into()));
-                    return self.enter("identity.name".into(), false);
+                    return self.enter_identity();
                 }
                 if self.flow == "identity" {
                     return self.enter(self.state.clone(), true);
@@ -1067,6 +1095,74 @@ mod tests {
         back.payload = json!({"intent":"back"});
         let actions = s.handle(back);
         assert_eq!(s.state_name(), "inbound.welcome");
+        assert!(!actions.iter().any(|a| a.kind == "call"));
+    }
+    fn pending_write() -> Session {
+        let mut s = Session::new("inbound", Map::new()).unwrap();
+        s.start();
+        s.pending = Some(42);
+        s.pending_call = Some((
+            "crm".into(),
+            "book".into(),
+            json!({"patient_id":1,"slot_id":5}),
+        ));
+        s
+    }
+    #[test]
+    fn priority_requests_interrupt_pending_modules() {
+        for intent in ["emergency", "complaint", "operator"] {
+            let mut s = pending_write();
+            let mut ev = Event::new("speech", "Позовите сотрудника, нужна помощь");
+            ev.payload =
+                json!({"intent":intent,"yes_no":true,"vars":{"for_other":true,"slot_id":99}});
+            let actions = s.handle(ev);
+            assert_eq!(s.status, "transfer", "{intent}");
+            assert!(actions.iter().any(|a| a.kind == "transfer"));
+            assert!(!actions.iter().any(|a| a.kind == "call"));
+            assert!(!s.vars.contains_key("slot_id"));
+            let mut late = Event::new("module", "ok");
+            late.request_id = Some(42);
+            late.payload = json!({"booking_id":999});
+            assert!(s.handle(late).is_empty());
+            assert!(!s.vars.contains_key("booking_id"));
+        }
+    }
+    #[test]
+    fn notices_preserve_pending_request_without_replaying_it() {
+        for intent in ["record_opt_out", "self_identity"] {
+            let mut s = pending_write();
+            let state = s.state_name();
+            let history = s.history.clone();
+            let call = s.pending_call.clone();
+            let mut ev = Event::new("speech", "Вопрос о роботе и записи разговора");
+            ev.payload = json!({"intent":intent});
+            let actions = s.handle(ev);
+            assert_eq!(s.pending, Some(42));
+            assert_eq!(s.pending_call, call);
+            assert_eq!(s.state_name(), state);
+            assert_eq!(s.history, history);
+            assert_eq!(actions.len(), 1);
+            assert_eq!(actions[0].kind, "say");
+            if intent == "record_opt_out" {
+                assert_eq!(s.vars.get("recording_consent"), Some(&json!(false)));
+            }
+        }
+    }
+    #[test]
+    fn ordinary_speech_cannot_change_an_inflight_request() {
+        let mut s = pending_write();
+        let mut ev = Event::new("speech", "Да, лучше на другое время");
+        ev.payload = json!({"intent":"book","yes_no":true,"vars":{"specialty":"хирург"}});
+        assert!(s.handle(ev).is_empty());
+        assert_eq!(s.pending, Some(42));
+        assert!(!s.vars.contains_key("specialty"));
+    }
+    #[test]
+    fn tone_escape_interrupts_pending_request() {
+        let mut s = pending_write();
+        let actions = s.handle(Event::new("dtmf", "*"));
+        assert_eq!(s.status, "transfer");
+        assert!(actions.iter().any(|a| a.kind == "transfer"));
         assert!(!actions.iter().any(|a| a.kind == "call"));
     }
 }
