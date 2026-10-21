@@ -365,9 +365,9 @@ def test_mis_source_business_invariants(tmp_path,monkeypatch,dialogue_id):
 ])
 def test_audio_static_source_actions_must_be_in_prerecordable_flows(intent,literal):
     from calls.scenario.dsl import load_flows
-    static={s.text for flow in load_flows(ROOT/'scenarios').values()
+    static={(s.text,float(s.args.get('rate',flow.rate))) for flow in load_flows(ROOT/'scenarios').values()
             for state in flow.states.values() for s in state.statements if s.kind=='say' and '{' not in s.text}
     frames=probe([{'kind':'speech','value':literal,'payload':{'intent':intent,'confidence':1.0}}])
     assert frames[-1]['vars'].get('last_intent')==intent,frames
-    emitted=[a['text'] for frame in frames[1:] for a in frame['actions'] if a['kind']=='say' and a['text']]
+    emitted=[(a['text'],a['rate']) for frame in frames[1:] for a in frame['actions'] if a['kind']=='say' and a['text']]
     assert emitted and all(text in static for text in emitted),{'intent':intent,'unbanked':[t for t in emitted if t not in static]}

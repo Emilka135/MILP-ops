@@ -71,6 +71,23 @@ impl Action {
         }
     }
 }
+fn system_notice(key: &str, state: &str) -> Action {
+    let node = node("system_notices", key).expect("required system notice missing");
+    let statement = node
+        .statements
+        .iter()
+        .find(|s| s.kind == "say")
+        .expect("required system notice has no phrase");
+    let mut action = Action::new(
+        "say",
+        json!({"scenario_state":state,
+        "prompt_source":format!("system_notices.{key}")}),
+    );
+    action.text = statement.text.clone();
+    action.rate = node.rate;
+    action
+}
+
 #[derive(Debug, Clone)]
 pub struct Event {
     pub kind: String,
@@ -380,10 +397,8 @@ impl Session {
         }
         actions
     }
-    fn notice(&mut self, message: &str) -> Vec<Action> {
-        let mut notice = Action::new("say", json!({"scenario_state":self.state_name()}));
-        notice.text = message.into();
-        let mut actions = vec![notice];
+    fn notice(&mut self, key: &str) -> Vec<Action> {
+        let mut actions = vec![system_notice(key, &self.state_name())];
         actions.extend(self.enter(self.state.clone(), true));
         actions
     }
@@ -624,10 +639,10 @@ impl Session {
         }
         if intent == "record_opt_out" {
             self.set("recording_consent", json!(false));
-            return self.notice("Хорошо, аудиозапись разговора отключена.");
+            return self.notice("record_opt_out");
         }
         if intent == "self_identity" {
-            return self.notice("Я виртуальный помощник поликлиники. Если хотите поговорить с сотрудником, скажите об этом.");
+            return self.notice("self_identity");
         }
         if ev.payload["flags"]
             .as_array()
@@ -636,10 +651,7 @@ impl Session {
             self.set("client_flags", json!(["abusive_language"]));
         }
         if intent == "emergency" {
-            let mut notice = Action::new("say", json!({"scenario_state":"С-14"}));
-            notice.text =
-                "Немедленно звоните сто три или сто двенадцать. Не ждите приёма в поликлинике."
-                    .into();
+            let notice = system_notice("emergency", "С-14");
             let mut actions = vec![notice];
             actions.extend(self.escalate("emergency"));
             return actions;
@@ -648,9 +660,7 @@ impl Session {
             return self.enter("inbound.medical_boundary".into(), false);
         }
         if intent == "complaint" {
-            let mut notice = Action::new("say", json!({"scenario_state":"С-15"}));
-            notice.text =
-                "Мне жаль, что так вышло. Передам обращение старшему администратору.".into();
+            let notice = system_notice("complaint", "С-15");
             let mut actions = vec![notice];
             actions.extend(self.escalate("complaint"));
             return actions;

@@ -19,6 +19,13 @@ load_flows, validate = dsl.load_flows, dsl.validate
 
 def compile_to(directory: Path):
     flows = load_flows(ROOT / "scenarios")
+    # System notices are emitted directly by Rust and must be banked too.
+    notices=flows.get('system_notices')
+    for key in ('emergency','complaint','record_opt_out','self_identity'):
+        state=notices.states.get(key) if notices else None
+        phrases=[st for st in state.statements if st.kind=='say'] if state else []
+        if len(phrases)!=1 or not phrases[0].text or '{' in phrases[0].text:
+            raise ValueError('system_notices.'+key+': exactly one static phrase required')
     problems = validate(flows)
     if problems:
         raise ValueError("\n".join(problems))
