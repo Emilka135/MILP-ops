@@ -196,7 +196,9 @@ def parse(text: str, today: date) -> dict:
             minute = 0
             if 0 < hour < 12 and not qualifier:
                 clarify('spoken_hour_needs_am_pm'); continue
-        if hour > 23 or minute > 59:
+        op = ' '.join(hit['op'].split())
+        end_of_day = hour == 24 and minute == 0 and op in {'до', 'перед', 'раньше', 'не позже', 'не позднее', 'not after', 'before', 'until'}
+        if (hour > 23 and not end_of_day) or minute > 59:
             clarify('invalid_time'); continue
         if qualifier:
             if hour > 12:
@@ -205,7 +207,7 @@ def parse(text: str, today: date) -> dict:
                 hour = hour + 12 if hour < 12 else hour
             elif 'ночи' in qualifier and hour == 12:
                 hour = 0
-        op = ' '.join(hit['op'].split()); minutes = hour * 60 + minute
+        minutes = hour * 60 + minute
         lower = op in {'после', 'позже', 'не раньше', 'не ранее', 'not before', 'after', 'from', 'с'}
         inclusive = op in {'не раньше', 'не ранее', 'не позже', 'не позднее', 'not before', 'not after', 'from', 'с'}
         if op in {'в', 'at'}:
@@ -280,7 +282,8 @@ def validate(spec):
         result[field] = sorted(set(values))
     for field in ('time_from', 'time_to'):
         value = spec.get(field)
-        if value is not None and (not isinstance(value, str) or not re.fullmatch(r'(?:[01]\d|2[0-3]):[0-5]\d', value)):
+        if value is not None and (not isinstance(value, str) or not (
+                re.fullmatch(r'(?:[01]\d|2[0-3]):[0-5]\d', value) or field == 'time_to' and value == '24:00')):
             raise ValueError('invalid_availability_time')
         result[field] = value
         inclusive = spec.get(field + '_inclusive', True)

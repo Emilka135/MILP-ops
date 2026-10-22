@@ -8,6 +8,7 @@ x-module: &module
     CRM_URL: http://crm:8080
     MODULE_SETTINGS_FILE: /module-config/modules.json
     MODULE_SECRETS_DIR: /run/secrets
+    DIALOGUE_LOCAL_URL: ${DIALOGUE_LOCAL_URL:-http://dialogue-llm:11434/v1}
     OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
     OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     CRM_NOW: ${CRM_NOW:-}

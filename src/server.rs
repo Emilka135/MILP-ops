@@ -52,7 +52,13 @@ impl Call {
             "patient_birth_date",
             "identity_full_name",
             "identity_card_no",
+            "oms",
+            "identity_queries",
+            "identity_reply",
+            "identity_parts",
+            "identity_birth_date",
             "last_utterance",
+            "availability_utterance",
         ];
         let vars: serde_json::Map<String, Value> = self
             .session
@@ -587,6 +593,31 @@ mod prompt_timer_tests {
                 .duration_since(Instant::now())
                 .as_secs_f64()
                 > 14.0
+        );
+    }
+
+    #[test]
+    fn ordinary_snapshot_does_not_expose_identity_fields_or_lookup_rows() {
+        let mut c = call();
+        for key in [
+            "oms",
+            "availability_utterance",
+            "identity_queries",
+            "identity_reply",
+            "identity_parts",
+            "identity_birth_date",
+        ] {
+            c.session
+                .vars
+                .insert(key.into(), json!("private-synthetic-value"));
+        }
+        c.session
+            .vars
+            .insert("scenario_revision".into(), json!("public-revision"));
+        let snapshot = c.snapshot();
+        assert_eq!(
+            snapshot["vars"],
+            json!({"scenario_revision":"public-revision"})
         );
     }
 

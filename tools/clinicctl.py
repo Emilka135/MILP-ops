@@ -9,15 +9,17 @@ from datetime import datetime, timezone
 
 ROOT=Path(__file__).resolve().parents[1]
 GPU_ENABLED=False
+DIALOGUE_ENABLED=False
 TARGETS={'all':['orchestrator','scenario-editor'],'editor':['scenario-editor'],'voice':['orchestrator']}
 
 
 def docker(arguments,capture=False):
     files=[]
-    if GPU_ENABLED:
+    if GPU_ENABLED or DIALOGUE_ENABLED:
         files=['-f','compose.yaml']
         if (ROOT/'compose.override.yaml').exists():files+=['-f','compose.override.yaml']
-        files+=['-f','compose.gpu.yaml']
+        if GPU_ENABLED:files+=['-f','compose.gpu.yaml']
+        if DIALOGUE_ENABLED:files+=['-f','compose.dialogue.yaml']
     return subprocess.run(['docker','compose',*files,*arguments],cwd=ROOT,text=True,
         stdout=subprocess.PIPE if capture else None,stderr=subprocess.PIPE if capture else None,check=False,
         env={**os.environ,'CLINIC_LOCAL_UID':os.environ.get('CLINIC_LOCAL_UID',str(getattr(os,'getuid',lambda:1000)())),
@@ -46,7 +48,7 @@ def show_access(target):
         print('  Голосовой API:   '+url)
         print('  Окно оператора:  '+url+'/operator')
     print('\nОстановить с бэкапом:')
-    print('  ./clinic stop'+(' '+target if target!='all' else '')+' --backup')
+    print('  ./clinic stop'+(' '+target if target!='all' else '')+' --backup'+(' --gpu' if GPU_ENABLED else '')+(' --dialogue' if DIALOGUE_ENABLED else ''))
     print('  Бэкап пока заглушка: резервная копия ещё не создаётся. Остановка сохраняет данные.')
 
 
@@ -59,15 +61,17 @@ def backup_placeholder(target):
 
 
 def main():
-    global GPU_ENABLED
+    global GPU_ENABLED,DIALOGUE_ENABLED
     parser=argparse.ArgumentParser(description='Запуск и остановка регистратуры')
     parser.add_argument('command',choices=['start','stop','status'])
     parser.add_argument('target',nargs='?',choices=TARGETS,default='all')
     parser.add_argument('--backup',action='store_true',help='пока заглушка; данные при остановке сохраняются')
     parser.add_argument('--no-build',action='store_true',help='запустить уже собранную версию')
     parser.add_argument('--gpu',action='store_true',help='локальный ASR на NVIDIA GPU (Compose CUDA overlay)')
+    parser.add_argument('--dialogue',action='store_true',help='локальная LLM сложных уточнений с прогревом до запуска звонков')
     args=parser.parse_args()
     GPU_ENABLED=args.gpu
+    DIALOGUE_ENABLED=args.dialogue
     if args.command=='start':
         from check_space import require_space
         require_space()

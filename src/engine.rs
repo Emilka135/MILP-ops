@@ -324,6 +324,38 @@ impl Session {
         self.enter(format!("identity.{entry}"), false)
     }
     fn enter_index(&mut self, index: usize, same: bool) -> Vec<Action> {
+        // Resolve misunderstood preferences before any slot query, regardless
+        // of the active booking/rescheduling flow. Identity and safety remain
+        // independent; an LLM proposal is not write consent.
+        let target = &nodes()[index];
+        if self
+            .vars
+            .get("availability_constraints")
+            .is_some_and(|v| v["needs_clarification"] == true)
+            && target.statements.iter().any(|s| {
+                s.kind == "call"
+                    && (s.args["module"] == "agent" && s.args["op"] == "offer"
+                        || s.args["module"] == "crm"
+                            && matches!(
+                                s.args["op"].as_str(),
+                                "find_slots"
+                                    | "next_day"
+                                    | "agent_slots"
+                                    | "check_day"
+                                    | "day_parts"
+                                    | "nearest_in_day_part"
+                                    | "list_slots"
+                                    | "pick_time"
+                                    | "nearest_in_part"
+                            ))
+            })
+        {
+            self.verified_slot = None;
+            self.approval = None;
+            self.vars.remove("slot_id");
+            self.stack.push((target.flow.clone(), target.name.clone()));
+            return self.enter("time_clarification.resolve".into(), false);
+        }
         self.index = index;
         self.flow = nodes()[index].flow.clone();
         self.state = nodes()[index].name.clone();
@@ -521,6 +553,9 @@ impl Session {
             }
             self.pending = None;
             if let Some((module, op, args)) = self.pending_call.take() {
+                if module == "nlu" && op == "confirm_time" && ev.value == "ok" {
+                    self.vars.remove("availability_constraints");
+                }
                 if ev.value == "ok" {
                     if module == "crm"
                         && matches!(
@@ -543,7 +578,13 @@ impl Session {
                         self.verified_patient = ev.payload.get("patient_id").cloned();
                     }
                     if module == "crm"
-                        && matches!(op.as_str(), "my_booking" | "select_booking" | "verify_card")
+                        && matches!(
+                            op.as_str(),
+                            "my_booking"
+                                | "select_booking"
+                                | "verify_card"
+                                | "verify_booking_identity"
+                        )
                     {
                         self.verified_booking = ev.payload.get("booking_id").cloned();
                     }
@@ -684,6 +725,9 @@ impl Session {
             .to_owned();
         self.set("last_utterance", json!(ev.value));
         self.set("last_intent", json!(intent));
+        if intent == "language_unsupported" {
+            return self.escalate("language_unsupported");
+        }
         if intent == "voicemail" {
             return self.finish("no_verified_contact");
         }
@@ -717,6 +761,9 @@ impl Session {
                         self.vars.remove("slot_id");
                     }
                     self.set(k, v.clone());
+                    if k == "availability_constraints" && v["needs_clarification"] == true {
+                        self.set("availability_utterance", json!(ev.value));
+                    }
                 }
             }
         }
@@ -752,6 +799,26 @@ impl Session {
             .is_some_and(|v| !text(v).is_empty())
         {
             return self.escalate("specific_doctor");
+        }
+        if intent == "unknown"
+            && self.verified_patient.is_some()
+            && self.flow != "identity"
+            && self.flow != "time_clarification"
+            && ev.payload["yes_no"].is_null()
+            && ev.payload["vars"].as_object().is_none_or(Map::is_empty)
+            && let Some(edge) = self
+                .current()
+                .edges
+                .iter()
+                .find(|e| matches!(e.kind.as_str(), "time" | "daypart"))
+                .cloned()
+        {
+            self.set(
+                "availability_constraints",
+                json!({"needs_clarification":true,"reasons":["unparsed_time_reply"]}),
+            );
+            self.set("availability_utterance", json!(ev.value));
+            return self.follow(&edge);
         }
         if intent == "back" {
             return self.back();
@@ -1140,6 +1207,128 @@ mod tests {
         assert!(Session::new("missing", Map::new()).is_err());
     }
     #[test]
+    fn misunderstood_time_calls_llm_and_confirmation_resumes_query_without_booking() {
+        let mut s = Session::new("assisted", Map::new()).unwrap();
+        s.vars.insert(
+            "availability_constraints".into(),
+            json!({"needs_clarification":true,"time_to":"16:00","excluded_weekdays":[4]}),
+        );
+        s.vars.insert(
+            "availability_utterance".into(),
+            json!("не в пятницу, после обеда и до полуночи"),
+        );
+        s.vars.insert("patient_id".into(), json!(1));
+        s.verified_patient = Some(json!(1));
+        let actions = s.enter("assisted.offer_fetch".into(), false);
+        assert_eq!(s.state_name(), "time_clarification.resolve");
+        assert!(actions.iter().any(|a| a.kind == "call"
+            && a.args["module"] == "nlu"
+            && a.args["op"] == "resolve_time"));
+        assert!(
+            !actions
+                .iter()
+                .any(|a| a.kind == "call" && a.args["module"] == "crm")
+        );
+        let proposal = json!({"time_from":"12:00","time_to":"24:00","time_from_inclusive":true,"time_to_inclusive":false,"excluded_weekdays":[4]});
+        let mut reply = Event::new("module", "proposal");
+        reply.request_id = s.pending;
+        reply.payload = json!({"availability_proposal":proposal,"availability_question":"После обеда и до полуночи?"});
+        s.handle(reply);
+        assert_eq!(s.state_name(), "time_clarification.confirm");
+        let actions = s.handle(Event::new("dtmf", "1"));
+        assert!(
+            actions
+                .iter()
+                .any(|a| a.kind == "call" && a.args["op"] == "confirm_time")
+        );
+        let mut reply = Event::new("module", "ok");
+        reply.request_id = s.pending;
+        reply.payload = json!({"availability_constraints":{"time_from":"12:00","time_to":"24:00","time_to_inclusive":false,"excluded_weekdays":[4],"needs_clarification":false}});
+        let actions = s.handle(reply);
+        assert_eq!(s.state_name(), "assisted.offer_fetch");
+        let call = actions.iter().find(|a| a.kind == "call").unwrap();
+        assert_eq!(call.args["op"], "offer");
+        assert_eq!(
+            call.args["args"]["availability_constraints"]["time_to"],
+            "24:00"
+        );
+        assert!(s.approval.is_none());
+        assert!(
+            !actions
+                .iter()
+                .any(|a| a.kind == "sms" || a.kind == "call" && a.args["op"] == "book")
+        );
+    }
+    #[test]
+    fn unparsed_slot_reply_delegates_to_llm_instead_of_replaying_or_booking() {
+        let mut s = Session::new("assisted", Map::new()).unwrap();
+        s.verified_patient = Some(json!(1));
+        s.enter("assisted.offer".into(), false);
+        let mut event = Event::new("speech", "когда моя смена закончится");
+        event.payload = json!({"intent":"unknown","confidence":0.2,"vars":{}});
+        let actions = s.handle(event);
+        assert_eq!(s.state_name(), "time_clarification.resolve");
+        assert!(
+            actions
+                .iter()
+                .any(|a| a.kind == "call" && a.args["op"] == "resolve_time")
+        );
+        assert_eq!(
+            s.vars["availability_utterance"],
+            "когда моя смена закончится"
+        );
+        assert!(s.approval.is_none());
+    }
+    #[test]
+    fn all_slot_query_routes_pause_for_unresolved_preferences() {
+        let mut checked = 0;
+        for node in nodes() {
+            if node.statements.iter().any(|s| {
+                s.kind == "call"
+                    && s.args["module"] == "crm"
+                    && matches!(
+                        s.args["op"].as_str(),
+                        "find_slots"
+                            | "next_day"
+                            | "check_day"
+                            | "day_parts"
+                            | "nearest_in_day_part"
+                            | "list_slots"
+                            | "pick_time"
+                            | "nearest_in_part"
+                    )
+            }) {
+                let mut session = Session::new(&node.flow, Map::new()).unwrap();
+                session.vars.insert(
+                    "availability_constraints".into(),
+                    json!({"needs_clarification":true}),
+                );
+                let actions = session.enter(format!("{}.{}", node.flow, node.name), false);
+                assert_eq!(session.state_name(), "time_clarification.resolve");
+                assert!(
+                    !actions
+                        .iter()
+                        .any(|a| a.kind == "call" && a.args["module"] == "crm")
+                );
+                checked += 1;
+            }
+        }
+        assert!(checked >= 8);
+    }
+    #[test]
+    fn temporal_refusal_and_emergency_never_accept_proposal() {
+        let mut s = Session::new("time_clarification", Map::new()).unwrap();
+        s.enter("time_clarification.confirm".into(), false);
+        let actions = s.handle(Event::new("dtmf", "0"));
+        assert_eq!(s.state_name(), "time_clarification.ask");
+        assert!(!actions.iter().any(|a| a.kind == "call"));
+        let mut emergency = Event::new("speech", "у меня острая боль");
+        emergency.payload = json!({"intent":"emergency", "yes_no":true});
+        let actions = s.handle(emergency);
+        assert!(actions.iter().any(|a| a.kind == "transfer"));
+        assert!(s.approval.is_none());
+    }
+    #[test]
     fn reminder_cancel_requires_explicit_confirmation() {
         let mut s = Session::new("reminder", Map::new()).unwrap();
         s.start();
@@ -1147,7 +1336,7 @@ mod tests {
         s.vars.insert("booking_id".into(), json!(2));
         s.verified_patient = Some(json!(1));
         s.verified_booking = Some(json!(2));
-        s.enter("start".into(), false);
+        s.enter("reminder.start".into(), false);
         s.handle(Event::new("dtmf", "0"));
         assert_eq!(s.state, "cancel_offer");
         s.handle(Event::new("dtmf", "2"));
@@ -1168,7 +1357,7 @@ mod tests {
         s.vars.insert("booking_id".into(), json!(2));
         s.verified_patient = Some(json!(1));
         s.verified_booking = Some(json!(2));
-        s.enter("start".into(), false);
+        s.enter("reminder.start".into(), false);
         s.handle(Event::new("dtmf", "0"));
         s.handle(Event::new("dtmf", "2"));
         let mut ev = Event::new("speech", "Да, отмените.");

@@ -6,18 +6,14 @@ flow reminder
   rate 1.4
   entry identity
 
-# Answering a telephone does not identify the patient. No appointment details
-# are spoken until the entered card number matches the intended patient.
+# Do not disclose appointment details until the intended recipient is verified.
 state identity
-  say "Здравствуйте! Это автоматический помощник поликлиники. Чтобы перейти к вашей записи, введите номер карты поликлиники и нажмите решётку. Можно назвать номер по одной цифре. Если вы не ожидаете звонка, положите трубку. Мы не просим банковские данные и коды из СМС."
-  ask card_no digits 3-10 timeout 25s terminator "#"
-  listen 25s
-  ok -> verify_identity
-  timeout -> no_verified_contact
-  retry 2 -> no_verified_contact
+  say "Здравствуйте! Это автоматический помощник поликлиники. Сначала подтвердим данные пациента. Если вы не ожидаете звонка, положите трубку."
+  set locked_patient_id = $patient_id
+  enter identity.begin -> verify_identity
 
 state verify_identity
-  call crm.verify_card patient_id=$patient_id card_no=$card_no booking_id=$booking_id
+  call crm.verify_booking_identity patient_id=$patient_id booking_id=$booking_id
   ok -> start
   mismatch -> no_verified_contact
   error -> no_verified_contact

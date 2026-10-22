@@ -408,7 +408,7 @@ class MockRegistry:
 
     def find_slots(self, specialty: Optional[str] = None, day: Optional[date] = None, not_before: Optional[datetime] = None,
                    t_from: Optional[str] = None, t_to: Optional[str] = None, doctor_id: Optional[int] = None,
-                   surname_prefix: Optional[str] = None, limit: int = 10) -> list[Slot]:
+                   surname_prefix: Optional[str] = None, limit: int = 10, preserve_window: bool = False) -> list[Slot]:
         where = ["s.status = 'free'", "d.active = 1", "s.starts_at >= ?"]
         params: list[object] = [(not_before or self.now()).isoformat(timespec="minutes")]
         if specialty:
@@ -425,7 +425,7 @@ class MockRegistry:
             params.append(day.isoformat())
         from .availability import current
         constraints = current()
-        if constraints.get("time_from") is not None or constraints.get("time_to") is not None:
+        if not preserve_window and (constraints.get("time_from") is not None or constraints.get("time_to") is not None):
             # Structured bounds use the regulation's windows, not legacy halves.
             t_from = t_to = None
         if t_from:
@@ -480,12 +480,14 @@ class MockRegistry:
         """Which halves of the day still have free slots: subset of ["morning", "afternoon"]."""
         parts = []
         for part, (a, b) in (("morning", ("00:00", "13:00")), ("afternoon", ("13:00", "23:59"))):
-            if self.find_slots(specialty, day, t_from=a, t_to=b, doctor_id=doctor_id, limit=1):
+            if self.find_slots(specialty, day, t_from=a, t_to=b, doctor_id=doctor_id, limit=1, preserve_window=True):
                 parts.append(part)
         return parts
 
     def nearest_in_part(self, specialty: str, daypart: str, after: date, limit_days: int = 60) -> Optional[Slot]:
-        a, b = DAYPART_WINDOWS[daypart]
+        from .availability import current
+        spec = current()
+        a, b = (None, None) if spec.get('time_from') is not None or spec.get('time_to') is not None else DAYPART_WINDOWS[daypart]
         for d in range(0, limit_days + 1):
             day = after + timedelta(days=d)
             found = self.find_slots(specialty, day, t_from=a, t_to=b, limit=1)

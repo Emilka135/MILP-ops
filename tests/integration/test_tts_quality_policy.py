@@ -57,6 +57,13 @@ def test_real_callback_asr_whole_hour_notation_is_equivalent():
     assert result['wer'] == 0
 
 
+def test_real_gpu_menu_recognition_error_must_still_fail():
+    actual = ('Регистратор сейчас недоступен. Хотите, чтобы он перезвонил вам позже? '
+              'Обратный звонок можно выбрать с 10:00 до 16:00. 1—2—2— нет.')
+    result = compare(CALLBACK_PROMPT, actual)
+    assert not result['numbers_match'] and not result['passed']
+
+
 @pytest.mark.parametrize('bounds', [
     'с 08:00 до 16:00', 'с 10:00 до 18:00', 'с 10:01 до 16:00',
     'с 10:00 до 16:30', 'с восьми до шестнадцати часов',

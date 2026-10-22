@@ -72,6 +72,53 @@ def spelled_name(text):
     return None
 
 
+def spoken_letters(text):
+    """Check a model's reconstruction against explicit Russian letter names."""
+    aliases = dict(zip(
+        'а бэ вэ гэ дэ е ё жэ зэ и й ка эль эм эн о пэ эр эс тэ у эф ха цэ чэ ша ща э ю я'.split(),
+        'абвгдеёжзийклмнопрстуфхцчшщэюя'))
+    aliases.update({'мягкий знак': 'ь', 'твердый знак': 'ъ', 'твёрдый знак': 'ъ', 'и краткое': 'й', 'ы': 'ы'})
+    letters = []
+    for part in re.split(r'[,;\n]+|\s+-\s+', text.strip(' .!')):
+        part = part.strip().casefold()
+        if not part:
+            continue
+        if part in aliases:
+            letters.append(aliases[part])
+        elif re.fullmatch('[а-яё]', part):
+            letters.append(part)
+        else:
+            return spelled_name(text)
+    return ''.join(letters).title() if len(letters) >= 2 else None
+
+
+def owner_literal_parts(text, owners):
+    """Use phone owners only to label actually spoken tokens; never fill a gap."""
+    candidates = []
+    for owner in owners:
+        parts = owner.split()
+        if len(parts) != 3:
+            continue
+        found = {}
+        for key, part in zip(NAME_FIELDS, parts):
+            match = re.search(r'(?<!\w)' + re.escape(part) + r'(?!\w)', text, re.I)
+            if match:
+                found[key] = match[0]
+        if found:
+            candidates.append(found)
+    if not candidates:
+        return {}
+    best = max(len(value) for value in candidates)
+    winners = [value for value in candidates if len(value) == best]
+    if not all(value == winners[0] for value in winners):
+        return {}
+    # A known surname must not hide a different, explicitly supplied first name.
+    remaining = text
+    for part in winners[0].values():
+        remaining = re.sub(r'(?<!\w)' + re.escape(part) + r'(?!\w)', '', remaining, flags=re.I)
+    return winners[0] if not remaining.strip(' ,.;') else {}
+
+
 def clean_name(value):
     if not isinstance(value,str):return None
     value=' '.join(value.strip(' .,!').split())
@@ -141,6 +188,8 @@ class DialogueModel:
                  'messages':[{'role':'system','content':'Ты помощник регистратуры. Только JSON по схеме. Не придумывай данные, не подтверждай личность, не выполняй запись. /no_think'},
                              {'role':'user','content':json.dumps(task,ensure_ascii=False)}],
                  'response_format':{'type':'json_schema','json_schema':{'name':'identity_form','strict':True,'schema':schema}}}
+        if local:
+            payload['reasoning_effort'] = 'none'
         req=urllib.request.Request(base.rstrip('/')+'/chat/completions',data=json.dumps(payload).encode(),headers=headers,method='POST')
         try:
             with open_http(req,timeout=8) as response:
@@ -153,6 +202,63 @@ class DialogueModel:
         schema={'type':'object','properties':{key:{'type':'string'} for key in NAME_FIELDS},'required':list(NAME_FIELDS),'additionalProperties':False}
         value=self.complete({'task':'Выдели только явно произнесённые части имени пациента. Недостающие поля — пустая строка. Не исправляй орфографию. Учитывай вопрос. Иван Сергеевич: имя Иван, отчество Сергеевич, фамилия неизвестна.','requested_field':requested,'utterance':text},schema)
         return literal_parts(value,text), bool(value)
+
+    def extract_spelling(self, text, requested, owners=()):
+        # Constrain the small model to whole source tokens and independently
+        # decoded letter sequences. It cannot emit a substring such as «им»
+        # from «Ким», or treat a single phonetic letter name as the surname.
+        masked = text
+        spelled = {}
+        for key, label in [('last_name', 'фамилия'), ('first_name', 'имя'), ('middle_name', 'отчество')]:
+            match = re.search(r'\b' + label + r'\s+по\s+буквам\s*[: ,]*(.*?)(?=[.;]|$)', text, re.I)
+            if match:
+                chunk = match[1].strip(' ,.')
+                decoded = spoken_letters(chunk)
+                if decoded:
+                    spelled[key] = (decoded, chunk)
+                    masked = masked.replace(match[0], ' ')
+        stop = {'фамилия','имя','отчество','по','буквам','моя','меня','зовут','это','через','буква'}
+        literal = {token for token in re.findall(r"[^\W\d_]+(?:[-'’][^\W\d_]+)*", masked)
+                   if token.casefold() not in stop and len(token) > 1}
+        fields = {key: {'type': 'string', 'enum': ['', spelled[key][0]] if key in spelled else ['', *sorted(literal)]}
+                  for key in NAME_FIELDS}
+        evidence_fields = {key: {'type': 'string', 'enum': ['', spelled[key][1]] if key in spelled else ['', *sorted(literal)]}
+                           for key in NAME_FIELDS}
+        schema = {'type': 'object', 'properties': {
+            'parts': {'type': 'object', 'properties': fields, 'required': list(NAME_FIELDS), 'additionalProperties': False},
+            'evidence': {'type': 'object', 'properties': evidence_fields, 'required': list(NAME_FIELDS), 'additionalProperties': False}},
+            'required': ['parts', 'evidence'], 'additionalProperties': False}
+        answer = self.complete({'task': 'Разбери диктовку ФИО по буквам. Названия букв объединяй в слово: '
+                                'например, фамилия «бэ, а, ка» = Бак, evidence="бэ, а, ка". '
+                                'Не считай название отдельной буквы фамилией. Сохраняй первую букву имени. '
+                                'Только явно произнесенные части. '
+                                'Для каждой части evidence — дословный непрерывный фрагмент с буквами или самим именем. '
+                                'Недостающее — пустая строка. ФИО владельцев номера — только подсказка, не дополняй из них пропуски.',
+                                'utterance': text, 'requested_field': requested, 'phone_owner_names': list(owners),
+                                'decoded_spelling': {key: {'value': value, 'evidence': evidence} for key, (value, evidence) in spelled.items()}}, schema)
+        if not isinstance(answer, dict) or set(answer) != {'parts', 'evidence'}:
+            return {}
+        if not all(isinstance(answer[key], dict) and set(answer[key]) == set(NAME_FIELDS) for key in answer):
+            return {}
+        found = {}
+        for key, value in answer['parts'].items():
+            if not value:
+                continue
+            evidence = answer['evidence'][key]
+            if value not in fields[key]['enum'] or evidence not in evidence_fields[key]['enum']:
+                return {}
+            if not clean_name(value) or not isinstance(evidence, str) or not evidence or not re.search(r'(?<!\w)' + re.escape(evidence) + r'(?!\w)', text, re.I):
+                return {}
+            label = {'last_name':'фамилия', 'first_name':'имя', 'middle_name':'отчество'}[key]
+            spelling = re.search(r'\b' + label + r'\s+по\s+буквам\s*[: ,]*(.*?)(?=[.;]|$)', text, re.I)
+            if spelling and spoken_letters(spelling[1]) != value:
+                return {}
+            literal = literal_parts({key: value}, evidence)
+            spelled = spoken_letters(evidence)
+            if not literal and (not spelled or spelled.casefold() != value.casefold()):
+                return {}
+            found[key] = value
+        return found
 
     def question(self,requested):
         # Contains field labels only: no patient data is sent to phrase a question.
@@ -194,7 +300,7 @@ class IdentityForm:
         self.requested=('full_name' if len(missing)==3 else missing[0]) if missing else 'birth_date'
         return self.requested
 
-    def accept_name(self,text,model=None,*,today=None):
+    def accept_name(self,text,model=None,*,today=None,phone_owner_names=()):
         # Collect independent literal fields before asking only what is missing.
         name_text, parsed_birth = split_birth_utterance(text, today=today)
         changed_birth = bool(parsed_birth and parsed_birth != self.birth_date)
@@ -213,6 +319,12 @@ class IdentityForm:
             self.no_middle_name=True;self.parts['middle_name']='';self.confirmed_readback=False;self.next_field();return True
         requested=self.requested
         spelled=spelled_name(text)
+        spelling_request = bool(spelled or re.search(r'\b(?:по\s+буквам|букв[аыу]|через\s+[её])\b', text, re.I))
+        if model and spelling_request:
+            extracted = model.extract_spelling(text, requested, phone_owner_names)
+            if extracted:
+                self.parts.update(extracted);self.pending='';self.confirmed_readback=False
+                self.next_field();return True
         if spelled:
             if requested in NAME_FIELDS:self.parts[requested]=spelled
             else:self.pending=spelled
@@ -221,8 +333,8 @@ class IdentityForm:
             self.next_field();return True
         value=re.sub(r'^(?:меня зовут|моя фамилия|моё имя|мое имя|фамилия|имя|отчество|это|фио)[: ,]*','',text.strip(),flags=re.I).strip(' .!')
         words=value.split()
-        found={}
-        if '?' not in text and clean_name(value):
+        found=owner_literal_parts(value, phone_owner_names)
+        if not found and '?' not in text and clean_name(value):
             patronym=lambda w:folded(w).endswith(('вич','вна','ична','оглы','кызы'))
             if len(words)==3:
                 # Both common orders. For other name structures ask the model.
@@ -234,7 +346,7 @@ class IdentityForm:
             elif len(words)==1 and requested in NAME_FIELDS:found={requested:value}
             elif len(words)==1 and patronym(value):found={'middle_name':value}
             elif len(words)==1 and folded(value).endswith(('ов','ова','ев','ева','ин','ина','ский','ская','цкий','цкая')):found={'last_name':value}
-        if not found and model and text.strip():
+        if not found and model and text.strip() and not spelling_request:
             found,_=model.extract(text,requested)
         if found:
             self.parts.update(found);self.pending='';self.confirmed_readback=False
@@ -247,7 +359,7 @@ class IdentityForm:
     def question(self,model=None):
         if self.pending:return 'Вы назвали «'+self.pending+'». Это имя или фамилия пациента?'
         requested=self.next_field()
-        return model.question(requested) if model else QUESTIONS[requested]
+        return QUESTIONS[requested]
 
     def readback(self):
         return identity_readback(self.full_name,self.birth_date,self.no_middle_name)

@@ -68,3 +68,14 @@ def test_model_key_reader_uses_host_identity_without_changing_other_services(mon
     clinicctl.docker(['ps'])
     assert seen['env']['CLINIC_LOCAL_UID'] == str(os.getuid())
     assert seen['env']['CLINIC_LOCAL_GID'] == str(os.getgid())
+
+
+def test_dialogue_overlay_keeps_gpu_overlay_and_model_warmup(monkeypatch):
+    monkeypatch.setattr(clinicctl, 'GPU_ENABLED', True)
+    monkeypatch.setattr(clinicctl, 'DIALOGUE_ENABLED', True)
+    seen=[]
+    monkeypatch.setattr(clinicctl.subprocess, 'run', lambda command, **kwargs: (seen.append(command), subprocess.CompletedProcess(command,0,'',''))[1])
+    clinicctl.docker(['ps'])
+    assert seen[0][:2] == ['docker','compose']
+    assert seen[0][-1] == 'ps'
+    assert seen[0].index('compose.gpu.yaml') < seen[0].index('compose.dialogue.yaml')

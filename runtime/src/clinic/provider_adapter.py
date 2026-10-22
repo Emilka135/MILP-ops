@@ -98,7 +98,7 @@ class ConfiguredService:
         if item['provider']!='local' and self.module in {'tts','asr'}:
             return speech(self.module,op,args,item)
         service=self._service(item)
-        if self.module=='nlu' and item['provider']!='local':
+        if self.module=='nlu' and op=='interpret' and item['provider']!='local':
             # Deterministic safety always executes before an optional classifier.
             status,safe=service.handle(op,args)
             if status!='ok':return status,safe

@@ -38,6 +38,8 @@ last_name,first_name,middle_name,birth_date,phone,oms,NULL AS district FROM pati
             if len(self.sessions)>=1000:return 'error',{'error':'identity_capacity'}
             self.sessions[call_id]={'lock':threading.RLock(),'form':IdentityForm(),'stage':'name','phone':phone_digits(caller_phone),
                 'locked':locked_patient_id,'tries':0,'invalids':0,'candidates':[],'pending':None,'policy':'','policy_first':False,'queries':[],'updated':now}
+            session = self.sessions[call_id]
+            session['phone_owner_names'] = [row['full_name'] for row in self.candidates(call_id, {}, phone=session['phone'])] if session['phone'] else []
             return self.reply(call_id,'name',QUESTIONS['full_name']+' Если удобнее назвать номер полиса ОМС, нажмите два.')
 
     def use_policy(self,call_id,**_):
@@ -128,12 +130,11 @@ last_name,first_name,middle_name,birth_date,phone,oms,NULL AS district FROM pati
                     return self.reply(call_id,'name',form.question(self.model))
                 if stage=='readback':form.requested='last_name';stage='name'
             if stage=='name':
-                if not form.accept_name(text,self.model,today=self.today()):
+                if not form.accept_name(text,self.model,today=self.today(),phone_owner_names=session['phone_owner_names']):
                     session['invalids']+=1
                     if session['invalids']>=3:return self.reply(call_id,'operator',reason='identity_name_unclear')
                     return self.reply(call_id,'name',form.question(self.model))
                 session['invalids']=0
-                if form.parts:self.candidates(call_id,form.parts)
                 if form.missing or form.pending:return self.reply(call_id,'name',form.question(self.model))
                 return self.lookup(call_id) if form.birth_date else self.reply(call_id,'birth',QUESTIONS['birth_date'])
             if stage=='birth':

@@ -9,13 +9,15 @@ ROOT=Path(__file__).resolve().parents[1]
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--output',default='debug/runs/local-images');args=parser.parse_args()
     evidence={}
-    for module in ('crm','nlu','agent','sms','operator','tts','asr','scenario-editor','scenario-builder'):
+    for module in ('crm','nlu','agent','sms','operator','tts','asr','scenario-editor','scenario-builder','orchestrator'):
+        if module=='orchestrator':
+            subprocess.run(['cargo','build','--locked','--offline','--release','--bin','clinic-voice'],cwd=ROOT,check=True)
         name='clinic-voice-'+('asr-gpu' if module=='asr' else module)
         # Freeze the current local ID before replacing its friendly tag.
         before=subprocess.check_output(['docker','image','inspect',name,'--format','{{.Id}}'],text=True).strip()
         base_tag='clinic-voice-local-base:'+module
         subprocess.run(['docker','tag',before,base_tag],check=True)
-        dockerfile={'scenario-editor':'docker/local-editor-update.Dockerfile','scenario-builder':'docker/local-builder-update.Dockerfile'}.get(module,'docker/local-update.Dockerfile')
+        dockerfile={'scenario-editor':'docker/local-editor-update.Dockerfile','scenario-builder':'docker/local-builder-update.Dockerfile','tts':'docker/local-tts-update.Dockerfile','orchestrator':'docker/local-orchestrator-update.Dockerfile'}.get(module,'docker/local-update.Dockerfile')
         subprocess.run(['docker','build','--network=none','--pull=false','--build-arg','BASE_IMAGE='+base_tag,
                         '--build-arg','SOURCE_ROOT='+('/workspace' if module in {'scenario-editor','scenario-builder'} else '/app'),
                         '-f',dockerfile,'-t',name,'.'],cwd=ROOT,check=True)

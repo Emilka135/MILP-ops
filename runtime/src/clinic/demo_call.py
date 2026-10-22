@@ -67,6 +67,7 @@ class Call:
     flags: list = field(default_factory=list)
     identity: IdentityForm = field(default_factory=IdentityForm)
     caller_phone: str = ''
+    phone_owner_names: list = field(default_factory=list)
     candidates: list = field(default_factory=list)
     policy_candidate: dict | None = None
     patient_name: str = ''
@@ -125,7 +126,10 @@ class DemoCalls:
                     call.extensions=snapshot(self.store,data.get('_line','100'))
                 self.calls[key]=call
             try:
-                with call.lock:return self._result(key,call,PROMPTS['menu'])
+                with call.lock:
+                    if call.caller_phone and self.enabled(call, 'crm'):
+                        call.phone_owner_names = [row['full_name'] for row in self.store.identity_candidates(call.key, {}, phone=call.caller_phone)]
+                    return self._result(key,call,PROMPTS['menu'])
             except Exception:
                 with self.lock:self.calls.pop(key,None)
                 raise
@@ -245,7 +249,7 @@ class DemoCalls:
         if call.state=='identity_policy_confirm':
             from calls.tts.verbalize import date_to_words
             p=call.policy_candidate
-            return 'По полису найдены данные: '+p['full_name']+', дата рождения '+date_to_words(date.fromisoformat(p['birth_date']))+'. Это пациент, которого нужно записать? Да — один. Нет — ноль.'
+            return 'По полису найдены данные: '+p['full_name']+', дата рождения '+date_to_words(date.fromisoformat(p['birth_date']), with_year=True, with_weekday=False)+'. Это пациент, которого нужно записать? Да — один. Нет — ноль.'
         if call.state=='identity_confirm':return 'Вы уже назвали: '+call.patient_name+'. Это ФИО пациента? Да — один. Исправить — ноль.'
         if call.state=='doctor':return 'Выберите врача: '+'. '.join(f'{i+1}: {d["full_name"]}' for i,d in enumerate(call.doctors))+'. Назовите номер варианта или ФИО врача.'
         if call.state=='confirm':
@@ -416,10 +420,8 @@ class DemoCalls:
                 self._move(call,'identity_birth' if not call.identity.missing else 'identity_name');return self._prompt(call)
             if digit=='0' or yes_no is False:call.patient_name='';call.name_offered=False;call.identity.reset();self._move(call,'identity_name');return self._prompt(call)
         elif call.state=='identity_name':
-            if call.identity.accept_name(text,self.dialogue_model if self.enabled(call,'dialogue') else None,today=clinic_now().date()):
+            if call.identity.accept_name(text,self.dialogue_model if self.enabled(call,'dialogue') else None,today=clinic_now().date(),phone_owner_names=call.phone_owner_names):
                 call.patient_name=call.identity.full_name
-                if not call.analysis and self.enabled(call,'crm') and call.identity.parts:
-                    call.candidates=self.store.identity_candidates(call.key,call.identity.parts)
                 # Even one preliminary candidate never completes missing fields.
                 if not call.identity.missing and not call.identity.pending and call.identity.birth_date:
                     return self._identity_lookup(call)
@@ -455,7 +457,7 @@ class DemoCalls:
                 self._move(call,'identity_name');return self._prompt(call)
             # An actual correction is data, not an unsuccessful yes/no answer.
             old=call.identity.requested;call.identity.requested='last_name'
-            if call.identity.accept_name(text,self.dialogue_model if self.enabled(call,'dialogue') else None,today=clinic_now().date()):
+            if call.identity.accept_name(text,self.dialogue_model if self.enabled(call,'dialogue') else None,today=clinic_now().date(),phone_owner_names=call.phone_owner_names):
                 call.patient_name=call.identity.full_name
                 if not call.identity.missing and call.identity.birth_date:return self._identity_lookup(call)
                 self._move(call,'identity_birth' if not call.identity.missing else 'identity_name');return self._prompt(call)

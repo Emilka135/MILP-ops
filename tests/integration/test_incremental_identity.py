@@ -241,3 +241,94 @@ def test_ci_never_calls_optional_generative_identity_model(monkeypatch, flag):
     settings = SimpleNamespace(read=lambda: {'dialogue': {'enabled': True, 'provider': 'local', 'model': 'test'}})
     monkeypatch.setattr('clinic.identity_form.open_http', lambda *_args, **_kwargs: pytest.fail('CI called a generative API'))
     assert DialogueModel(settings).complete({'task': 'extract'}, {}) is None
+
+
+def test_browser_policy_confirmation_reads_complete_birth_year(tmp_path):
+    from clinic.demo_call import Call
+    from clinic.identity import normalize_birth_date
+    store = SandboxStore(tmp_path / 'policy-browser')
+    settings = ModuleSettings(tmp_path / 'modules.json')
+    demo = DemoCalls(store=store, settings=settings)
+    call = Call('observer', 0, key='policy-browser', modules=settings.read())
+    call.state = 'identity_policy_confirm'
+    call.policy_candidate = {'id': 1, 'full_name': 'Иванов Иван Петрович', 'birth_date': '1985-04-12'}
+    spoken = demo._prompt(call).split('дата рождения ', 1)[1].split('. Это пациент', 1)[0]
+    assert normalize_birth_date(spoken, today=TODAY) == date(1985, 4, 12)
+    store.db.close()
+
+
+def test_dialogue_configuration_is_optional_disabled_and_persists_without_keys(tmp_path):
+    settings = ModuleSettings(tmp_path / 'modules.json')
+    values = settings.read()
+    assert values['dialogue']['enabled'] is False
+    values['dialogue'].update(provider='compatible', model='literal-extraction-test', base_url='https://models.example/v1')
+    settings.save(values)
+    restored = ModuleSettings(settings.path).read()['dialogue']
+    assert restored['provider'] == 'compatible' and not restored['enabled']
+    assert not any('secret' in key or 'token' in key for key in restored)
+
+
+def test_phone_owner_labels_unusual_literal_name_without_llm_or_filling_gaps(service):
+    patient(service,last='Ли',first='Ким',middle='Сергеевич',phone='79001234567')
+    service.model.extract=lambda *_a: pytest.fail('literal phone owner name called LLM')
+    service.model.question=lambda *_a: pytest.fail('ordinary missing field called LLM')
+    stage, reply = service.start('owner',caller_phone='79001234567')
+    assert stage == 'name' and 'patient_id' not in reply
+    stage, reply = service.answer('owner','Ким Ли')
+    assert reply['identity_parts'] == {'last_name':'Ли','first_name':'Ким'}
+    assert reply['identity_missing'] == ['middle_name','birth_date']
+    assert 'patient_id' not in reply and stage == 'name'
+    service.answer('owner','Сергеевич')
+    assert service.answer('owner','12.04.1985')[0] == 'readback'
+    assert service.answer('owner','1')[1]['patient_id'] == 1
+
+
+def test_phone_owner_does_not_override_another_explicit_first_name(service):
+    patient(service,phone='79001234567')
+    service.start('other-name',caller_phone='79001234567')
+    _, reply = service.answer('other-name','Иванов Александр')
+    assert reply['identity_parts']['first_name'] == 'Александр'
+    assert 'patient_id' not in reply
+
+
+def test_spelled_full_name_invokes_model_and_requires_grounded_letters(monkeypatch):
+    from clinic.identity_form import DialogueModel
+    settings=SimpleNamespace(read=lambda:{'dialogue':{'enabled':False}})
+    model=DialogueModel(settings);tasks=[]
+    text='Фамилия по буквам: эль, и. Имя Ким, отчество Сергеевич.'
+    def complete(task,schema):
+        tasks.append(task)
+        return {'parts':{'last_name':'Ли','first_name':'Ким','middle_name':'Сергеевич'},
+                'evidence':{'last_name':'эль, и','first_name':'Ким','middle_name':'Сергеевич'}}
+    monkeypatch.setattr(model,'complete',complete)
+    form=IdentityForm()
+    assert form.accept_name(text,model,phone_owner_names=['Ли Ким Сергеевич'])
+    assert form.full_name == 'Ли Ким Сергеевич' and len(tasks)==1
+    assert tasks[0]['phone_owner_names'] == ['Ли Ким Сергеевич']
+    assert not form.confirmed_readback
+    wrong=complete({},{});wrong['parts']['last_name']='Лин'
+    monkeypatch.setattr(model,'complete',lambda *_a:wrong)
+    assert model.extract_spelling(text,'full_name') == {}
+
+
+def test_spelling_model_cannot_fill_a_missing_name_from_phone_owner(monkeypatch):
+    from clinic.identity_form import DialogueModel
+    model=DialogueModel(SimpleNamespace(read=lambda:{'dialogue':{'enabled':False}}))
+    monkeypatch.setattr(model,'complete',lambda *_a:{'parts':{'last_name':'Ли','first_name':'Ким','middle_name':''},
+                       'evidence':{'last_name':'эль, и','first_name':'','middle_name':''}})
+    assert model.extract_spelling('По буквам: эль, и','full_name',['Ли Ким Сергеевич']) == {}
+
+
+@pytest.mark.parametrize('parts,evidence', [
+    ({'last_name':'эль','first_name':'Ким','middle_name':'Сергеевич'}, {'last_name':'эль','first_name':'Ким','middle_name':'Сергеевич'}),
+    ({'last_name':'Ли','first_name':'им','middle_name':'Сергеевич'}, {'last_name':'эль, и','first_name':'им','middle_name':'Сергеевич'}),
+])
+def test_real_bad_spelling_outputs_cannot_use_phoneme_as_surname_or_substring_as_name(monkeypatch, parts, evidence):
+    from clinic.identity_form import DialogueModel
+    model=DialogueModel(SimpleNamespace(read=lambda:{'dialogue':{'enabled':False}}))
+    monkeypatch.setattr(model,'complete',lambda *_a:{'parts':parts,'evidence':evidence})
+    text='Фамилия по буквам: эль, и. Имя Ким, отчество Сергеевич.'
+    assert model.extract_spelling(text,'full_name',['Ли Ким Сергеевич']) == {}
+    form=IdentityForm()
+    assert not form.accept_name(text,model,phone_owner_names=['Ли Ким Сергеевич'])
+    assert not form.parts

@@ -90,3 +90,23 @@ def test_real_nlu_does_not_turn_before_clock_or_birth_date_into_minimum_time(sem
     assert spec['excluded_weekdays'] == [4] and spec['time_to'] == '14:00' and not spec['time_to_inclusive']
     _, birth = semantic_nlu.handle('interpret', {'text': '12.04.1985', 'today': TODAY.isoformat(), 'identity_field': 'birth_date'})
     assert 'availability_constraints' not in birth['vars'] and 'said_date' not in birth['vars']
+
+
+@pytest.mark.parametrize('op,extra', [
+    ('nearest_in_part', {'from_day':'2026-10-22'}),
+    ('nearest_in_day_part', {'day':'2026-10-22'}),
+    ('pick_time', {'day':'2026-10-22'}),
+])
+def test_confirmed_time_window_resumes_legacy_queries_without_a_guessed_daypart(clinic,op,extra):
+    crm,_=clinic
+    status,result=crm.handle(op,{'specialty':'терапевт',**extra,
+                          'availability_constraints':{'time_from':'14:00','time_from_inclusive':False,'time_to':'24:00','time_to_inclusive':False}})
+    assert status=='ok' and result['slot_time']=='16:00'
+    assert not crm.reg.execute('SELECT * FROM bookings')
+
+
+def test_structured_window_does_not_advertise_unavailable_morning(clinic):
+    crm,_=clinic
+    status,result=crm.handle('day_parts',{'specialty':'терапевт','day':'2026-10-22',
+                          'availability_constraints':{'time_from':'14:00','time_from_inclusive':False,'time_to':'24:00','time_to_inclusive':False}})
+    assert status=='single' and result['part']=='afternoon' and result['slot_time']=='16:00'

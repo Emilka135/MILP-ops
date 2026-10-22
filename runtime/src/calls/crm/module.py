@@ -82,7 +82,8 @@ class CrmModule:
 
     def op_identity_start(self,**args):
         from clinic.identity_service import IdentityService
-        if not hasattr(self,'_identity_form'):self._identity_form=IdentityService(self.reg,self.today)
+        with self.reg._lock:
+            if not hasattr(self,'_identity_form'):self._identity_form=IdentityService(self.reg,self.today)
         return self._identity_form.start(**args)
 
     def op_identity_answer(self,**args):
@@ -196,7 +197,7 @@ class CrmModule:
             return "single", {**slot_payload(slot), "part": parts[0], "part_spoken": "до обеда" if parts[0] == "morning" else "после обеда"}
         return "both", {"parts": ",".join(parts)}
 
-    def op_nearest_in_day_part(self, specialty: str, day: str, said_daypart: str, **_: object) -> Result:
+    def op_nearest_in_day_part(self, specialty: str, day: str, said_daypart: str = '', **_: object) -> Result:
         d = date.fromisoformat(day)
         a, b = ("00:00", "13:00") if said_daypart == "morning" else ("13:00", "23:59")
         if said_daypart in ("midday", "evening"):
@@ -218,8 +219,14 @@ class CrmModule:
         spoken = ", ".join(time_to_words(s.clock) for s in slots)
         return "ok", {"slot_times": ",".join(times), "slots_spoken": spoken, "slots_count": len(slots)}
 
-    def op_pick_time(self, specialty: str, day: str, said_time: str, **_: object) -> Result:
+    def op_pick_time(self, specialty: str, day: str, said_time: str = '', **_: object) -> Result:
         d = date.fromisoformat(day)
+        if not said_time:
+            from .availability import current
+            spec = current()
+            if spec.get('time_from') is None and spec.get('time_to') is None:
+                return 'error', {'error':'time_required'}
+            said_time = spec.get('time_from') or '00:00'
         t = time.fromisoformat(said_time)
         exact = self.reg.find_slots(specialty, d, t_from=t.strftime("%H:%M"), t_to=(datetime.combine(d, t) + timedelta(minutes=1)).time().strftime("%H:%M"), limit=1)
         if exact:
@@ -229,7 +236,7 @@ class CrmModule:
             return "near", slot_payload(near[0])
         return "empty", {}
 
-    def op_nearest_in_part(self, specialty: str, said_daypart: str, from_day: str, **_: object) -> Result:
+    def op_nearest_in_part(self, specialty: str, said_daypart: str = '', from_day: str = '', **_: object) -> Result:
         slot = self.reg.nearest_in_part(specialty, said_daypart, date.fromisoformat(from_day))
         if slot is None:
             return "empty", {}

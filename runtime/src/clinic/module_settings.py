@@ -12,6 +12,7 @@ DEFAULTS = {
     'asr': {'enabled':True,'provider':'local','model':'gigaam-v3-e2e-rnnt','voice':'','base_url':'','key_env':'OPENROUTER_API_KEY'},
     'nlu': {'enabled':True,'provider':'local','model':'e5','voice':'','base_url':'','key_env':'OPENROUTER_API_KEY'},
     'agent': {'enabled':True,'provider':'local','model':'deterministic','voice':'','base_url':'','key_env':'OPENROUTER_API_KEY'},
+    'dialogue': {'enabled':False,'provider':'local','model':'qwen3:1.7b','voice':'','base_url':'','key_env':'OPENROUTER_API_KEY'},
     'crm': {'enabled':True,'provider':'local','model':'sqlite / МИС','voice':'','base_url':'','key_env':''},
     'sms': {'enabled':True,'provider':'local','model':'gateway','voice':'','base_url':'','key_env':''},
     'operator': {'enabled':True,'provider':'local','model':'queue','voice':'','base_url':'','key_env':''},
@@ -19,7 +20,7 @@ DEFAULTS = {
     'preferences': {'enabled':False,'provider':'local','model':'explicit-only','voice':'','base_url':'','key_env':''},
     'scenario_extensions': {'enabled':False,'provider':'local','model':'reviewed-build','voice':'','base_url':'','key_env':''},
 }
-LABELS = dict(tts='Озвучка',asr='Распознавание речи',nlu='Понимание речи',agent='Подбор слотов',crm='Картотека и запись',sms='Уведомления',operator='Передача сотруднику',client_tags='Метки клиентов',preferences='Предпочтения',scenario_extensions='Расширения сценариев')
+LABELS = dict(tts='Озвучка',asr='Распознавание речи',nlu='Понимание речи',agent='Подбор слотов',dialogue='Сложные уточнения ФИО и времени (LLM)',crm='Картотека и запись',sms='Уведомления',operator='Передача сотруднику',client_tags='Метки клиентов',preferences='Предпочтения',scenario_extensions='Расширения сценариев')
 
 
 class ModuleSettings:
@@ -47,12 +48,12 @@ class ModuleSettings:
             item = {**DEFAULTS[key],**value}
             if type(item['enabled']) is not bool: raise ValueError('enabled должен быть логическим')
             if item['provider'] not in {'local','openrouter','compatible'}: raise ValueError('Неизвестный провайдер')
-            if key not in {'tts','asr','nlu','agent'} and item['provider']!='local': raise ValueError('Этот модуль использует адаптер приложения, а не речевую модель')
+            if key not in {'tts','asr','nlu','agent','dialogue'} and item['provider']!='local': raise ValueError('Этот модуль использует адаптер приложения, а не речевую модель')
             for field in ('model','voice','base_url','key_env'):
                 if not isinstance(item[field],str) or len(item[field])>300: raise ValueError('Некорректное поле '+field)
             if not item['model'].strip(): raise ValueError('Укажите модель или стек')
-            if item['provider']=='local' and key in {'tts','asr','nlu','agent'}:
-                choices = {'tts':{'v5_cis_base'},'asr':{'gigaam-v3-e2e-rnnt'},'nlu':{'e5'},'agent':{'deterministic'}}
+            if item['provider']=='local' and key in {'tts','asr','nlu','agent','dialogue'}:
+                choices = {'tts':{'v5_cis_base'},'asr':{'gigaam-v3-e2e-rnnt'},'nlu':{'e5'},'agent':{'deterministic'},'dialogue':{'qwen3:1.7b'}}
                 if item['model'] not in choices[key]: raise ValueError('Локальная модель не установлена / не разрешена')
             if item['provider']!='local':
                 if not re.fullmatch(r'[A-Z][A-Z0-9_]{2,79}',item['key_env']): raise ValueError('Укажите имя переменной ключа')
@@ -88,7 +89,7 @@ def secret(item):
 
 def model_catalog(module):
     """Public provider metadata, filtered by the module's actual modality."""
-    if module not in {'tts','asr','nlu','agent'}:raise ValueError('У модуля нет каталога моделей')
+    if module not in {'tts','asr','nlu','agent','dialogue'}:raise ValueError('У модуля нет каталога моделей')
     from calls.services.netutil import open_http
     import urllib.request
     try:

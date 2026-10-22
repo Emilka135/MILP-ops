@@ -39,6 +39,10 @@ class Nlu:
         self.safety = SafetyLayer()
 
     def handle(self, op, args):
+        if op in {'resolve_time', 'confirm_time'}:
+            from .temporal_dialogue import TemporalDialogue
+            dialogue = TemporalDialogue()
+            return (dialogue.resolve if op == 'resolve_time' else dialogue.confirm)(**args)
         if op != "interpret":
             return "error", {"error": "unknown NLU operation"}
         text = str(args.get("text", ""))[:4096]
@@ -110,10 +114,12 @@ class Nlu:
         ):
             intent = "gratitude"
             confidence = 1.0
+        from .identity_form import foreign_language_request
+        if foreign_language_request(text): intent = "language_unsupported"; confidence = 1.0
         flags=[]
         if intent=="abuse":intent="operator";flags.append("abusive_language")
         identity_field = args.get("identity_field")
-        identity_context = identity_field in {"birth_date", "card_no", "snils", "phone"}
+        identity_context = identity_field in {"birth_date", "card_no", "snils", "phone", "oms"}
         date_field = None
         digits = it.digits
         if identity_context:
