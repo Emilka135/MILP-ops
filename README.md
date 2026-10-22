@@ -167,3 +167,29 @@ GitHub Actions: тесты, SCA, лицензии Rust, функциональн
 Мастерская регистратора и наблюдателя: `/registrar` на адресе редактора. Временный вход — `user/user`, без входа — просмотр звонков и соседних шагов. Администратор — `admin/admin`. [Работа со звонком и предложением исправления](scenarios/docs/WORKSHOP.md). [Незавершённые задачи](TODO.md).
 
 Панель свободных отзывов и жалоб: после входаadmin/admin нажмите «Отзывы». Ночная сводка использует расписание регистратуры; одобрение сохраняет черновик до проверки развёртывания. [Как это устроено и проверено](docs/FEEDBACK.md).
+
+## Презентация — исходник и сборка
+
+
+**[Открыть презентацию в браузере](docs/presentations/index.html)** · **[PDF, 11 слайдов](docs/presentations/clinic-voice-assistant.pdf)**
+
+- [PPTX с фиксированной вёрсткой](docs/presentations/clinic-voice-assistant.pptx)
+- [Редактируемый PPTX](docs/presentations/clinic-voice-assistant-editable.pptx)
+- [Актуальные скриншоты слайдов](docs/presentations/slides/)
+- **[Исходник: presentation/deck.json](presentation/deck.json)** — тексты, расположение элементов и тема.
+- **[Как редактировать и собирать](presentation/README.md)** — локальный аналог скриптовой сборки слайдов, без Google API.
+
+```bash
+npm --prefix presentation ci
+npm --prefix presentation run dev    # браузерный просмотр и редактор, порт 8787
+npm --prefix presentation run build  # HTML + PDF + PPTX + PNG из одного JSON
+npm --prefix presentation test
+```
+
+Просмотр в запущенном сервере: `/` — PNG-слайды без JavaScript; `/editor` — редактор.
+Пересоберите экспорты после изменения JSON: галерея показывает последнюю сборку.
+
+В редакторе: **«Править» → выбрать элемент → изменить → «Сохранить» → «Экспорт»**.
+Сохранение меняет JSON в репозитории; экспорт пересобирает все форматы.
+Показатели в презентации разделены на цели пилота и текущие результаты прототипа.
+
