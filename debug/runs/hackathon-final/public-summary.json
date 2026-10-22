@@ -1,0 +1,46 @@
+{
+  "integration": {
+    "tests": 770,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "fresh_compose_volumes_no_network_passed": true
+  },
+  "operator": {
+    "passed": true,
+    "answered_test_softphone": true,
+    "stand_acknowledged": true,
+    "seconds": 53.55160774302203,
+    "staffed_human_not_tested": true
+  },
+  "reminder": {
+    "passed": true,
+    "status": "confirmed",
+    "confirmation_scope": "local; DBI does not provide confirmed status",
+    "test_visit_cancel_acknowledged": true,
+    "received_pcm_samples": 304243,
+    "received_rms": 3365.01
+  },
+  "agent_after_restart": {
+    "passed": true,
+    "mode": "openai",
+    "model_call_verified": true,
+    "test_visit_cancel_acknowledged": true
+  },
+  "raw_evidence": "Kept privately on the team VM under debug/runs; no raw logs/transcripts/audio in this public report",
+  "reminder_reschedule_replay": {
+    "passed": true,
+    "scope": "real PCM / production VAD / organizer Whisper / NLU / Rust / DBI; no SIP call",
+    "test_visit_cancel_acknowledged": true,
+    "real_outbound_retest_pending": true
+  },
+  "browser": {
+    "text_booking_verified": true,
+    "real_wav_asr_steps_verified": 6,
+    "slot_ordinal_bug_fixed": true,
+    "full_audio_browser_retest_pending": false,
+    "physical_microphone_not_tested": true,
+    "audio_booking_insert_verified": true,
+    "accepted_on": "2026-10-22"
+  }
+}
