@@ -485,7 +485,14 @@ async fn operation(
     if !app.authorized(&headers) {
         return StatusCode::UNAUTHORIZED.into_response();
     }
-    result(app.operation(&op, args).await)
+    let budget_ms = crate::bus::configured_limit("TURN_TIMEOUT_MS", 55_000, 55_000);
+    result(
+        crate::bus::within_turn(
+            app.operation(&op, args),
+            Duration::from_millis(budget_ms as u64),
+        )
+        .await,
+    )
 }
 async fn health(State(app): State<App>) -> Json<Value> {
     Json(json!({"status":"ok","module":"rust-orchestrator","mode":if app.demo{"demo"}else{"live"}}))

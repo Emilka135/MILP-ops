@@ -15,6 +15,23 @@ env:
   STAND_URL: ''
   SMS_GATEWAY_URL: ''
 jobs:
+  twenty-call-queues:
+    name: twenty concurrent sessions and shared turn budget
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.98.0
+      - name: Exercise actual per-module HTTP queues with twenty simultaneous sessions
+        run: |
+          mkdir -p debug/runs/score-acceptance
+          set -o pipefail
+          cargo test --locked --lib bus::tests -- --nocapture 2>&1 | tee debug/runs/score-acceptance/twenty-call-queues.log
+      - uses: actions/upload-artifact@v4
+        if: always() && !env.ACT
+        with:
+          name: twenty-call-queues
+          path: debug/runs/score-acceptance/twenty-call-queues.log
   control-contracts:
     name: isolated evidence and scenario editing
     runs-on: ubuntu-latest

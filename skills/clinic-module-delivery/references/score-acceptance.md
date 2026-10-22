@@ -9,6 +9,7 @@ User refinements: 22 October 2026. These apply to this clinic project.
 - Generate an audible synthetic dialogue corpus once with different available TTS voices and rates spanning 0.75–2.5. Freeze each fixture's selection, audio, seed, expected text/trace/terminal state and hashes. Actions verifies/replays the existing corpus; it does not rerandomize or regenerate the reference audio.
 - Replay actual audio through ASR and the actual FSM, import the recorded dialogue in the registrar client, and compare transcript/trace/target state. A wrong target fails, even if transcription or import alone succeeds. Bound job, subprocess, request, playback and conversation timeouts.
 - CI uses the local small encoder for intent/missing fields and deterministic questions; no smart/reasoning external LLM, credentials or paid calls. Current E5 is not a fine-tuned USER-bge model. Claim fine-tuning only with weights, training provenance and independent evaluation.
+- Accept twenty simultaneously active calls, with every user turn strictly below sixty seconds including module queues and audible response preparation. Check the maximum per turn, call correlation and target state. A queue-only test or twenty sequential HTTP requests does not prove the full audio profile; keep both reports distinct.
 
 ## Runtime division of work
 

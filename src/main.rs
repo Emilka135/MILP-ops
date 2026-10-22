@@ -27,7 +27,11 @@ async fn main() {
         )
     })
     .collect();
-    let bus = Bus::new(urls, 128, 4);
+    let bus = Bus::new(
+        urls,
+        clinic_voice::bus::configured_limit("MODULE_QUEUE_CAPACITY", 128, 4096),
+        clinic_voice::bus::configured_limit("MODULE_WORKERS", 4, 64),
+    );
     let app = App::new(bus);
     app.start_timers();
     let bind = env::var("BIND").unwrap_or_else(|_| "127.0.0.1:8080".into());
