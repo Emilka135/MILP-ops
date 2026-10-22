@@ -44,6 +44,39 @@ def test_numeric_and_spoken_dates_and_harmless_grammar_are_equivalent():
                    'На этот номер записаны несколько пациентов. Введите дату рождения пациента: 8 цифр.')['passed']
 
 
+CALLBACK_PROMPT = ('Регистратор сейчас недоступен. Хотите, чтобы он перезвонил вам позже? '
+                   'Обратный звонок можно выбрать с десяти до шестнадцати часов. Один — да. Два — нет.')
+
+
+def test_real_callback_asr_whole_hour_notation_is_equivalent():
+    # Actual failed release audit; retain its complete transcript verbatim.
+    actual = ('Регистратор сейчас недоступен. Хотите, чтобы он перезвонил вам позже? '
+              'Обратный звонок можно выбрать с 10:00 до 16:00. Один— да, два— нет.')
+    result = compare(CALLBACK_PROMPT, actual)
+    assert result['passed']
+    assert result['wer'] == 0
+
+
+@pytest.mark.parametrize('bounds', [
+    'с 08:00 до 16:00', 'с 10:00 до 18:00', 'с 10:01 до 16:00',
+    'с 10:00 до 16:30', 'с восьми до шестнадцати часов',
+    'с десяти до восемнадцати часов', 'с 16:00 до 10:00',
+])
+def test_callback_changed_hours_or_minutes_still_block_release(bounds):
+    actual = CALLBACK_PROMPT.replace('с десяти до шестнадцати часов', bounds)
+    result = compare(CALLBACK_PROMPT, actual)
+    assert not result['numbers_match']
+    assert not result['passed']
+
+
+@pytest.mark.parametrize(('before', 'after'), [
+    ('недоступен', 'доступен'), ('можно', 'нельзя'), ('позже', 'раньше'),
+    ('до шестнадцати', 'после шестнадцати'), ('Два — нет', 'Два — да'),
+])
+def test_callback_critical_meaning_changes_still_block_release(before, after):
+    assert not compare(CALLBACK_PROMPT, CALLBACK_PROMPT.replace(before, after))['passed']
+
+
 def test_real_dictionary_fallback_and_clitics_determine_fingerprint():
     plain = DictAccentor(lexicon={'замок': 'з+амок'})
     changed = DictAccentor(lexicon={'замок': 'зам+ок'})

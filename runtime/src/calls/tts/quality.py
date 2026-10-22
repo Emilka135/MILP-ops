@@ -1,20 +1,45 @@
 """Conservative automatic screening; recognizer agreement does not prove naturalness."""
 import re
 from .normalize import normalize_text
+from .verbalize import number_to_words
 
 # Changing what can pass invalidates every earlier release certificate.
-QUALITY_POLICY_VERSION = "ru-clinic-critical-3"
+QUALITY_POLICY_VERSION = "ru-clinic-critical-4"
 _NUMBER_WORDS = frozenset("ноль один одна два две три четыре пять шесть семь восемь девять десять одиннадцать двенадцать тринадцать четырнадцать пятнадцать шестнадцать семнадцать восемнадцать девятнадцать двадцать тридцать сорок пятьдесят шестьдесят семьдесят восемьдесят девяносто сто двести триста четыреста пятьсот шестьсот семьсот восемьсот девятьсот тысяча тысячи тысяч минус плюс".split())
 _CALENDAR_WORDS = frozenset("январь января февраль февраля март марта апрель апреля май мая июнь июня июль июля август августа сентябрь сентября октябрь октября ноябрь ноября декабрь декабря понедельник понедельника вторник вторника среда среду среды четверг четверга пятница пятницу пятницы суббота субботу субботы воскресенье воскресенья".split())
 _ORDINAL = re.compile(r"(?:перв|втор|трет|треть|четверт|пят|шест|седьм|восьм|девят|десят|одиннадцат|двенадцат|тринадцат|четырнадцат|пятнадцат|шестнадцат|семнадцат|восемнадцат|девятнадцат|двадцат|тридцат|сороков|пятидесят|шестидесят|семидесят|восьмидесят|девяност|сот|двухсот|трехсот|четырехсот|пятисот|шестисот|семисот|восьмисот|девятисот|тысячн|двухтысячн)(?:ый|ий|ой|ое|ее|ая|яя|ую|юю|ого|его|ому|ему|ом|ем|ых|их|ым|им|ые|ие)")
 _STATUS = ((re.compile(r"отмен.*"), "cancelled"),
            (re.compile(r"подтвержд.*|подтверд.*"), "confirmed"),
            (re.compile(r"записан.*|оформлен.*"), "booked"),
-           (re.compile(r"перенес.*|перенос.*"), "rescheduled"))
+           (re.compile(r"перенес.*|перенос.*"), "rescheduled"),
+           (re.compile(r"недоступ(?:ен|на|но|ны)"), "unavailable"),
+           (re.compile(r"доступ(?:ен|на|но|ны)"), "available"))
 _POLARITY = frozenset("не ни нет нельзя без запрещено запрещается разрешено разрешается можно невозможно обязательно никогда только до после перед раньше позже минимум максимум менее более".split())
 
 
+_HOURS_GENITIVE = (
+    'нуля одного двух трех четырех пяти шести семи восьми девяти десяти '
+    'одиннадцати двенадцати тринадцати четырнадцати пятнадцати шестнадцати '
+    'семнадцати восемнадцати девятнадцати двадцати'
+).split() + ['двадцати одного', 'двадцати двух', 'двадцати трех']
+_HOUR_VALUES = {word: hour for hour in range(24)
+                for word in (_HOURS_GENITIVE[hour], number_to_words(hour).replace('ё', 'е'))}
+_HOUR_WORDS = '|'.join(re.escape(word) for word in sorted(_HOUR_VALUES, key=len, reverse=True))
+_SPOKEN_HOUR_RANGE = re.compile(
+    rf'\bс\s+({_HOUR_WORDS})(?:\s+час(?:а|ов)?)?\s+до\s+({_HOUR_WORDS})\s+час(?:а|ов)?\b', re.I)
+_NUMERIC_HOUR_RANGE = re.compile(
+    r'\bс\s+([01]?\d|2[0-3]):00\s+до\s+([01]?\d|2[0-3]):00(?!\d)(?:\s+час(?:а|ов)?\b)?', re.I)
+
+
 def tokens(text):
+    text = str(text).replace('ё', 'е').replace('Ё', 'Е').replace('+', '')
+    # ASR writes whole-hour ranges as HH:00. Canonicalize only explicit
+    # clock ranges, retaining both bounds and «до». Never strip zeroes from
+    # identifiers or treat a nonzero minute as a whole hour.
+    def hours(start, end):
+        return f'с {number_to_words(start)} до {number_to_words(end)} часов'
+    text = _NUMERIC_HOUR_RANGE.sub(lambda m: hours(int(m[1]), int(m[2])), text)
+    text = _SPOKEN_HOUR_RANGE.sub(lambda m: hours(_HOUR_VALUES[m[1].lower()], _HOUR_VALUES[m[2].lower()]), text)
     return re.findall('[а-яё]+', normalize_text(text).lower().replace('ё', 'е').replace('+', ''))
 
 

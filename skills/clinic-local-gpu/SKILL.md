@@ -21,4 +21,6 @@ Use silero-stress on complete Russian utterances, preserving explicit reviewed p
 
 The launch command must print the real localhost URL and a stop command that retains data. Mark a backup stub explicitly. Preserve local .env and secrets; demo calls must not mutate the real DBI API even when live keys are saved. Do not require VM/Gitea credentials to complete a local build.
 
+If audio-check exits nonzero, preserve its full report and inspect failed phrases before restarting. ASR can render spoken whole-hour ranges as HH:00; equivalence must retain both bounds, minutes and negation. Keep TTS, editor and compiler on the same quality-policy version, invalidate earlier certificates and rerun actual ASR over the complete current bank. Never bypass the gate or regenerate frozen caller fixtures to clear it.
+
 If a necessary next action requires an unavailable password, passphrase or secret, save the precise progress and blocker to TODO.md without the secret, explain what credential is needed and how to provide it locally, then end the chat turn and wait. Do not keep retrying authentication or continue dependent work after asking.
