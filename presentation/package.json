@@ -1,0 +1,16 @@
+{
+  "name": "clinic-presentation",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node server.mjs",
+    "build": "node build.mjs",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@sparticuz/chromium": "133.0.0",
+    "playwright-core": "1.51.1",
+    "pptxgenjs": "3.12.0"
+  }
+}
