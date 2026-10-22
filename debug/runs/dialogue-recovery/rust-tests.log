@@ -1,0 +1,32 @@
+   Compiling clinic-voice v0.1.0 (/home/alpaca/GitHub/calls/prodxak/worktrees/dialogue-recovery)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.44s
+     Running unittests src/lib.rs (/tmp/dialogue-cargo-target/debug/deps/clinic_voice-954d405b31162dc6)
+
+running 24 tests
+test engine::tests::changed_offer_invalidates_consent ... ok
+test engine::tests::ordinary_speech_cannot_change_an_inflight_request ... ok
+test engine::tests::stale_result_does_not_cross_calls ... ok
+test engine::tests::tone_escape_interrupts_pending_request ... ok
+test engine::tests::medical_yes_never_confirms ... ok
+test engine::tests::speech_does_not_inject_trusted_identifiers ... ok
+test engine::tests::notices_preserve_pending_request_without_replaying_it ... ok
+test engine::tests::duplicate_keep_does_not_create_or_announce_a_booking ... ok
+test engine::tests::callback_refusal_offers_explicit_request_without_booking_or_sms ... ok
+test engine::tests::back_does_not_replay_write ... ok
+test engine::tests::reminder_cancel_requires_explicit_confirmation ... ok
+test engine::tests::runtime_transaction_failure_uses_operator_phrase_only_on_confirmed_route ... ok
+test engine::tests::linked_targets_equal_reference_dispatch ... ok
+test engine::tests::duplicate_extra_booking_requires_separate_consent_then_returns_to_offer ... ok
+test engine::tests::spoken_cancel_yes_is_contextual ... ok
+test engine::tests::all_mutations_and_receipts_reject_unverified_entry ... ok
+test engine::tests::priority_requests_interrupt_pending_modules ... ok
+test nlu::tests::sql_never_interpolates_input ... ok
+test server::prompt_timer_tests::finished_session_never_rearms ... ok
+test nlu::tests::routes_agree_and_preserve_safety ... ok
+test server::prompt_timer_tests::response_window_starts_only_after_final_current_prompt ... ok
+test engine::tests::unknown_flow_is_error ... ok
+test engine::tests::typed_free_text_field_is_preserved ... ok
+test server::prompt_timer_tests::queued_speech_suspends_the_response_timer ... ok
+
+test result: ok. 24 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

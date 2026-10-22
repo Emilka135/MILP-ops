@@ -149,7 +149,8 @@ state rs_do
   call crm.reschedule booking_id=$booking_id slot_id=$slot_id
   ok -> rs_done
   taken -> rs_taken
-  error -> operator reason=crm_error
+  busy -> recovery.overload
+  error -> recovery.route
 
 state rs_taken
   say "Это время только что заняли. Подберу другое."

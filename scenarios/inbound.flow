@@ -151,12 +151,12 @@ state book_specialty_unknown
 state book_referral_check
   call crm.referral_required specialty=$specialty
   required -> book_has_referral
-  not_required -> book_find_slot
+  not_required -> book_conflict_check
   error -> operator reason=crm_error
 
 state book_has_referral
   call crm.check_referral patient_id=$patient_id specialty=$specialty
-  ok -> book_find_slot
+  ok -> book_conflict_check
   missing -> book_no_referral
   error -> operator reason=crm_error
 
@@ -214,7 +214,9 @@ state book_do
   call crm.book patient_id=$patient_id slot_id=$slot_id
   ok -> book_done
   taken -> book_taken
-  error -> operator reason=crm_error
+  conflict -> book_conflict_race
+  busy -> recovery.overload
+  error -> recovery.route
 
 state book_taken
   say "К сожалению, это время только что заняли. Ищу другое."
@@ -277,7 +279,8 @@ state cancel_confirm
 state cancel_do
   call crm.cancel booking_id=$booking_id
   ok -> cancel_done
-  error -> operator reason=crm_error
+  busy -> recovery.overload
+  error -> recovery.route
 
 state cancel_done
   say "Запись пациента {patient_name} к {specialty_dative} {slot_date_spoken} отменена. Мы отправим СМС. Чтобы записаться снова, позвоните нам. Всего доброго!"
@@ -368,3 +371,9 @@ state medical_boundary
   intent operator -> operator reason=requested
   timeout 15s -> medical_boundary
   retry 2 -> operator reason=medical_question
+
+state book_conflict_check
+  enter booking_conflict.check -> book_find_slot
+
+state book_conflict_race
+  enter booking_conflict.ask -> book_find_slot

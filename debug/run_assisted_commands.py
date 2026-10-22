@@ -259,7 +259,7 @@ class Acceptance:
             assert ticket["dialogue"], ticket
             route = "operator-with-frozen-machine-view"
         else:
-            assert state["state"] == "callback.ask", state
+            assert state["state"] == "callback.ask_consent", state
             assert state["vars"]["operator_available"] is False
             assert state["transfer"] is None and not state["finished"], state
             route = "off-hours-callback-question"

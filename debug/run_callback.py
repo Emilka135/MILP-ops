@@ -46,6 +46,8 @@ def execute(base, tts_url, folder="debug/runs/callback"):
         {"call_id": call, "flow": "voice", "caller_phone": "79165550000"},
     )
     result = say(call, "Позовите оператора.")
+    assert result["state"] == "callback.ask_consent" and result["transfer"] is None, result
+    result = say(call, "Да, перезвоните.")
     assert result["state"] == "callback.ask" and result["transfer"] is None, result
     result = say(call, "Завтра в пятнадцать часов.")
     assert result["status"] == "callback_requested" and result["transfer"] is None, (

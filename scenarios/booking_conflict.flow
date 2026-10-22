@@ -1,0 +1,46 @@
+flow booking_conflict
+  rate 1.5
+  entry check
+
+state check
+  call crm.booking_conflict patient_id=$patient_id specialty=$specialty
+  clear -> continue
+  conflict -> ask
+  busy -> recovery.overload
+  error -> inbound.operator reason=booking_check_failed
+
+state ask
+  say "У вас уже есть предстоящая запись к {specialty_dative}: {slot_date_spoken}, в {slot_time_spoken}, врач {doctor}. Один — оставить эту запись. Два — перенести её. Три — отменить. Четыре — оформить ещё одну запись к этой специальности, сохранив прежнюю."
+  listen 20s
+  dtmf 1 -> keep
+  dtmf 2 -> select_reschedule
+  dtmf 3 -> select_cancel
+  dtmf 4 -> allow_new
+  intent reschedule -> select_reschedule
+  intent cancel -> select_cancel
+  intent operator -> inbound.operator reason=requested
+  timeout 20s -> ask
+  retry 2 -> inbound.operator reason=duplicate_booking_unclear
+
+state keep
+  say "Ваша прежняя запись сохранена. Новую запись не создаём. Всего доброго!"
+  end existing_booking_kept
+
+state select_reschedule
+  call crm.select_booking patient_id=$patient_id choices=$conflict_booking_ids index=1
+  ok -> reschedule.rs_start
+  error -> check
+
+state select_cancel
+  call crm.select_booking patient_id=$patient_id choices=$conflict_booking_ids index=1
+  ok -> inbound.cancel_confirm
+  error -> check
+
+state allow_new
+  call crm.booking_conflict patient_id=$patient_id specialty=$specialty decision=allow_new
+  clear -> continue
+  busy -> recovery.overload
+  error -> inbound.operator reason=duplicate_booking_unclear
+
+state continue
+  return

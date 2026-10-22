@@ -5,7 +5,42 @@ flow callback
 state prepare
   set said_date = ""
   set said_time = ""
-  goto ask
+  goto ask_consent
+
+state ask_consent
+  say "Регистратор сейчас недоступен. Хотите, чтобы он перезвонил вам позже? Обратный звонок можно выбрать с десяти до шестнадцати часов. Один — да. Два — нет."
+  listen 20s
+  dtmf 1 -> ask
+  dtmf 2 -> offer_request
+  yes -> ask
+  no -> offer_request
+  timeout 20s -> declined
+  silence -> declined
+  retry 2 -> declined
+
+state offer_request
+  say "Хотите оставить заявку на запись без обратного звонка? Регистратор рассмотрит её позже. СМС придёт только после подтверждённой записи. Один — оставить заявку. Два — завершить."
+  listen 20s
+  dtmf 1 -> save_request
+  dtmf 2 -> declined
+  yes -> save_request
+  no -> declined
+  timeout 20s -> declined
+  silence -> declined
+  retry 2 -> declined
+
+state save_request
+  call crm.booking_request patient_id=$patient_id phone=$caller_phone consent=true
+  ok -> request_done
+  error -> failed
+
+state request_done
+  say "Заявка сохранена. Это ещё не запись на приём. Перезванивать вам не будем. После подтверждённой записи вам отправят СМС. Всего доброго!"
+  end booking_request_saved
+
+state declined
+  say "Хорошо. Всего доброго!"
+  end callback_declined
 
 state ask
   say "Я не могу справиться с этой задачей без помощи коллег. Когда вам удобно принять их звонок? Назовите день и время. Обратные звонки доступны {callback_hours}. Можно сказать: завтра в три часа дня."

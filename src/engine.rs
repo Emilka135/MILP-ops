@@ -951,6 +951,92 @@ pub fn scenario_graph() -> &'static Value {
 #[cfg(test)]
 mod tests {
     use super::*;
+    fn recovery_reply(s: &mut Session, status: &str, payload: Value) -> Vec<Action> {
+        let mut event = Event::new("module", status);
+        event.request_id = s.pending;
+        event.payload = payload;
+        s.handle(event)
+    }
+    #[test]
+    fn duplicate_keep_does_not_create_or_announce_a_booking() {
+        let mut s = Session::new("booking_conflict", Map::new()).unwrap();
+        s.start();
+        recovery_reply(
+            &mut s,
+            "conflict",
+            json!({"booking_id":4,"slot_date_spoken":"завтра","slot_time_spoken":"в два часа"}),
+        );
+        let actions = s.handle(Event::new("dtmf", "1"));
+        assert_eq!(s.status, "existing_booking_kept");
+        assert!(
+            !actions
+                .iter()
+                .any(|a| matches!(a.kind.as_str(), "call" | "sms"))
+        );
+        assert!(
+            actions
+                .iter()
+                .any(|a| a.kind == "say" && a.text.contains("прежняя запись сохранена"))
+        );
+    }
+    #[test]
+    fn duplicate_extra_booking_requires_separate_consent_then_returns_to_offer() {
+        let mut s = Session::new("inbound", Map::new()).unwrap();
+        s.enter("book_conflict_check".into(), false);
+        recovery_reply(&mut s, "conflict", json!({"booking_id":4}));
+        let actions = s.handle(Event::new("dtmf", "4"));
+        assert!(actions.iter().any(|a| a.kind == "call"
+            && a.args["op"] == "booking_conflict"
+            && a.args["args"]["decision"] == "allow_new"));
+        let actions = recovery_reply(&mut s, "clear", json!({}));
+        assert_eq!(s.state_name(), "inbound.book_find_slot");
+        assert!(
+            actions
+                .iter()
+                .any(|a| a.kind == "call" && a.args["op"] == "find_slots")
+        );
+    }
+    #[test]
+    fn callback_refusal_offers_explicit_request_without_booking_or_sms() {
+        let mut s = Session::new("callback", Map::new()).unwrap();
+        s.start();
+        s.handle(Event::new("dtmf", "2"));
+        assert_eq!(s.state_name(), "callback.offer_request");
+        let actions = s.handle(Event::new("dtmf", "1"));
+        assert!(
+            actions
+                .iter()
+                .any(|a| a.kind == "call" && a.args["op"] == "booking_request")
+        );
+        let actions = recovery_reply(
+            &mut s,
+            "ok",
+            json!({"request_saved":true,"booking_confirmed":false}),
+        );
+        assert_eq!(s.status, "booking_request_saved");
+        assert!(!actions.iter().any(|a| a.kind == "sms"));
+    }
+    #[test]
+    fn runtime_transaction_failure_uses_operator_phrase_only_on_confirmed_route() {
+        let mut s = Session::new("recovery", Map::new()).unwrap();
+        s.start();
+        let actions = recovery_reply(
+            &mut s,
+            "operator",
+            json!({"recovery_message":"Что-то пошло не так, сейчас переключу на оператора."}),
+        );
+        assert_eq!(s.status, "transfer");
+        assert!(
+            actions
+                .iter()
+                .any(|a| a.kind == "say" && a.text.starts_with("Что-то пошло не так"))
+        );
+        let mut night = Session::new("recovery", Map::new()).unwrap();
+        night.start();
+        let actions = recovery_reply(&mut night, "callback", json!({"reasoning_available":false}));
+        assert_eq!(night.state_name(), "callback.ask_consent");
+        assert!(!actions.iter().any(|a| a.kind == "transfer"));
+    }
     #[test]
     fn typed_free_text_field_is_preserved() {
         let mut s = Session::new("feedback", Map::new()).unwrap();
