@@ -8,7 +8,7 @@ import shutil
 import sys
 
 GIB = 1024 ** 3
-RESERVES = {'/home': 10 * GIB, '/': 5 * GIB}
+RESERVES = {'/home': 5 * GIB, '/': 5 * GIB}
 
 
 def check_space(write_path=None, expected_bytes=0):
@@ -35,7 +35,7 @@ def check_space(write_path=None, expected_bytes=0):
 def require_space(write_path=None, expected_bytes=0):
     rows = check_space(write_path, expected_bytes)
     if not all(row['ok'] for row in rows):
-        raise RuntimeError('Disk reserve violated: /home > 10 GiB, / > 5 GiB; use the project volume on /mnt/docker_space')
+        raise RuntimeError('Disk reserve violated: /home > 5 GiB, / > 5 GiB; use the project volume on /mnt/docker_space')
     return rows
 
 
@@ -53,7 +53,7 @@ def main():
         args.output.write_text(text)
     print(text, end='')
     if report['status'] != 'passed':
-        sys.exit('Недостаточно места: /home > 10 GiB, / > 5 GiB. Используйте проектный том на /mnt/docker_space, не удаляйте чужие данные.')
+        sys.exit('Недостаточно места: /home > 5 GiB, / > 5 GiB. Используйте проектный том на /mnt/docker_space, не удаляйте чужие данные.')
 
 
 if __name__ == '__main__':

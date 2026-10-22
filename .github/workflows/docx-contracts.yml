@@ -24,6 +24,8 @@ jobs:
       DBI_API_TOKEN: ''
       STAND_TOKEN: ''
       SMS_GATEWAY_TOKEN: ''
+      CLINIC_CONTRACT_RUN_ID: '${{ github.run_id }}-${{ github.run_attempt }}'
+      CLINIC_ACCEPTANCE_TEST: '1'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -70,6 +72,9 @@ jobs:
     needs: contracts
     if: always()
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      CLINIC_CONTRACT_RUN_ID: '${{ github.run_id }}-${{ github.run_attempt }}'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

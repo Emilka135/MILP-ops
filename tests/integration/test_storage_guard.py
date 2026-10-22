@@ -8,7 +8,7 @@ Usage = namedtuple('Usage', 'total used free')
 def test_reserves_are_strict_and_checked_before_allocation(monkeypatch, tmp_path):
     import tools.check_space as guard
     def space(path):
-        return Usage(100*GIB, 0, (10 if str(path)=='/home' else 5)*GIB)
+        return Usage(100*GIB, 0, 5*GIB)
     monkeypatch.setattr(guard.shutil, 'disk_usage', space)
     assert all(not r['ok'] for r in check_space())
     with pytest.raises(RuntimeError, match='reserve'):

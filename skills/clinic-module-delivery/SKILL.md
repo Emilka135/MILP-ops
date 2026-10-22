@@ -7,13 +7,15 @@ description: Resume and deliver modules of the clinic voice assistant with expli
 
 Work from the existing checkout, its AGENTS.md, TODO.md and docs/acceptance/GOAL.md. The user prioritizes a local Docker copy on their GPU. VM deployment is a separate task; do not make it a prerequisite for local acceptance.
 
-Before editing, inspect Git status and preserve other modules' pending work. Use agents for independent module implementation/review when the user's ongoing request authorizes them. Give each agent disjoint files and explicit acceptance conditions. Review their outputs rather than treating an agent's summary as proof.
+Before editing, inspect Git status and preserve other modules' pending work. Fetch and inspect the requested branch before basing new work on it; preserve dirty work before a pull and restore it without dropping its checkpoint. Import presentation-only changes from main separately when requested. Use agents for independent module implementation/review when the user's ongoing request authorizes them. Give each agent its own local branch/worktree, disjoint files and explicit acceptance conditions. Review their outputs rather than treating an agent's summary as proof.
 
-Finish one concrete module, run checks appropriate to its behavior, record actual evidence in debug/runs/<module-name>/, update TODO.md, make a signed commit and push to feature/rust-clinic-voice. In shared files stage only the accepted change. Never commit local .env, API keys, model binaries, private keys, or synthetic evidence represented as real results.
+Finish one concrete module, run checks appropriate to its behavior, record actual evidence in debug/runs/<module-name>/, update TODO.md, make a signed commit and push to the user's selected task branch. The historical integration branch is feature/rust-clinic-voice; a newer explicit request for separate task branches takes precedence. In shared files stage only the accepted change. Never commit local .env, API keys, model binaries, private keys, or synthetic evidence represented as real results.
 
 For speech changes use actual audible audio and real ASR; test speech, tones and both together independently. For browser changes inspect actual screenshots as well as automated assertions. For Docker changes verify build caching, healthy services, actual URLs, retained data and real device execution. Check Actions for the published SHA, and report pending/failing jobs accurately.
 
 Record skipped requirements and discovered defects in TODO.md before changing focus. Describe what is deployed, what is only a draft, and what has genuinely been tested. Keep the overall goal active while required modules remain unfinished.
+
+For scenario changes, score/CI work, MIS failures, or registrar suggestions, read [score-acceptance.md](references/score-acceptance.md). It records the user's test isolation, fixed speech corpus, night recovery and role-specific editing requirements. Run applicable workflows with act and report actual Actions results on the published SHA; local pytest alone is not workflow acceptance.
 
 ## Credential stop
 
