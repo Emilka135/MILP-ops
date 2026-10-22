@@ -9,7 +9,7 @@ The user requires a working local Docker copy using their GPU. The clinic projec
 
 Read AGENTS.md, TODO.md and docs/acceptance/GOAL.md in the checkout. Preserve unfinished modules and existing user edits. Finish modules separately, verify them, then make signed commits and push feature/rust-clinic-voice when existing credentials suffice.
 
-Before model downloads or builds run tools/check_space.py. Keep more than 10 GiB free on /home and 5 GiB on /. Use only this project's caches on /mnt/docker_space when necessary. Never prune other Docker resources or alter another GPU process.
+Before model downloads or builds run tools/check_space.py. The user's latest instruction (22 October 2026) requires more than 5 GiB free on both /home and /. This supersedes the earlier 10 GiB /home reserve. Use only this project's caches on /mnt/docker_space when necessary. Never prune other Docker resources or alter another GPU process.
 
 Measure the actual GPU, driver, free VRAM, NVIDIA Container Toolkit and Docker runtime. Configure the speech container explicitly for CUDA and bound its memory/concurrency. A provider listed as available is insufficient: a real audio inference must execute CUDA kernels, and the acceptance report must record the actual provider/device. Fail clearly if requested CUDA cannot initialize instead of silently reporting CPU as GPU.
 

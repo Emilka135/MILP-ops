@@ -45,6 +45,19 @@ def neighbor_view(project, state=None):
 
 def request(repo, route, post, data, query, identity, store=None):
     registrar=identity.get('registrar') if identity['role']=='registrar' else (data.get('registrar') or query.get('registrar',['100'])[0])
+    if route.startswith('/api/workshop/knowledge') and not post:
+        from .scenario_knowledge import ScenarioKnowledge
+        knowledge=ScenarioKnowledge(repo.root,repo.read())
+        if route=='/api/workshop/knowledge':return knowledge.index()
+        if route=='/api/workshop/knowledge/document':return knowledge.document(query.get('id',[''])[0])
+        if route=='/api/workshop/knowledge/flow':return knowledge.flow(query.get('id',[''])[0])
+        raise ValueError('Неизвестный раздел сценариев')
+    if route=='/api/workshop/mis-draft' and post:
+        if identity['role'] not in {'admin','registrar'}:raise ValueError('Нужен вход сотрудника')
+        from .mis_contract import prepare
+        result=prepare(data.get('operation_id',''),body=data.get('body'),query=data.get('query'),
+                       path_parameters=data.get('path_parameters'))
+        return {**result,'execution':'draft_only','network_requests':0}
     if route=='/api/workshop/preview' and post:
         if identity['role']=='observer':raise ValueError('Наблюдатель может слушать готовые записи')
         import re

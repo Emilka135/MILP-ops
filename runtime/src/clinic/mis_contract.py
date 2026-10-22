@@ -14,7 +14,7 @@ import unicodedata
 from urllib.parse import quote
 
 
-_SPEC_PATH = Path(__file__).resolve().parents[3] / 'docs' / 'openapi.json'
+_SPEC_PATH = Path(__file__).resolve().parents[3] / 'scenarios' / 'mis' / 'openapi.json'
 _METHODS = frozenset({'get', 'post', 'patch', 'put', 'delete'})
 _NAME_FIELDS = frozenset({'last_name', 'first_name', 'middle_name'})
 _DATE_FIELDS = frozenset({'birth_date', 'date_from', 'date_to'})
