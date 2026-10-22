@@ -1,17 +1,21 @@
 """Actual Silero/CPU ASR acceptance of the medical boundary menu in PCM and G.711. No API keys. Run in the integration-test image."""
-import sys,base64,json,wave,pathlib,audioop
+import sys,base64,json,wave,pathlib,audioop,argparse
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 sys.path[:0]=[str(ROOT),str(ROOT/'runtime/src')]
 from calls.tts.silero import SileroTTS,TtsModule
 from calls.asr.onnx_gateway import OnnxAsrModule
 from calls.tts.quality import compare
 from calls.scenario.dsl import load_flows
-flow=load_flows(ROOT/'scenarios')['inbound']
-text=next(statement.text for statement in flow.states['medical_boundary'].statements if statement.kind=='say')
+parser=argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--callback-failure',action='store_true')
+args=parser.parse_args()
+flow_name,state_name=('callback','failed') if args.callback_failure else ('inbound','medical_boundary')
+flow=load_flows(ROOT/'scenarios')[flow_name]
+text=next(statement.text for statement in flow.states[state_name].statements if statement.kind=='say')
 synth=SileroTTS(ROOT/'modules/tts/models/v5_cis_base.pt',speaker='ru_ekaterina',device='cpu',stress='dict')
 pcm,_=TtsModule(synth).render(text,1.5)
 asr=OnnxAsrModule()
-folder=ROOT/'debug/runs/medical-boundary-audio';folder.mkdir(parents=True,exist_ok=True)
+folder=ROOT/'debug/runs'/('callback-failure-audio' if args.callback_failure else 'medical-boundary-audio');folder.mkdir(parents=True,exist_ok=True)
 results=[]
 for name,data in [('pcm',pcm),('alaw',audioop.alaw2lin(audioop.lin2alaw(pcm,2),2)),('ulaw',audioop.ulaw2lin(audioop.lin2ulaw(pcm,2),2))]:
  status,result=asr.handle('transcribe',{'pcm_b64':base64.b64encode(data).decode(),'rate':8000})
