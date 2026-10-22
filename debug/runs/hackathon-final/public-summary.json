@@ -81,5 +81,35 @@
   "docx_ci": {
     "full_coverage_verified": false,
     "remaining": "label/entities/FSM and source/module behavior bindings; see TODO.md"
+  },
+  "callback_failure_audio": {
+    "passed": true,
+    "codecs": [
+      {
+        "codec": "pcm",
+        "wer": 0.0,
+        "numbers_match": true,
+        "polarity_match": true,
+        "status_match": true
+      },
+      {
+        "codec": "alaw",
+        "wer": 0.0,
+        "numbers_match": true,
+        "polarity_match": true,
+        "status_match": true
+      },
+      {
+        "codec": "ulaw",
+        "wer": 0.0,
+        "numbers_match": true,
+        "polarity_match": true,
+        "status_match": true
+      }
+    ],
+    "targeted_callback_crm_hours_tests": 38,
+    "local_bank_passed": 41,
+    "production_whisper_bank_passed": 41,
+    "polarity_gate_relaxed": false
   }
 }
