@@ -7,7 +7,7 @@ rendering chunks...
 computing gzip size...
 dist/index.html                   0.42 kB │ gzip:   0.32 kB
 dist/assets/index-LXCYYQAl.css   58.58 kB │ gzip:  12.60 kB
-dist/assets/index-CF2jf0Sh.js   617.63 kB │ gzip: 194.88 kB
+dist/assets/index-CHdXq34g.js   617.67 kB │ gzip: 194.89 kB
 
 [33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "use client" in "node_modules/@xyflow/react/dist/esm/index.js" may not be preserved when bundling.
    [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m node_modules/@xyflow/react/dist/esm/index.js:1:1 [38;5;246m][0m
@@ -44,4 +44,4 @@ dist/assets/index-CF2jf0Sh.js   617.63 kB │ gzip: 194.88 kB
  [38;5;240m  │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
 [38;5;246m───╯[0m
 
-✓ built in 230ms
+✓ built in 213ms

@@ -35,7 +35,7 @@ try{
  });
  await page.goto(base+'/registrar');
  const inspector=page.getByRole('region',{name:'Ответы МИС и тестовой базы'});
- await inspector.waitFor();await page.getByText(/Телефонный архив временно недоступен/).waitFor();checks.push('Archive warnings remain visible while saved calls are usable');
+ await inspector.waitFor();assert.ok(!(await page.locator('.recent-calls').innerText()).includes('undefined'));await page.getByText(/Телефонный архив временно недоступен/).waitFor();checks.push('Archive warnings remain visible while saved calls are usable');
  async function open(id){await page.getByLabel('Номер звонка').fill(id);await page.getByRole('button',{name:'Открыть звонок',exact:true}).click();await inspector.locator('.query-call').filter({hasText:'Звонок: '+id}).waitFor()}
  await open('first');
  const mainBox=await page.locator('.quest-main').boundingBox(),paneBox=await page.locator('.query-sidebar').boundingBox();assert.ok(paneBox.x>=mainBox.x+mainBox.width);checks.push('Archive response panel is to the right of the call');
