@@ -1,0 +1,158 @@
+# Standalone file: never combine with compose.yaml or its production secrets/volumes.
+name: clinic-concurrent-acceptance
+x-env: &env
+  APP_MODE: demo
+  CLINIC_NAME: Acceptance isolated clinic
+  CLINIC_RUNTIME_MODE: acceptance
+  CLINIC_ACCEPTANCE_TEST: "1"
+  CI: "true"
+  GITHUB_ACTIONS: "true"
+  NIGHT_REASONING_ENABLED: "0"
+  TTS_DOCTOR_BANK_SYNC: "0"
+  CRM_NOW: "2026-10-22T23:00:00+04:00"
+  OPERATOR_AVAILABLE: "0"
+  STAND_URL: ""
+  STAND_TOKEN: ""
+  DBI_API_TOKEN: ""
+  OPENAI_API_KEY: ""
+  OPENROUTER_API_KEY: ""
+  SMS_GATEWAY_URL: ""
+  SMS_GATEWAY_TOKEN: ""
+  OUTBOUND_ENABLED: "0"
+  MODULE_SETTINGS_FILE: /no-config/modules.json
+  MODULE_SECRETS_DIR: /no-secrets
+  CRM_URL: http://crm:8080
+  PYTHONPATH: /source:/source/runtime/src
+  PYTHONUNBUFFERED: "1"
+  HOST: 0.0.0.0
+  PORT: "8080"
+  OMP_NUM_THREADS: "2"
+  MKL_NUM_THREADS: "2"
+  MODULE_WORKERS: "4"
+  MODULE_QUEUE_CAPACITY: "32"
+  MODULE_TIMEOUT_SECONDS: "15"
+x-module: &module
+  restart: "no"
+  init: true
+  user: "10001:10001"
+  working_dir: /source
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  networks: [isolated]
+  tmpfs: ["/tmp:size=256m,mode=1777", "/data:size=64m,mode=1777"]
+  volumes: ["${ACCEPTANCE_SOURCE_DIR:-.}:/source:ro"]
+  environment: *env
+  healthcheck:
+    test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health',timeout=2)"]
+    interval: 3s
+    timeout: 3s
+    retries: 120
+
+services:
+  rust-build:
+    image: ${ACCEPTANCE_BUILDER_IMAGE:-clinic-voice-scenario-builder:latest}
+    network_mode: none
+    user: "0:0"
+    working_dir: /source
+    environment: {CARGO_TARGET_DIR: /target, CARGO_BUILD_JOBS: "2"}
+    command: [cargo, build, --offline, --locked, --bin, clinic-voice]
+    volumes: ["${ACCEPTANCE_SOURCE_DIR:-.}:/source:ro", "acceptance-target:/target"]
+    restart: "no"
+  crm:
+    <<: *module
+    image: ${ACCEPTANCE_CRM_IMAGE:-clinic-voice-crm:latest}
+    command: [python, -m, clinic, crm]
+    environment:
+      <<: *env
+      CRM_DB: /data/acceptance.sqlite
+  nlu:
+    <<: *module
+    image: ${ACCEPTANCE_NLU_IMAGE:-clinic-voice-nlu:latest}
+    command: [python, -m, clinic, nlu]
+    environment:
+      <<: *env
+      NLU_EMBEDDER: e5
+      NLU_MODEL_PATH: /models/multilingual-e5-small
+    volumes: ["${ACCEPTANCE_SOURCE_DIR:-.}:/source:ro", "${ACCEPTANCE_MODELS_ROOT:?Set the existing checkout modules directory}/nlu/models:/models:ro"]
+  tts:
+    <<: *module
+    image: ${ACCEPTANCE_TTS_IMAGE:-clinic-voice-tts:latest}
+    command: [python, -m, clinic, tts]
+    tmpfs: ["/tmp:size=256m,mode=1777", "/audio:size=192m,mode=1777"]
+    environment:
+      <<: *env
+      TTS_MODEL: /models/v5_cis_base.pt
+      TTS_SPEAKER: ru_ekaterina
+      TTS_DEVICE: cpu
+      TTS_STRESS: context
+      PYTHONPATH: /source:/source/runtime/src:/models/accentor
+      SCENARIO_DIR: /source/scenarios
+      PROMPT_DIR: /audio
+    volumes: ["${ACCEPTANCE_SOURCE_DIR:-.}:/source:ro", "${ACCEPTANCE_MODELS_ROOT}/tts/models:/models:ro"]
+  asr:
+    <<: *module
+    image: ${ACCEPTANCE_ASR_IMAGE:-clinic-voice-asr-gpu:latest}
+    runtime: nvidia
+    command: [python, -m, clinic, asr]
+    tmpfs: ["/tmp:size=256m,mode=1777", "/debug:size=64m,mode=1777"]
+    environment:
+      <<: *env
+      ASR_MODEL: gigaam-v3-e2e-rnnt
+      ASR_MODEL_PATH: /models
+      ASR_PROVIDER: CUDAExecutionProvider
+      ASR_GPU_MEM_LIMIT_MIB: "1024"
+      ASR_QUANTIZATION: none
+      ASR_PROFILE_DIR: /debug/profiles
+      HF_HUB_OFFLINE: "1"
+      NVIDIA_VISIBLE_DEVICES: ${CLINIC_GPU_DEVICE:-0}
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+    volumes: ["${ACCEPTANCE_SOURCE_DIR:-.}:/source:ro", "${ACCEPTANCE_MODELS_ROOT}/asr/models:/models:ro"]
+  sms:
+    <<: *module
+    image: ${ACCEPTANCE_SMS_IMAGE:-clinic-voice-sms:latest}
+    command: [python, -m, clinic, sms]
+  operator:
+    <<: *module
+    image: ${ACCEPTANCE_OPERATOR_IMAGE:-clinic-voice-operator:latest}
+    command: [python, -m, clinic, operator]
+  agent:
+    <<: *module
+    image: ${ACCEPTANCE_AGENT_IMAGE:-clinic-voice-agent:latest}
+    command: [python, -m, clinic, agent]
+    environment:
+      <<: *env
+      AGENT_MODE: deterministic
+  orchestrator:
+    image: ${ACCEPTANCE_ORCHESTRATOR_IMAGE:-clinic-voice-orchestrator:latest}
+    user: "10001:10001"
+    read_only: true
+    cap_drop: [ALL]
+    entrypoint: [/target/debug/clinic-voice]
+    networks: [isolated]
+    volumes: ["acceptance-target:/target:ro"]
+    environment:
+      <<: *env
+      BIND: 0.0.0.0:8080
+      NLU_URL: http://nlu:8080
+      ASR_URL: http://asr:8080
+      TTS_URL: http://tts:8080
+      SMS_URL: http://sms:8080
+      OPERATOR_URL: http://operator:8080
+      AGENT_URL: http://agent:8080
+      API_TOKEN: ""
+      TURN_TIMEOUT_MS: "55000"
+    depends_on:
+      rust-build: {condition: service_completed_successfully}
+      crm: {condition: service_healthy}
+      nlu: {condition: service_healthy}
+      asr: {condition: service_healthy}
+      tts: {condition: service_healthy}
+      sms: {condition: service_healthy}
+      operator: {condition: service_healthy}
+      agent: {condition: service_healthy}
+
+networks:
+  isolated: {internal: true}
+volumes:
+  acceptance-target:

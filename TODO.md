@@ -360,3 +360,12 @@ Evidence: `debug/runs/speech-regression/`; details [SPEECH_REGRESSION.md](docs/S
 - [x] Принята19e538b вместе с голосовой веткой:83 целевых Python,95 offline Docker/E5,21 engine tests,clippy passed. act control77+36+62+27 и Rust28 passed. Добавлены регрессии смены снимка старого приёма, закрытого/короткого календаря и запрета reasoning при CLINIC_ACCEPTANCE_TEST.
 - [x] Все3 DSL-входа identity переведены на begin; тест запрещает обход инициализации. Старый callback audio test не прошёл на хосте из-за запрета bind sandbox; он не объявляется пройденным. Реальный контейнерный аудиопрогон готовится отдельным модулем.
 - [ ] GitHub score acceptance на25e6da8 success, DOCX module contracts failure, другие workflows на момент проверки in_progress. ОбщийCI не объявлен зелёным.
+
+## Настоящие20 звонков и найденная safety ошибка — 22.10.2026
+
+- [x] Подготовлен отдельный disposable compose.acceptance.yaml без внешней сети/секретов/живойCRM. Реальный act concurrent-audio:20сессий×2turn отдельно speech/DTMF/mixed; максимумы1.297с/0.182с/1.270с до готовогоPCM. CUDA execution подтверждён настоящей ONNX-пробой; TTS CPU/context silero-stress. Записей, операцийМИС,СМС нет. Это короткий callback-сценарий, не полная20booking приёмка.
+- [x] При первом полном прогоне выявлена коллизия safety: «перекос» обрезался до «перек», поэтому «переключите» запускало emergency. Уточнён stem в реальном и fallback словаре;6регрессий,58прежних unittest passed, frozenWAV неизменны. Исходный failed отчёт сохранён.
+- [x] Настоящий аудио/FSM архив из act импортирован в клиент регистратора:7реальных Chromium/HTTP/SQLite проверок, точный transcript/trace/target, admin restore и scopedproposal, screenshot просмотрен.
+- [x] Архитектура, модульные пробелы тестов и критерии максимальной приёмки обновлены в scenarios/docs/SCORE_PLAN.md, команды/границы нагрузки в CONCURRENT_CALLS.md.
+- [ ] CPU-подготовка нового hosted Actions job ещё должна пройти удалённо; локальныйact использовал существующий закрытыйGPUстенд. Не объявлять общийCI зелёным: DOCX gate красный.
+- [ ] Endpoint/noise и20полных SIP/booking диалогов остаются отдельным приоритетом. РучнойMISdraft пока API, отдельная UI форма не завершена. НовыйUI33d41a8 опубликован агентом, root его не сливал.

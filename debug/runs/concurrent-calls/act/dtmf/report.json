@@ -1,0 +1,2005 @@
+{
+  "status": "passed",
+  "synthetic": true,
+  "mode": "dtmf",
+  "concurrent_calls": 20,
+  "barrier_parties": 20,
+  "total_s": 0.5765922669997963,
+  "turns": 40,
+  "max_turn_s": 0.18142511300175101,
+  "p95_turn_s": 0.18125045499982662,
+  "target": "callback.ask_consent",
+  "no_booking_changes": true,
+  "expected_scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17",
+  "actual_asr_probe": {
+    "text": "Переключите меня на оператора.",
+    "final": true,
+    "engine": "onnx-asr:gigaam-v3-e2e-rnnt",
+    "rtf": 0.007,
+    "provider": "CUDAExecutionProvider",
+    "device_id": 0,
+    "cuda_verified": true
+  },
+  "no_operations": true,
+  "no_sms": true,
+  "metrics_before": {
+    "calls": 160,
+    "modules": {
+      "agent": {
+        "completed": 0,
+        "expired": 0,
+        "queue_us": 0,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 0,
+        "submitted": 0
+      },
+      "asr": {
+        "completed": 200,
+        "expired": 0,
+        "queue_us": 71035526,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 35266716,
+        "submitted": 200
+      },
+      "crm": {
+        "completed": 968,
+        "expired": 0,
+        "queue_us": 5233299,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 5062358,
+        "submitted": 968
+      },
+      "nlu": {
+        "completed": 200,
+        "expired": 0,
+        "queue_us": 8847,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 1732851,
+        "submitted": 200
+      },
+      "operator": {
+        "completed": 20,
+        "expired": 0,
+        "queue_us": 598,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 260741,
+        "submitted": 20
+      },
+      "sms": {
+        "completed": 0,
+        "expired": 0,
+        "queue_us": 0,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 0,
+        "submitted": 0
+      },
+      "tts": {
+        "completed": 620,
+        "expired": 0,
+        "queue_us": 8252296,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 6396752,
+        "submitted": 620
+      }
+    }
+  },
+  "metrics_after": {
+    "calls": 180,
+    "modules": {
+      "agent": {
+        "completed": 0,
+        "expired": 0,
+        "queue_us": 0,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 0,
+        "submitted": 0
+      },
+      "asr": {
+        "completed": 200,
+        "expired": 0,
+        "queue_us": 71035526,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 35266716,
+        "submitted": 200
+      },
+      "crm": {
+        "completed": 1068,
+        "expired": 0,
+        "queue_us": 5964273,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 5584094,
+        "submitted": 1068
+      },
+      "nlu": {
+        "completed": 200,
+        "expired": 0,
+        "queue_us": 8847,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 1732851,
+        "submitted": 200
+      },
+      "operator": {
+        "completed": 20,
+        "expired": 0,
+        "queue_us": 598,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 260741,
+        "submitted": 20
+      },
+      "sms": {
+        "completed": 0,
+        "expired": 0,
+        "queue_us": 0,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 0,
+        "submitted": 0
+      },
+      "tts": {
+        "completed": 680,
+        "expired": 0,
+        "queue_us": 8560072,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 6617881,
+        "submitted": 680
+      }
+    }
+  },
+  "metrics_samples": [
+    {
+      "elapsed_s": 0.5134025299994391,
+      "metrics": {
+        "calls": 180,
+        "modules": {
+          "agent": {
+            "completed": 0,
+            "expired": 0,
+            "queue_us": 0,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 0,
+            "submitted": 0
+          },
+          "asr": {
+            "completed": 200,
+            "expired": 0,
+            "queue_us": 71035526,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 35266716,
+            "submitted": 200
+          },
+          "crm": {
+            "completed": 1068,
+            "expired": 0,
+            "queue_us": 5964273,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 5584094,
+            "submitted": 1068
+          },
+          "nlu": {
+            "completed": 200,
+            "expired": 0,
+            "queue_us": 8847,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 1732851,
+            "submitted": 200
+          },
+          "operator": {
+            "completed": 20,
+            "expired": 0,
+            "queue_us": 598,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 260741,
+            "submitted": 20
+          },
+          "sms": {
+            "completed": 0,
+            "expired": 0,
+            "queue_us": 0,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 0,
+            "submitted": 0
+          },
+          "tts": {
+            "completed": 680,
+            "expired": 0,
+            "queue_us": 8560072,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 6617881,
+            "submitted": 680
+          }
+        }
+      }
+    }
+  ],
+  "module_metrics": {
+    "crm": "module_requests_total{module=\"crm\"} 1353\nmodule_errors_total{module=\"crm\"} 0\nmodule_latency_seconds_sum{module=\"crm\"} 2.773503\nmodule_latency_seconds_count{module=\"crm\"} 1353\nmodule_latency_seconds_bucket{module=\"crm\",le=\"0.005\"} 1227\nmodule_latency_seconds_bucket{module=\"crm\",le=\"0.01\"} 1327\nmodule_latency_seconds_bucket{module=\"crm\",le=\"0.025\"} 1353\nmodule_latency_seconds_bucket{module=\"crm\",le=\"0.05\"} 1353\nmodule_latency_seconds_bucket{module=\"crm\",le=\"0.1\"} 1353\nmodule_latency_seconds_bucket{module=\"crm\",le=\"0.25\"} 1353\nmodule_latency_seconds_bucket{module=\"crm\",le=\"0.5\"} 1353\nmodule_latency_seconds_bucket{module=\"crm\",le=\"1.0\"} 1353\nmodule_latency_seconds_bucket{module=\"crm\",le=\"2.5\"} 1353\nmodule_latency_seconds_bucket{module=\"crm\",le=\"5.0\"} 1353\nmodule_latency_seconds_bucket{module=\"crm\",le=\"+Inf\"} 1353\n",
+    "nlu": "module_requests_total{module=\"nlu\"} 160\nmodule_errors_total{module=\"nlu\"} 0\nmodule_latency_seconds_sum{module=\"nlu\"} 1.099133\nmodule_latency_seconds_count{module=\"nlu\"} 160\nmodule_latency_seconds_bucket{module=\"nlu\",le=\"0.005\"} 3\nmodule_latency_seconds_bucket{module=\"nlu\",le=\"0.01\"} 157\nmodule_latency_seconds_bucket{module=\"nlu\",le=\"0.025\"} 158\nmodule_latency_seconds_bucket{module=\"nlu\",le=\"0.05\"} 159\nmodule_latency_seconds_bucket{module=\"nlu\",le=\"0.1\"} 160\nmodule_latency_seconds_bucket{module=\"nlu\",le=\"0.25\"} 160\nmodule_latency_seconds_bucket{module=\"nlu\",le=\"0.5\"} 160\nmodule_latency_seconds_bucket{module=\"nlu\",le=\"1.0\"} 160\nmodule_latency_seconds_bucket{module=\"nlu\",le=\"2.5\"} 160\nmodule_latency_seconds_bucket{module=\"nlu\",le=\"5.0\"} 160\nmodule_latency_seconds_bucket{module=\"nlu\",le=\"+Inf\"} 160\n",
+    "tts": "module_requests_total{module=\"tts\"} 680\nmodule_errors_total{module=\"tts\"} 0\nmodule_latency_seconds_sum{module=\"tts\"} 4.625199\nmodule_latency_seconds_count{module=\"tts\"} 680\nmodule_latency_seconds_bucket{module=\"tts\",le=\"0.005\"} 671\nmodule_latency_seconds_bucket{module=\"tts\",le=\"0.01\"} 671\nmodule_latency_seconds_bucket{module=\"tts\",le=\"0.025\"} 671\nmodule_latency_seconds_bucket{module=\"tts\",le=\"0.05\"} 671\nmodule_latency_seconds_bucket{module=\"tts\",le=\"0.1\"} 671\nmodule_latency_seconds_bucket{module=\"tts\",le=\"0.25\"} 674\nmodule_latency_seconds_bucket{module=\"tts\",le=\"0.5\"} 677\nmodule_latency_seconds_bucket{module=\"tts\",le=\"1.0\"} 679\nmodule_latency_seconds_bucket{module=\"tts\",le=\"2.5\"} 680\nmodule_latency_seconds_bucket{module=\"tts\",le=\"5.0\"} 680\nmodule_latency_seconds_bucket{module=\"tts\",le=\"+Inf\"} 680\n",
+    "asr": "module_requests_total{module=\"asr\"} 205\nmodule_errors_total{module=\"asr\"} 0\nmodule_latency_seconds_sum{module=\"asr\"} 34.790779\nmodule_latency_seconds_count{module=\"asr\"} 205\nmodule_latency_seconds_bucket{module=\"asr\",le=\"0.005\"} 0\nmodule_latency_seconds_bucket{module=\"asr\",le=\"0.01\"} 0\nmodule_latency_seconds_bucket{module=\"asr\",le=\"0.025\"} 3\nmodule_latency_seconds_bucket{module=\"asr\",le=\"0.05\"} 4\nmodule_latency_seconds_bucket{module=\"asr\",le=\"0.1\"} 81\nmodule_latency_seconds_bucket{module=\"asr\",le=\"0.25\"} 180\nmodule_latency_seconds_bucket{module=\"asr\",le=\"0.5\"} 202\nmodule_latency_seconds_bucket{module=\"asr\",le=\"1.0\"} 205\nmodule_latency_seconds_bucket{module=\"asr\",le=\"2.5\"} 205\nmodule_latency_seconds_bucket{module=\"asr\",le=\"5.0\"} 205\nmodule_latency_seconds_bucket{module=\"asr\",le=\"+Inf\"} 205\n"
+  },
+  "calls": [
+    {
+      "call_id": "load-8a74c5f0e2c0-07",
+      "registrar": "8107",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "dtmf",
+          "elapsed_s": 0.1663697609983501,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-07/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "dtmf",
+          "elapsed_s": 0.14218978099961532,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-07/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-07/welcome-1.wav",
+          "sha256": "105e0d552ac6dc3de645c7fbc64e1c4cf946ad362a295c72df2a741e0de0dd00",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 5.20875,
+          "rms": 3478.4,
+          "peak": 25869
+        }
+      ],
+      "start_s": 0.11955290300102206,
+      "target": "callback.ask_consent",
+      "trace": [
+        "inbound.welcome",
+        "inbound.intent_book",
+        "inbound.id_start",
+        "identity.begin",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "dtmf",
+          "text": "Клавиша 1",
+          "state": "inbound.welcome",
+          "step_index": 0,
+          "source": "dtmf"
+        },
+        {
+          "role": "dtmf",
+          "text": "Клавиша *",
+          "state": "identity.name",
+          "step_index": 4,
+          "source": "dtmf"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-8a74c5f0e2c0-05",
+      "registrar": "8105",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "dtmf",
+          "elapsed_s": 0.1790159379997931,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-05/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "dtmf",
+          "elapsed_s": 0.1415408370012301,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-05/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-05/welcome-1.wav",
+          "sha256": "105e0d552ac6dc3de645c7fbc64e1c4cf946ad362a295c72df2a741e0de0dd00",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 5.20875,
+          "rms": 3478.4,
+          "peak": 25869
+        }
+      ],
+      "start_s": 0.09855977799816174,
+      "target": "callback.ask_consent",
+      "trace": [
+        "inbound.welcome",
+        "inbound.intent_book",
+        "inbound.id_start",
+        "identity.begin",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "dtmf",
+          "text": "Клавиша 1",
+          "state": "inbound.welcome",
+          "step_index": 0,
+          "source": "dtmf"
+        },
+        {
+          "role": "dtmf",
+          "text": "Клавиша *",
+          "state": "identity.name",
+          "step_index": 4,
+          "source": "dtmf"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-8a74c5f0e2c0-00",
+      "registrar": "8100",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "dtmf",
+          "elapsed_s": 0.1804963399990811,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-00/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "dtmf",
+          "elapsed_s": 0.14643750100003672,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-00/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-00/welcome-1.wav",
+          "sha256": "105e0d552ac6dc3de645c7fbc64e1c4cf946ad362a295c72df2a741e0de0dd00",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 5.20875,
+          "rms": 3478.4,
+          "peak": 25869
+        }
+      ],
+      "start_s": 0.12054560099932132,
+      "target": "callback.ask_consent",
+      "trace": [
+        "inbound.welcome",
+        "inbound.intent_book",
+        "inbound.id_start",
+        "identity.begin",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "dtmf",
+          "text": "Клавиша 1",
+          "state": "inbound.welcome",
+          "step_index": 0,
+          "source": "dtmf"
+        },
+        {
+          "role": "dtmf",
+          "text": "Клавиша *",
+          "state": "identity.name",
+          "step_index": 4,
+          "source": "dtmf"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-8a74c5f0e2c0-01",
+      "registrar": "8101",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "dtmf",
+          "elapsed_s": 0.17950055899927975,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-01/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "dtmf",
+          "elapsed_s": 0.12067449200185365,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-01/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-01/welcome-1.wav",
+          "sha256": "105e0d552ac6dc3de645c7fbc64e1c4cf946ad362a295c72df2a741e0de0dd00",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 5.20875,
+          "rms": 3478.4,
+          "peak": 25869
+        }
+      ],
+      "start_s": 0.0976472019974608,
+      "target": "callback.ask_consent",
+      "trace": [
+        "inbound.welcome",
+        "inbound.intent_book",
+        "inbound.id_start",
+        "identity.begin",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "dtmf",
+          "text": "Клавиша 1",
+          "state": "inbound.welcome",
+          "step_index": 0,
+          "source": "dtmf"
+        },
+        {
+          "role": "dtmf",
+          "text": "Клавиша *",
+          "state": "identity.name",
+          "step_index": 4,
+          "source": "dtmf"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-8a74c5f0e2c0-16",
+      "registrar": "8116",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "dtmf",
+          "elapsed_s": 0.17619203900176217,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-16/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "dtmf",
+          "elapsed_s": 0.14464619199861772,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-16/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-16/welcome-1.wav",
+          "sha256": "105e0d552ac6dc3de645c7fbc64e1c4cf946ad362a295c72df2a741e0de0dd00",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 5.20875,
+          "rms": 3478.4,
+          "peak": 25869
+        }
+      ],
+      "start_s": 0.12244713499967474,
+      "target": "callback.ask_consent",
+      "trace": [
+        "inbound.welcome",
+        "inbound.intent_book",
+        "inbound.id_start",
+        "identity.begin",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "dtmf",
+          "text": "Клавиша 1",
+          "state": "inbound.welcome",
+          "step_index": 0,
+          "source": "dtmf"
+        },
+        {
+          "role": "dtmf",
+          "text": "Клавиша *",
+          "state": "identity.name",
+          "step_index": 4,
+          "source": "dtmf"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-8a74c5f0e2c0-04",
+      "registrar": "8104",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "dtmf",
+          "elapsed_s": 0.15759342599994852,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-04/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "dtmf",
+          "elapsed_s": 0.1488089470003615,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-04/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-04/welcome-1.wav",
+          "sha256": "105e0d552ac6dc3de645c7fbc64e1c4cf946ad362a295c72df2a741e0de0dd00",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 5.20875,
+          "rms": 3478.4,
+          "peak": 25869
+        }
+      ],
+      "start_s": 0.12031957399813109,
+      "target": "callback.ask_consent",
+      "trace": [
+        "inbound.welcome",
+        "inbound.intent_book",
+        "inbound.id_start",
+        "identity.begin",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "dtmf",
+          "text": "Клавиша 1",
+          "state": "inbound.welcome",
+          "step_index": 0,
+          "source": "dtmf"
+        },
+        {
+          "role": "dtmf",
+          "text": "Клавиша *",
+          "state": "identity.name",
+          "step_index": 4,
+          "source": "dtmf"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-8a74c5f0e2c0-08",
+      "registrar": "8108",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "dtmf",
+          "elapsed_s": 0.18137944000045536,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-08/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "dtmf",
+          "elapsed_s": 0.14935120700101834,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-08/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-08/welcome-1.wav",
+          "sha256": "105e0d552ac6dc3de645c7fbc64e1c4cf946ad362a295c72df2a741e0de0dd00",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 5.20875,
+          "rms": 3478.4,
+          "peak": 25869
+        }
+      ],
+      "start_s": 0.12150280100104283,
+      "target": "callback.ask_consent",
+      "trace": [
+        "inbound.welcome",
+        "inbound.intent_book",
+        "inbound.id_start",
+        "identity.begin",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "dtmf",
+          "text": "Клавиша 1",
+          "state": "inbound.welcome",
+          "step_index": 0,
+          "source": "dtmf"
+        },
+        {
+          "role": "dtmf",
+          "text": "Клавиша *",
+          "state": "identity.name",
+          "step_index": 4,
+          "source": "dtmf"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-8a74c5f0e2c0-06",
+      "registrar": "8106",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "dtmf",
+          "elapsed_s": 0.17813324100279715,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-06/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "dtmf",
+          "elapsed_s": 0.146291218999977,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-06/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-06/welcome-1.wav",
+          "sha256": "105e0d552ac6dc3de645c7fbc64e1c4cf946ad362a295c72df2a741e0de0dd00",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 5.20875,
+          "rms": 3478.4,
+          "peak": 25869
+        }
+      ],
+      "start_s": 0.12072892499782029,
+      "target": "callback.ask_consent",
+      "trace": [
+        "inbound.welcome",
+        "inbound.intent_book",
+        "inbound.id_start",
+        "identity.begin",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "dtmf",
+          "text": "Клавиша 1",
+          "state": "inbound.welcome",
+          "step_index": 0,
+          "source": "dtmf"
+        },
+        {
+          "role": "dtmf",
+          "text": "Клавиша *",
+          "state": "identity.name",
+          "step_index": 4,
+          "source": "dtmf"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-8a74c5f0e2c0-12",
+      "registrar": "8112",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "dtmf",
+          "elapsed_s": 0.14901457000087248,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-12/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "dtmf",
+          "elapsed_s": 0.15108434099965962,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-12/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-12/welcome-1.wav",
+          "sha256": "105e0d552ac6dc3de645c7fbc64e1c4cf946ad362a295c72df2a741e0de0dd00",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 5.20875,
+          "rms": 3478.4,
+          "peak": 25869
+        }
+      ],
+      "start_s": 0.12304758000027505,
+      "target": "callback.ask_consent",
+      "trace": [
+        "inbound.welcome",
+        "inbound.intent_book",
+        "inbound.id_start",
+        "identity.begin",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "dtmf",
+          "text": "Клавиша 1",
+          "state": "inbound.welcome",
+          "step_index": 0,
+          "source": "dtmf"
+        },
+        {
+          "role": "dtmf",
+          "text": "Клавиша *",
+          "state": "identity.name",
+          "step_index": 4,
+          "source": "dtmf"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-8a74c5f0e2c0-17",
+      "registrar": "8117",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "dtmf",
+          "elapsed_s": 0.1795607599997311,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-17/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "dtmf",
+          "elapsed_s": 0.14882117100205505,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-17/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-17/welcome-1.wav",
+          "sha256": "105e0d552ac6dc3de645c7fbc64e1c4cf946ad362a295c72df2a741e0de0dd00",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 5.20875,
+          "rms": 3478.4,
+          "peak": 25869
+        }
+      ],
+      "start_s": 0.12015737099864054,
+      "target": "callback.ask_consent",
+      "trace": [
+        "inbound.welcome",
+        "inbound.intent_book",
+        "inbound.id_start",
+        "identity.begin",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "dtmf",
+          "text": "Клавиша 1",
+          "state": "inbound.welcome",
+          "step_index": 0,
+          "source": "dtmf"
+        },
+        {
+          "role": "dtmf",
+          "text": "Клавиша *",
+          "state": "identity.name",
+          "step_index": 4,
+          "source": "dtmf"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-8a74c5f0e2c0-15",
+      "registrar": "8115",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "dtmf",
+          "elapsed_s": 0.17656572100167978,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-15/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "dtmf",
+          "elapsed_s": 0.15665085700311465,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-15/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-15/welcome-1.wav",
+          "sha256": "105e0d552ac6dc3de645c7fbc64e1c4cf946ad362a295c72df2a741e0de0dd00",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 5.20875,
+          "rms": 3478.4,
+          "peak": 25869
+        }
+      ],
+      "start_s": 0.1212314129988954,
+      "target": "callback.ask_consent",
+      "trace": [
+        "inbound.welcome",
+        "inbound.intent_book",
+        "inbound.id_start",
+        "identity.begin",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "dtmf",
+          "text": "Клавиша 1",
+          "state": "inbound.welcome",
+          "step_index": 0,
+          "source": "dtmf"
+        },
+        {
+          "role": "dtmf",
+          "text": "Клавиша *",
+          "state": "identity.name",
+          "step_index": 4,
+          "source": "dtmf"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-8a74c5f0e2c0-09",
+      "registrar": "8109",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "dtmf",
+          "elapsed_s": 0.17568130099971313,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-09/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "dtmf",
+          "elapsed_s": 0.15257404200019664,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-09/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-09/welcome-1.wav",
+          "sha256": "105e0d552ac6dc3de645c7fbc64e1c4cf946ad362a295c72df2a741e0de0dd00",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 5.20875,
+          "rms": 3478.4,
+          "peak": 25869
+        }
+      ],
+      "start_s": 0.12089179899703595,
+      "target": "callback.ask_consent",
+      "trace": [
+        "inbound.welcome",
+        "inbound.intent_book",
+        "inbound.id_start",
+        "identity.begin",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "dtmf",
+          "text": "Клавиша 1",
+          "state": "inbound.welcome",
+          "step_index": 0,
+          "source": "dtmf"
+        },
+        {
+          "role": "dtmf",
+          "text": "Клавиша *",
+          "state": "identity.name",
+          "step_index": 4,
+          "source": "dtmf"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-8a74c5f0e2c0-19",
+      "registrar": "8119",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "dtmf",
+          "elapsed_s": 0.17513396999856923,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-19/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "dtmf",
+          "elapsed_s": 0.14813568200042937,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-19/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-19/welcome-1.wav",
+          "sha256": "105e0d552ac6dc3de645c7fbc64e1c4cf946ad362a295c72df2a741e0de0dd00",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 5.20875,
+          "rms": 3478.4,
+          "peak": 25869
+        }
+      ],
+      "start_s": 0.12380768999719294,
+      "target": "callback.ask_consent",
+      "trace": [
+        "inbound.welcome",
+        "inbound.intent_book",
+        "inbound.id_start",
+        "identity.begin",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "dtmf",
+          "text": "Клавиша 1",
+          "state": "inbound.welcome",
+          "step_index": 0,
+          "source": "dtmf"
+        },
+        {
+          "role": "dtmf",
+          "text": "Клавиша *",
+          "state": "identity.name",
+          "step_index": 4,
+          "source": "dtmf"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-8a74c5f0e2c0-10",
+      "registrar": "8110",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "dtmf",
+          "elapsed_s": 0.1782049300018116,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-10/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "dtmf",
+          "elapsed_s": 0.1497601820010459,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-10/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-10/welcome-1.wav",
+          "sha256": "105e0d552ac6dc3de645c7fbc64e1c4cf946ad362a295c72df2a741e0de0dd00",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 5.20875,
+          "rms": 3478.4,
+          "peak": 25869
+        }
+      ],
+      "start_s": 0.119695673998649,
+      "target": "callback.ask_consent",
+      "trace": [
+        "inbound.welcome",
+        "inbound.intent_book",
+        "inbound.id_start",
+        "identity.begin",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "dtmf",
+          "text": "Клавиша 1",
+          "state": "inbound.welcome",
+          "step_index": 0,
+          "source": "dtmf"
+        },
+        {
+          "role": "dtmf",
+          "text": "Клавиша *",
+          "state": "identity.name",
+          "step_index": 4,
+          "source": "dtmf"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-8a74c5f0e2c0-18",
+      "registrar": "8118",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "dtmf",
+          "elapsed_s": 0.17921102800028166,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-18/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "dtmf",
+          "elapsed_s": 0.15113297200150555,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-18/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-18/welcome-1.wav",
+          "sha256": "105e0d552ac6dc3de645c7fbc64e1c4cf946ad362a295c72df2a741e0de0dd00",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 5.20875,
+          "rms": 3478.4,
+          "peak": 25869
+        }
+      ],
+      "start_s": 0.11944951899931766,
+      "target": "callback.ask_consent",
+      "trace": [
+        "inbound.welcome",
+        "inbound.intent_book",
+        "inbound.id_start",
+        "identity.begin",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "dtmf",
+          "text": "Клавиша 1",
+          "state": "inbound.welcome",
+          "step_index": 0,
+          "source": "dtmf"
+        },
+        {
+          "role": "dtmf",
+          "text": "Клавиша *",
+          "state": "identity.name",
+          "step_index": 4,
+          "source": "dtmf"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-8a74c5f0e2c0-11",
+      "registrar": "8111",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "dtmf",
+          "elapsed_s": 0.17750017900107196,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-11/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "dtmf",
+          "elapsed_s": 0.15097366299960413,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-11/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-11/welcome-1.wav",
+          "sha256": "105e0d552ac6dc3de645c7fbc64e1c4cf946ad362a295c72df2a741e0de0dd00",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 5.20875,
+          "rms": 3478.4,
+          "peak": 25869
+        }
+      ],
+      "start_s": 0.10843055100122001,
+      "target": "callback.ask_consent",
+      "trace": [
+        "inbound.welcome",
+        "inbound.intent_book",
+        "inbound.id_start",
+        "identity.begin",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "dtmf",
+          "text": "Клавиша 1",
+          "state": "inbound.welcome",
+          "step_index": 0,
+          "source": "dtmf"
+        },
+        {
+          "role": "dtmf",
+          "text": "Клавиша *",
+          "state": "identity.name",
+          "step_index": 4,
+          "source": "dtmf"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-8a74c5f0e2c0-03",
+      "registrar": "8103",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "dtmf",
+          "elapsed_s": 0.17444675300066592,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-03/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "dtmf",
+          "elapsed_s": 0.15066891799870064,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-03/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-03/welcome-1.wav",
+          "sha256": "105e0d552ac6dc3de645c7fbc64e1c4cf946ad362a295c72df2a741e0de0dd00",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 5.20875,
+          "rms": 3478.4,
+          "peak": 25869
+        }
+      ],
+      "start_s": 0.06833662999997614,
+      "target": "callback.ask_consent",
+      "trace": [
+        "inbound.welcome",
+        "inbound.intent_book",
+        "inbound.id_start",
+        "identity.begin",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "dtmf",
+          "text": "Клавиша 1",
+          "state": "inbound.welcome",
+          "step_index": 0,
+          "source": "dtmf"
+        },
+        {
+          "role": "dtmf",
+          "text": "Клавиша *",
+          "state": "identity.name",
+          "step_index": 4,
+          "source": "dtmf"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-8a74c5f0e2c0-02",
+      "registrar": "8102",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "dtmf",
+          "elapsed_s": 0.18125045499982662,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-02/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "dtmf",
+          "elapsed_s": 0.1563098920014454,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-02/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-02/welcome-1.wav",
+          "sha256": "105e0d552ac6dc3de645c7fbc64e1c4cf946ad362a295c72df2a741e0de0dd00",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 5.20875,
+          "rms": 3478.4,
+          "peak": 25869
+        }
+      ],
+      "start_s": 0.12271259499902953,
+      "target": "callback.ask_consent",
+      "trace": [
+        "inbound.welcome",
+        "inbound.intent_book",
+        "inbound.id_start",
+        "identity.begin",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "dtmf",
+          "text": "Клавиша 1",
+          "state": "inbound.welcome",
+          "step_index": 0,
+          "source": "dtmf"
+        },
+        {
+          "role": "dtmf",
+          "text": "Клавиша *",
+          "state": "identity.name",
+          "step_index": 4,
+          "source": "dtmf"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-8a74c5f0e2c0-14",
+      "registrar": "8114",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "dtmf",
+          "elapsed_s": 0.17693499400047585,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-14/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "dtmf",
+          "elapsed_s": 0.15519027700065635,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-14/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-14/welcome-1.wav",
+          "sha256": "105e0d552ac6dc3de645c7fbc64e1c4cf946ad362a295c72df2a741e0de0dd00",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 5.20875,
+          "rms": 3478.4,
+          "peak": 25869
+        }
+      ],
+      "start_s": 0.11841174900109763,
+      "target": "callback.ask_consent",
+      "trace": [
+        "inbound.welcome",
+        "inbound.intent_book",
+        "inbound.id_start",
+        "identity.begin",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "dtmf",
+          "text": "Клавиша 1",
+          "state": "inbound.welcome",
+          "step_index": 0,
+          "source": "dtmf"
+        },
+        {
+          "role": "dtmf",
+          "text": "Клавиша *",
+          "state": "identity.name",
+          "step_index": 4,
+          "source": "dtmf"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-8a74c5f0e2c0-13",
+      "registrar": "8113",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "dtmf",
+          "elapsed_s": 0.18142511300175101,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-13/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "dtmf",
+          "elapsed_s": 0.15810011599751306,
+          "fixture_id": null,
+          "fixture_sha256": null,
+          "voice": null,
+          "speed": null,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-13/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/dtmf/load-8a74c5f0e2c0-13/welcome-1.wav",
+          "sha256": "105e0d552ac6dc3de645c7fbc64e1c4cf946ad362a295c72df2a741e0de0dd00",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 5.20875,
+          "rms": 3478.4,
+          "peak": 25869
+        }
+      ],
+      "start_s": 0.05660604399963631,
+      "target": "callback.ask_consent",
+      "trace": [
+        "inbound.welcome",
+        "inbound.intent_book",
+        "inbound.id_start",
+        "identity.begin",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "dtmf",
+          "text": "Клавиша 1",
+          "state": "inbound.welcome",
+          "step_index": 0,
+          "source": "dtmf"
+        },
+        {
+          "role": "dtmf",
+          "text": "Клавиша *",
+          "state": "identity.name",
+          "step_index": 4,
+          "source": "dtmf"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    }
+  ],
+  "scope": "real audio/ASR/NLU/Rust/TTS; safe operator escalation, no appointment throughput claim",
+  "latency_origin": "after complete frozen user PCM is available; caller speaking duration excluded",
+  "vad_scope": "finished utterance ingress; noise endpointing requires separate tests"
+}

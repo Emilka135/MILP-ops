@@ -1,0 +1,91 @@
+name: twenty real audio calls
+on: [push, pull_request, workflow_dispatch]
+permissions: {contents: read}
+concurrency:
+  group: concurrent-audio-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  audio:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      APP_MODE: demo
+      CLINIC_ACCEPTANCE_TEST: '1'
+      CLINIC_RUNTIME_MODE: acceptance
+      CLINIC_NAME: Acceptance isolated clinic
+      CRM_NOW: '2026-10-22T23:00:00+04:00'
+      OPERATOR_AVAILABLE: '0'
+      NIGHT_REASONING_ENABLED: '0'
+      TTS_DOCTOR_BANK_SYNC: '0'
+      STAND_URL: ''
+      STAND_TOKEN: ''
+      DBI_API_TOKEN: ''
+      OPENAI_API_KEY: ''
+      OPENROUTER_API_KEY: ''
+      SMS_GATEWAY_URL: ''
+      MODULE_SETTINGS_FILE: /tmp/clinic-audio-unconfigured/modules.json
+      MODULE_SECRETS_DIR: /tmp/clinic-audio-no-secrets
+      TTS_STRESS: context
+      NLU_EMBEDDER: e5
+      ASR_PROVIDER: CPUExecutionProvider
+      MODULE_TIMEOUT_SECONDS: '45'
+      MODULE_WORKERS: '4'
+      TURN_TIMEOUT_MS: '55000'
+      OMP_NUM_THREADS: '2'
+      MKL_NUM_THREADS: '2'
+    steps:
+      - uses: actions/checkout@v4
+      # act may connect to the already prepared, closed-network Docker stack.
+      # The runner still validates demo identity, compiled revision and real ASR.
+      - uses: actions/setup-python@v5
+        if: env.CLINIC_AUDIO_EXTERNAL_STACK != '1'
+        with: {python-version: '3.12'}
+      - uses: dtolnay/rust-toolchain@1.98.0
+        if: env.CLINIC_AUDIO_EXTERNAL_STACK != '1'
+      - name: Install actual CPU speech and local encoder dependencies
+        if: env.CLINIC_AUDIO_EXTERNAL_STACK != '1'
+        run: |
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
+          pip install --index-url https://download.pytorch.org/whl/cpu torch==2.14.1
+          pip install -r requirements/base.txt -r requirements/asr.txt -r requirements/nlu-semantic.txt -r requirements/tts.txt
+      - name: Fetch model weights, never regenerate the frozen caller WAVs
+        if: env.CLINIC_AUDIO_EXTERNAL_STACK != '1'
+        run: |
+          python tools/check_space.py
+          python tools/download_models.py --tts --asr
+          python tools/download_nlu.py
+          python tools/check_space.py
+        env: {HF_HUB_DISABLE_XET: '1', HF_HUB_DISABLE_TELEMETRY: '1'}
+      - name: Start disposable native CPU services
+        if: env.CLINIC_AUDIO_EXTERNAL_STACK != '1'
+        run: |
+          mkdir -p debug/runs/concurrent-calls
+          export DEMO_DATA_DIR="${RUNNER_TEMP}/clinic-audio-acceptance"
+          python tools/dev.py --base-port 33880 > debug/runs/concurrent-calls/stack.log 2>&1 &
+          echo $! > debug/runs/concurrent-calls/stack.pid
+          for attempt in $(seq 1 180); do
+            if curl --fail --silent http://127.0.0.1:33880/readyz; then break; fi
+            kill -0 "$(cat debug/runs/concurrent-calls/stack.pid)" || exit 1
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:33880/readyz
+      - name: Twenty simultaneous speech, tones and mixed calls with independent targets
+        run: |
+          for mode in speech dtmf mixed; do
+            python debug/run_concurrent_calls.py --mode "$mode" --run-timeout 240 \
+              --base "${CLINIC_AUDIO_BASE:-http://127.0.0.1:33880}" \
+              --crm "${CLINIC_AUDIO_CRM:-http://127.0.0.1:33881}" \
+              --nlu "${CLINIC_AUDIO_NLU:-http://127.0.0.1:33882}" \
+              --tts "${CLINIC_AUDIO_TTS:-http://127.0.0.1:33885}" \
+              --asr "${CLINIC_AUDIO_ASR:-http://127.0.0.1:33886}" \
+              --output "${CLINIC_AUDIO_OUTPUT_DIR:-debug/runs/concurrent-calls}/$mode"
+          done
+      - name: Stop disposable services
+        if: always() && env.CLINIC_AUDIO_EXTERNAL_STACK != '1'
+        run: |
+          if test -f debug/runs/concurrent-calls/stack.pid; then
+            kill "$(cat debug/runs/concurrent-calls/stack.pid)" || true
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always() && !env.ACT
+        with: {name: twenty-real-audio-calls, path: debug/runs/concurrent-calls/}

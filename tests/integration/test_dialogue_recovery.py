@@ -244,3 +244,17 @@ def test_callback_respects_closed_calendar_and_short_workday(clinic):
     assert crm.handle('callback_request', {**args, 'preferred_time': '10:00'})[0] == 'invalid'
     assert crm.handle('callback_request', args)[0] == 'ok'
     assert crm.handle('callback_request', {**args, 'call_id': 'late', 'preferred_time': '14:00'})[0] == 'invalid'
+
+
+@pytest.mark.parametrize('phrase', ['Переключите меня на оператора.', 'Переключите на регистратора.', 'Переключите, пожалуйста, на сотрудника.'])
+def test_operator_request_is_not_a_stroke_stem_collision(phrase):
+    from app.safety.detector import SafetyLayer
+    from app.types import SafetyVerdict
+    assert SafetyLayer().check(phrase).verdict == SafetyVerdict.OPERATOR
+
+
+@pytest.mark.parametrize('phrase', ['Перекосило лицо, переключите на оператора.', 'У меня перекос лица.', 'Перекосило рот.'])
+def test_actual_stroke_marker_keeps_priority_over_operator_request(phrase):
+    from app.safety.detector import SafetyLayer
+    from app.types import SafetyVerdict
+    assert SafetyLayer().check(phrase).verdict == SafetyVerdict.RED_FLAG_A
