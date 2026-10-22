@@ -7,7 +7,7 @@ description: Build and verify the clinic voice assistant locally in Docker with 
 
 The user requires a working local Docker copy using their GPU. The clinic project, model weights and debug evidence must stay usable without a VM password. Locate the checkout through the current workspace and Git; it may move. Never hard-code an old absolute path in launchers, signing wrappers, bind mounts or cache overrides.
 
-Read AGENTS.md, TODO.md and docs/acceptance/GOAL.md in the checkout. Preserve unfinished modules and existing user edits. Finish modules separately, verify them, then make signed commits and push feature/rust-clinic-voice when existing credentials suffice.
+Read AGENTS.md, TODO.md and docs/acceptance/GOAL.md in the checkout. Preserve unfinished modules and existing user edits. Finish modules separately, verify them, then make signed commits and push the selected publication branch when existing credentials suffice. Current publication is feature/score-acceptance; the older agent branches are merged and detached worktrees preserve their remaining drafts.
 
 Before model downloads or builds run tools/check_space.py. The user's latest instruction (22 October 2026) requires more than 5 GiB free on both /home and /. This supersedes the earlier 10 GiB /home reserve. Use only this project's caches on /mnt/docker_space when necessary. Never prune other Docker resources or alter another GPU process.
 
