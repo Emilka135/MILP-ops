@@ -64,10 +64,10 @@ def normalize_surname(value):
 
 
 def normalize_identifier(value, field="card_no"):
-    if field not in {"card_no", "snils", "phone", "birth_digits"}:
+    if field not in {"card_no", "snils", "phone", "birth_digits", "oms"}:
         raise ValueError("invalid_identifier_field")
     text = text_value(value).casefold().replace("ё", "е").rstrip(".!?").strip()
-    text = re.sub(r"^(?:номер карты|номер снилс|номер телефона)\s*:?\s+", "", text)
+    text = re.sub(r"^(?:номер карты|номер снилс|номер телефона|номер полиса|полис омс|омс)\s*:?\s+", "", text)
     text = re.sub(r"(?<!\S)[,.;!?]+|[,.;!?]+(?=\s|$)", " ", text).strip()
     if re.fullmatch(r"[0-9\s-]+", text):
         digits = re.sub(r"[\s-]", "", text)
@@ -87,7 +87,7 @@ def normalize_identifier(value, field="card_no"):
     else:
         valid = {"card_no": 3 <= len(digits) <= 10,
                  "snils": len(digits) == 11,
-                 "birth_digits": len(digits) == 8}[field]
+                 "birth_digits": len(digits) == 8, "oms": 4 <= len(digits) <= 16}[field]
     if not valid:
         raise ValueError("incomplete_identifier")
     return digits

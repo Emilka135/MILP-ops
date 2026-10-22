@@ -21,7 +21,11 @@ class SandboxStore:
         self.lock = threading.RLock()
         self.db = sqlite3.connect(self.folder / 'sandbox.sqlite', check_same_thread=False, uri=True)
         self.db.row_factory = sqlite3.Row
-        self.db.create_function('clinic_name',1,lambda value:' '.join(str(value).casefold().replace('ё','е').split()),deterministic=True)
+        from .identity_form import folded
+        self.db.create_function('clinic_name',1,folded,deterministic=True)
+        self.db.create_function('clinic_part',2,lambda value,index:(str(value).split()+['','',''])[index],deterministic=True)
+        from .identity_form import phone_digits
+        self.db.create_function('clinic_phone',1,phone_digits,deterministic=True)
         source_path=source_path or os.environ.get('CLINIC_SOURCE_DB') or ('/imports/clinic-source.sqlite' if Path('/imports/clinic-source.sqlite').is_file() else None)
         self.reference_sources=[]
         self.source_path=Path(source_path).resolve() if source_path else None
@@ -41,9 +45,10 @@ class SandboxStore:
         CREATE TABLE IF NOT EXISTS events(id INTEGER PRIMARY KEY, scope TEXT, phrase TEXT, response TEXT, state TEXT, author TEXT);
         CREATE TABLE IF NOT EXISTS extensions(scope TEXT PRIMARY KEY, revision TEXT, document TEXT);
         ''')
-        for name,kind in [('oms','TEXT'),('district','TEXT')]:
+        for name,kind in [('oms','TEXT'),('district','TEXT'),('phone','TEXT'),('last_name','TEXT'),('first_name','TEXT'),('middle_name','TEXT')]:
             if name not in {r['name'] for r in self.db.execute('PRAGMA table_info(patients)')}:
                 self.db.execute('ALTER TABLE patients ADD COLUMN '+name+' '+kind)
+        self.db.execute('CREATE VIEW IF NOT EXISTS identity_people AS SELECT id,full_name,birth_date,oms,district,phone,\nCOALESCE(last_name,clinic_part(full_name,0)) AS last_name,COALESCE(first_name,clinic_part(full_name,1)) AS first_name,COALESCE(middle_name,clinic_part(full_name,2)) AS middle_name FROM patients')
         self.db.execute('CREATE TABLE IF NOT EXISTS doctors(id INTEGER PRIMARY KEY,full_name TEXT NOT NULL,specialty TEXT NOT NULL,district TEXT)')
         self.db.execute('CREATE TABLE IF NOT EXISTS district_doctors(district TEXT,specialty TEXT,doctor_id TEXT,PRIMARY KEY(district,specialty,doctor_id))')
         if 'source_slot_id' not in {r['name'] for r in self.db.execute('PRAGMA table_info(slots)')}:
@@ -67,6 +72,15 @@ class SandboxStore:
             fixtures=json.loads(Path(__file__).with_name('sandbox_fixtures.json').read_text())
             self.db.executemany('INSERT OR IGNORE INTO patients(id,full_name,birth_date,oms,district) VALUES(?,?,?,?,?)',fixtures['patients'])
             self.db.executemany('INSERT OR IGNORE INTO doctors VALUES(?,?,?,?)',fixtures['doctors'])
+
+    def identity_candidates(self,call_id,parts,birth=None,phone=None,policy=None,cohort=None):
+        """Read-only typed form query; never synthesize SQL from caller/model text.
+
+        Name components also work for old rows without the new optional columns.
+        A unique preliminary match does NOT satisfy mandatory name/DOB fields.
+        """
+        from .identity_form import candidate_query
+        return candidate_query(self.query,call_id,parts,birth,phone,policy,cohort)
 
     def query(self, call_id, sql, params=()):
         """Only application-owned parameterized statements reach this method."""

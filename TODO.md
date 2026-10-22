@@ -302,3 +302,10 @@
 - [ ] Human listening to native48k/telephone8k examples remains required for pronunciation/naturalness. ASR agreement is separate evidence.
 
 Evidence: `debug/runs/speech-regression/`; details [SPEECH_REGRESSION.md](docs/SPEECH_REGRESSION.md). No external MIS writes or live LLM calls were made by these tools.
+
+## Incremental identity — 22.10.2026
+
+- [x] Accepted the relevant baseline identity form/service and registrar-store hooks with tests. Frozen utterance + actual ASR text retain surname, first name and complete DOB; ask only patronymic, preserve DOB on answer/correction, then explicit readback before exact DB lookup. No-middle-name is an exact empty field.
+- [x] Preserve ё; reject model letter substitutions; never auto-confirm another phone owner, fuzzy spelling or ambiguous duplicate cohort. Per-session locks permit20 concurrent optional extractors; imported dialogue analysis does not look up real patients.
+- [x] Existing registrar/API/real-E5 protocols passed offline after adding the mandatory confirmation turn to two existing scenario tests; no external MIS/LLM calls.
+- [ ] Root integration must preserve existing baseline CRM IdentityService dispatch and baseline required-field identity.flow (owned by other module), then run complete phone/FSM/20-call acceptance. Exact hooks and a baseline contract expectation requiring one additional readback confirmation are documented in docs/INCREMENTAL_IDENTITY.md.
