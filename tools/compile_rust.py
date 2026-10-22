@@ -34,8 +34,8 @@ def compile_to(directory: Path):
     cases = []
     entries = []
     for name, flow in sorted(flows.items()):
-        if not 1.3 <= flow.rate <= 1.75:
-            raise ValueError(f"{name}: rate must be in 1.3..1.75")
+        if not 0.75 <= flow.rate <= 2.5:
+            raise ValueError(f"{name}: rate must be in 0.75..2.5")
         entries.append(f"        {json.dumps(name)} => Some({json.dumps(flow.entry)}),")
         for state_name, state in flow.states.items():
             cases.append(

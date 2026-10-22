@@ -53,8 +53,8 @@ def fields(args):
 def serialize(flow):
     name = identifier(flow["name"])
     rate = float(flow.get("rate", 1.5))
-    if not 1.3 <= rate <= 1.75:
-        raise ValueError("Скорость речи должна быть от 1,3 до 1,75")
+    if not 0.75 <= rate <= 2.5:
+        raise ValueError("Скорость речи должна быть от 0,75 до 2,5")
     lines = [
         f"flow {name}",
         f"  rate {rate:g}",

@@ -23,7 +23,7 @@ invalid -> operator reason=invalid_mis_fields
 
 ```bash
 python -m pytest tests/contracts/test_mis_constructor.py
-python debug/run_docx_contracts.py --module mis
+CLINIC_CONTRACT_RUN_ID=local-mis-check python debug/run_docx_contracts.py --module mis
 ```
 
 При выборе энкодера сравниваются категории, извлечённые поля, отрицания и корректный план операции. USER-bge-m3 использует CLS + L2 и требует отдельной калибровки; префикс `query:` и mean-pooling E5 нельзя переносить механически. [Карточка модели](https://huggingface.co/deepvk/USER-bge-m3) указывает Apache-2.0; проверенная ревизия `0cc6cfe48e260fb0474c753087a69369e88709ae`. Веса и дообучение ещё не приняты. Сжатие проверяется на целевом CPU и независимом корпусе; текущий обязательный порог — 100 запросов энкодера в минуту, полный тракт — отдельно 20 звонков в минуту.

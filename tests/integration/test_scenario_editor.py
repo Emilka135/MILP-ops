@@ -33,6 +33,25 @@ def test_all_flows_roundtrip_without_manual_code(repository):
             assert [(s["kind"],s["args"]) for s in before["statements"]]==[(s["kind"],s["args"]) for s in after["statements"]]
 
 
+@pytest.mark.parametrize('rate', [.75, 1.0, 1.3, 1.75, 2.5])
+def test_frozen_corpus_speed_range_roundtrips_through_editor(repository, rate):
+    project = repository.read()
+    project['flows'][0]['rate'] = rate
+    assert repository.inspect(project)['valid']
+    stored = repository.save(project, project['revision'])
+    assert stored['flows'][0]['rate'] == rate
+
+
+@pytest.mark.parametrize('rate', [.74, 2.51, float('nan'), float('inf')])
+def test_invalid_speech_speed_does_not_replace_project(repository, rate):
+    project = repository.read()
+    revision = project['revision']
+    project['flows'][0]['rate'] = rate
+    with pytest.raises(ValueError, match='Скорость'):
+        repository.save(project, revision)
+    assert repository.read()['revision'] == revision
+
+
 def test_quoted_hash_inside_prompt_is_not_a_comment(repository):
     project = repository.read()
     s = next(

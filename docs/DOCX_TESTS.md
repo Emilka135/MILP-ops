@@ -5,6 +5,7 @@ Workflow `.github/workflows/docx-contracts.yml` запускается на push
 `C-01…C-15` — ASCII-запись исходных `С-01…С-15`; `.01` — пример триггера, `.D-06` — строка приложения Д, `.label/.entities/.fsm/.mis/.audio` — модуль. `ALL` обозначает межсценарное правило. Ошибка содержит ID, ожидаемое и фактическое значение. JSON/JUnit и полный traceback находятся в артефакте `docx-contract-<модуль>`; локально — `debug/runs/docx-contracts/`.
 
 ```bash
+export CLINIC_CONTRACT_RUN_ID="local-$(date -u +%Y%m%dT%H%M%SZ)"
 python -m pip install -r requirements/dev.txt
 python tools/download_nlu.py
 cargo build --locked --bin contract-replay
@@ -17,6 +18,10 @@ python debug/run_docx_contracts.py --module audio
 python debug/run_nlu_capacity.py
 python debug/check_docx_coverage.py
 ```
+
+Все модули одного прогона используют один `CLINIC_CONTRACT_RUN_ID`; Actions задаёт `run_id-run_attempt`. Отчёт связан с Git SHA, хэшем исходников/сценариев и SHA JUnit. Старый, подменённый, неполный или чужой отчёт не закрывает coverage. Перед pytest старый JUnit удаляется; общий timeout модуля по умолчанию 300 секунд, `--timeout` меняет его явно. Контрактные тесты блокируют внешние TCP-соединения и используют только локальные disposable sinks. Секреты внешних МИС/LLM очищаются в процессе runner.
+
+Workflow `score-acceptance.yml` отдельно запускает проверки целостности доказательств, конструктора МИС, изменений администратора и предварительных предложений регистратора. Прогон через act от 22.10.2026: 64 + 27 проверок passed, `debug/runs/score-act/control-fixed.log`. Это не результат полного DOCX/ASR/внешнего стенда.
 
 Группа `audio` проверяет, что постоянный ответ настоящего автомата включён в набор обязательных записей. Настоящие WAV, слышимость и обратное распознавание проверяет отдельный `containers-and-sbom`; принадлежность фразы к реестру не заменяет прослушивание.
 
