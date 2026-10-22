@@ -19,22 +19,23 @@ from .module_settings import configured
 from .sandbox_store import SandboxStore,clinic_now
 from .specialty_dictionary import SpecialtyDictionary
 from .dialogue_plan import compile_plan
+from .identity_form import IdentityForm, DialogueModel, phone_digits, foreign_language_request,near_phone_owner
 
 CATALOG_SOURCE = 'docs/requirements/clinic-regulation.txt, раздел 2.3'
-POLICY_VERSION = 'sandbox-booking-3'
-TITLES = dict(identity_policy='Полис ОМС',identity_confirm='Проверяем уже названное ФИО',district='Уточняем участок',doctor='Выбираем врача',menu='Куда записаться?',specialist='Выбираем специалиста',referral='Уточняем направление',
+POLICY_VERSION = 'sandbox-booking-4'
+TITLES = dict(identity_match_confirm='Подтверждаем данные другого пациента',identity_readback='Подтверждаем распознанные данные',identity_phone='Уточняем телефон',identity_policy_confirm='Подтверждаем данные по ОМС',identity_policy='Полис ОМС',identity_confirm='Проверяем уже названное ФИО',district='Уточняем участок',doctor='Выбираем врача',menu='Куда записаться?',specialist='Выбираем специалиста',referral='Уточняем направление',
  therapist_first='Сначала участковый врач',confirm='Проверяем выбранный вариант',identity_name='Фамилия, имя и отчество',
  identity_birth='Дата рождения',slots='Свободные талоны',booking_confirm='Подтверждение записи',
  done='Запись в тестовой таблице',operator='Помощь регистратора',emergency='Экстренное обращение',closed='Звонок завершён')
 PROMPTS = {
  'menu':'Здравствуйте! Куда хотите записаться? К участковому врачу — один. К специалисту — два. На исследование или анализы — три. Можно ответить голосом.',
- 'identity_policy':'Не удалось найти пациента по ФИО и дате рождения. Назовите номер полиса ОМС: шестнадцать цифр. Для помощи регистратора нажмите звёздочку.',
+ 'identity_policy':'Назовите номер полиса ОМС или его последние четыре цифры. Для помощи регистратора нажмите звёздочку.',
  'district':'Номер участка в картотеке отсутствует. Назовите свой участок. Если не знаете, переведу на регистратора: нажмите звёздочку.',
  'specialist':'Назовите специалиста. Для помощи регистратора нажмите ноль.',
  'referral':'Есть направление? Да — один. Нет — ноль. Регистратор — два.',
  'therapist_first':'Без направления сначала обратитесь к участковому врачу. Выбрать участкового врача — один. Назад — ноль. Регистратор — два.',
- 'identity_name':'Назовите фамилию, имя и отчество полностью. Это тестовая картотека: Иванов Иван Иванович или Петрова Анна Сергеевна.',
- 'identity_birth':'Назовите дату рождения: день, месяц и год. Для тестового Иванова: двенадцатое апреля тысяча девятьсот восемьдесят пятого года.',
+ 'identity_name':'Назовите фамилию, имя и отчество пациента.',
+ 'identity_birth':'Назовите дату рождения пациента: день, месяц и полный год.',
  'operator':'Перевожу на оператора. В тестовом режиме передача отмечена в журнале звонка.',
  'emergency':'Если состояние резко ухудшилось, звоните сто три или сто двенадцать. Требуется помощь сотрудника.',
  'done':'Запись сохранена в тестовой таблице. В настоящей поликлинике запись не создавалась. Спасибо!',
@@ -44,8 +45,10 @@ BRANCHES = {
  'menu':['specialist','referral','confirm','operator','emergency'], 'specialist':['referral','confirm','operator'],
  'referral':['confirm','therapist_first','operator'], 'therapist_first':['confirm','menu','operator'],
  'district':['doctor','slots','operator'],'doctor':['slots','district','operator'],'identity_policy':['district','doctor','slots','operator'],'identity_confirm':['identity_birth','identity_name','operator'],
+ 'identity_readback':['identity_name','identity_policy','operator'], 'identity_phone':['identity_policy','district','doctor','slots','operator'], 'identity_policy_confirm':['identity_name','district','doctor','slots','operator'],
+ 'identity_match_confirm':['identity_name','identity_birth','district','doctor','slots','operator'],
  'confirm':['identity_confirm','identity_name','menu','operator'], 'identity_name':['identity_birth','operator'],
- 'identity_birth':['identity_name','identity_policy','district','doctor','slots','operator'], 'slots':['booking_confirm','operator'], 'booking_confirm':['done','slots','operator'],
+ 'identity_birth':['identity_readback','identity_phone','identity_name','identity_policy','district','doctor','slots','operator'], 'slots':['booking_confirm','operator'], 'booking_confirm':['done','slots','operator'],
 }
 MAX_SECONDS = 12
 MAX_WAV_BYTES = MAX_SECONDS*48000*2+4096
@@ -62,6 +65,10 @@ class Call:
     attempts: int = 0
     consent: bool = False
     flags: list = field(default_factory=list)
+    identity: IdentityForm = field(default_factory=IdentityForm)
+    caller_phone: str = ''
+    candidates: list = field(default_factory=list)
+    policy_candidate: dict | None = None
     patient_name: str = ''
     name_offered: bool = False
     identity_misses: int = 0
@@ -92,6 +99,7 @@ class DemoCalls:
         self._temporary = tempfile.TemporaryDirectory(prefix='clinic-unit-') if store is None else None
         self.store=store or SandboxStore(self._temporary.name)
         self.settings=settings or configured()
+        self.dialogue_model=DialogueModel(self.settings)
         self.tmp=Path(tmp or tempfile.gettempdir())/'clinic-call-tmp'
         self.tmp.mkdir(parents=True,exist_ok=True)
 
@@ -111,7 +119,7 @@ class DemoCalls:
                 for k in expired:self.calls.pop(k)
                 if len(self.calls)>=self.limit or sum(c.owner==client for c in self.calls.values())>=4:raise ValueError('Слишком много пробных звонков. Завершите предыдущий.')
                 key=secrets.token_urlsafe(32)
-                call=Call(client,now+self.ttl,registrar=str(data.get('_line') or '100'),consent=data.get('consent_audio',False),key=key,modules=self.settings.read())
+                call=Call(client,now+self.ttl,caller_phone=phone_digits(data.get('caller_phone')),registrar=str(data.get('_line') or '100'),consent=data.get('consent_audio',False),key=key,modules=self.settings.read())
                 if call.modules['scenario_extensions']['enabled']:
                     from .scenario_extensions import snapshot
                     call.extensions=snapshot(self.store,data.get('_line','100'))
@@ -202,7 +210,7 @@ class DemoCalls:
             call.selection=None;call.offers=[];call.slot=None
 
     def enabled(self,call,module):
-        return call.modules[module]['enabled'] and self.settings.read()[module]['enabled']
+        return call.modules.get(module,{}).get('enabled',False) and self.settings.read().get(module,{}).get('enabled',False)
 
     def _choose(self,call,item):
         doc=self.dictionary.read()
@@ -219,11 +227,25 @@ class DemoCalls:
         previous={'identity_birth':'identity_name','doctor':'identity_birth','district':'identity_birth','identity_policy':'identity_name','identity_confirm':'confirm','slots':'doctor' if call.doctors else 'identity_birth','booking_confirm':'slots','identity_name':'confirm','confirm':'specialist','referral':'specialist','therapist_first':'referral'}
         target=previous.get(call.state,'menu')
         if call.state=='confirm' and call.selection and call.selection['id'] in {'therapist','pediatrician'}:target='menu'
-        if target in {'identity_name','identity_birth'}:call.patient=None;call.slot=None;call.offers=[];call.doctor=None;call.doctors=[];call.district=None
+        if target in {'identity_name','identity_birth'}:
+            call.patient=None;call.slot=None;call.offers=[];call.doctor=None;call.doctors=[];call.district=None;call.candidates=[];call.policy_candidate=None
+            if target=='identity_name':call.identity.reset();call.patient_name=''
+            else:call.identity.birth_date=''
         self._move(call,target)
         return self._prompt(call)
 
     def _prompt(self,call):
+        if call.state=='identity_name':return call.identity.question(self.dialogue_model if self.enabled(call,'dialogue') else None)
+        if call.state=='identity_readback':return call.identity.readback()
+        if call.state=='identity_match_confirm':
+            candidate=call.policy_candidate
+            from .identity_form import identity_readback
+            return 'В картотеке найдены данные. '+identity_readback(candidate['full_name'],candidate['birth_date'])
+        if call.state=='identity_phone':return 'По ФИО и дате рождения найдено несколько совпадений. Назовите номер телефона пациента, указанный в картотеке.'
+        if call.state=='identity_policy_confirm':
+            from calls.tts.verbalize import date_to_words
+            p=call.policy_candidate
+            return 'По полису найдены данные: '+p['full_name']+', дата рождения '+date_to_words(date.fromisoformat(p['birth_date']))+'. Это пациент, которого нужно записать? Да — один. Нет — ноль.'
         if call.state=='identity_confirm':return 'Вы уже назвали: '+call.patient_name+'. Это ФИО пациента? Да — один. Исправить — ноль.'
         if call.state=='doctor':return 'Выберите врача: '+'. '.join(f'{i+1}: {d["full_name"]}' for i,d in enumerate(call.doctors))+'. Назовите номер варианта или ФИО врача.'
         if call.state=='confirm':
@@ -240,7 +262,7 @@ class DemoCalls:
             return 'В разговоре обсуждается выбор времени.' if call.state=='slots' else 'В разговоре требуется подтверждение выбранного времени.'
         if call.state=='slots':
             return 'Доступные тестовые талоны. '+'. '.join(f'{i+1}: {s["doctor"]}, {self._spoken_slot(s)}' for i,s in enumerate(call.offers))+'. Назовите номер варианта. Для регистратора нажмите звёздочку.'
-        if call.state=='booking_confirm':return 'Тестовая запись: '+call.selection['label']+', '+call.slot['doctor']+', '+self._spoken_slot(call.slot)+'. Подтвердить — один. Выбрать другое время — ноль.'
+        if call.state=='booking_confirm':return 'Подтвердите запись: '+call.selection['label']+', '+call.slot['doctor']+', '+self._spoken_slot(call.slot)+'. Подтвердить — один. Выбрать другое время — ноль.'
         return PROMPTS[call.state]
 
     @staticmethod
@@ -253,6 +275,45 @@ class DemoCalls:
         call.flags.append(reason)
         self._move(call,'operator')
         return PROMPTS['operator']
+
+    def _identity_lookup(self,call,phone_checked=False):
+        call.patient=None
+        if call.analysis:
+            call.flags.append('identity_and_referral_not_verified')
+            self._move(call,'slots');return self._prompt(call)
+        if not call.identity.confirmed_readback:
+            self._move(call,'identity_readback')
+            return call.identity.readback()
+        call.candidates=self.store.identity_candidates(call.key,call.identity.parts,birth=call.identity.birth_date)
+        if len(call.candidates)==1:
+            if call.caller_phone:
+                owners=self.store.identity_candidates(call.key,{},phone=call.caller_phone)
+                if owners and call.candidates[0]['id'] not in {p['id'] for p in owners}:
+                    call.policy_candidate=call.candidates[0]
+                    self._move(call,'identity_match_confirm');return self._prompt(call)
+            if call.candidates[0]['full_name'].casefold()!=call.identity.full_name.casefold():
+                call.policy_candidate=call.candidates[0]
+                self._move(call,'identity_match_confirm');return self._prompt(call)
+            call.patient=call.candidates[0];return self._availability(call)
+        if not call.candidates:
+            if call.caller_phone:
+                owners=self.store.identity_candidates(call.key,{},birth=call.identity.birth_date,phone=call.caller_phone)
+                if len(owners)==1 and near_phone_owner(call.identity.parts,owners[0]):
+                    call.policy_candidate=owners[0];call.flags.append('asr_name_candidate_requires_confirmation')
+                    self._move(call,'identity_match_confirm');return self._prompt(call)
+            call.identity_misses+=1
+            if call.identity_misses>=2:return self._handoff(call,'patient_not_found_after_retry')
+            self._move(call,'identity_readback')
+            return 'Карточку по этим данным найти не удалось. '+self._prompt(call)
+        if call.caller_phone:
+            narrowed=self.store.identity_candidates(call.key,call.identity.parts,birth=call.identity.birth_date,phone=call.caller_phone)
+            if len(narrowed)==1:
+                call.policy_candidate=narrowed[0]
+                self._move(call,'identity_match_confirm');return self._prompt(call)
+            if narrowed:call.candidates=narrowed
+            self._move(call,'identity_policy');return self._prompt(call)
+        self._move(call,'identity_policy' if phone_checked else 'identity_phone')
+        return self._prompt(call)
 
     def _availability(self,call):
         if not self.enabled(call,'crm'):return self._handoff(call,'crm_disabled')
@@ -278,6 +339,14 @@ class DemoCalls:
     def _advance(self,call,text,digit):
         low=re.sub(r'[^а-яё0-9\s]',' ',text.lower()).replace('ё','е').strip()
         low=re.sub(r'\s+',' ',low)
+        if text and foreign_language_request(text):return self._handoff(call,'language_unsupported')
+        correction=re.match(r'^\s*нет[, .!]*\s*(?:я\s+|меня зовут\s+)(.+)',text,re.I)
+        if correction and call.state.startswith('identity_'):
+            call.identity.reset();call.patient=None;call.patient_name='';call.slot=None;call.offers=[];call.candidates=[];call.policy_candidate=None
+            call.identity.accept_name(correction[1],self.dialogue_model if self.enabled(call,'dialogue') else None)
+            call.patient_name=call.identity.full_name
+            self._move(call,'identity_name' if call.identity.missing else 'identity_birth')
+            return self._prompt(call)
         meaning=None
         yes_no=None
         if text:
@@ -297,7 +366,7 @@ class DemoCalls:
             if intent in {'home_visit','results','paid','waitlist','attachment'}:return self._handoff(call,'scenario_integration_not_enabled:'+str(result.get('source_scenario')))
             if intent=='emergency':call.flags.append('emergency');self._move(call,'emergency');return PROMPTS['emergency']
             if intent in {'operator','medical','complaint'}:return self._handoff(call,'abusive_language' if 'abusive_language' in result.get('flags',[]) else 'human_only_'+intent)
-            if intent=='identity_question' and call.state in {'identity_name','identity_birth','identity_policy'}:
+            if intent=='identity_question' and call.state.startswith('identity_'):
                 return 'Назовите данные пациента, которого нужно записать. '+self._prompt(call)
             if intent=='already_said':
                 return ('Сохранил названное ФИО: '+call.patient_name+'. ' if call.patient_name else 'Не удалось надёжно выделить ФИО пациента из предыдущей фразы. ')+self._prompt(call)
@@ -342,41 +411,81 @@ class DemoCalls:
             if low in set('0123456789'):digit=low
         if call.state=='specialist' and digit=='0':return self._handoff(call,'requested_operator')
         if call.state=='identity_confirm':
-            if digit=='1' or yes_no is True:self._move(call,'identity_birth');return self._prompt(call)
-            if digit=='0' or yes_no is False:call.patient_name='';call.name_offered=False;self._move(call,'identity_name');return self._prompt(call)
+            if digit=='1' or yes_no is True:
+                call.identity.accept_name(call.patient_name)
+                self._move(call,'identity_birth' if not call.identity.missing else 'identity_name');return self._prompt(call)
+            if digit=='0' or yes_no is False:call.patient_name='';call.name_offered=False;call.identity.reset();self._move(call,'identity_name');return self._prompt(call)
         elif call.state=='identity_name':
-            name=re.sub(r'^(?:меня зовут|это|фио)\s+','',text.strip(),flags=re.I).strip(' .!')
-            if '?' not in text and re.fullmatch(r"[А-Яа-яЁё'-]+(?:\s+[А-Яа-яЁё'-]+){2}",name):
-                call.patient_name=' '.join(name.split());self._move(call,'identity_birth');return self._prompt(call)
+            if call.identity.accept_name(text,self.dialogue_model if self.enabled(call,'dialogue') else None,today=clinic_now().date()):
+                call.patient_name=call.identity.full_name
+                if not call.analysis and self.enabled(call,'crm') and call.identity.parts:
+                    call.candidates=self.store.identity_candidates(call.key,call.identity.parts)
+                # Even one preliminary candidate never completes missing fields.
+                if not call.identity.missing and not call.identity.pending and call.identity.birth_date:
+                    return self._identity_lookup(call)
+                self._move(call,'identity_name' if call.identity.missing or call.identity.pending else 'identity_birth')
+                return self._prompt(call)
         elif call.state=='identity_birth':
             from .identity import birth_date_input
             parsed=birth_date_input(text,today=clinic_now().date())
             call.transcript[-1]['date_field']=parsed
-            if parsed['status']!='valid':
-                # Clarifying a century does not consume the unrecognized-intent budget.
-                return parsed['message']
-            birth=parsed['value']
+            if parsed['status']!='valid':return parsed['message']
+            call.identity.birth_date=parsed['value']
             if call.analysis:
                 call.flags.append('identity_and_referral_not_verified')
                 self._move(call,'slots');return self._prompt(call)
             if not self.enabled(call,'crm'):return self._handoff(call,'crm_disabled')
-            call.patient=self.store.lookup_patient(call.key,call.patient_name,birth)
-            if not call.patient:
-                call.identity_misses+=1
-                if call.identity_misses==1:
-                    self._move(call,'identity_name')
-                    return 'Пациент не найден по ФИО и дате рождения. Уточните ФИО, при необходимости по буквам. Затем я повторно уточню дату рождения.'
+            if call.identity.missing:
+                self._move(call,'identity_name');return self._prompt(call)
+            return self._identity_lookup(call)
+        elif call.state=='identity_match_confirm':
+            if digit=='1' or yes_no is True:
+                call.patient=call.policy_candidate;return self._availability(call)
+            if digit=='0' or yes_no is False:
+                call.identity.reset();call.patient=None;call.patient_name=''
+                self._move(call,'identity_name');return self._prompt(call)
+        elif call.state=='identity_readback':
+            if digit=='1' or yes_no is True:
+                if not call.identity.confirmed_readback:
+                    call.identity.confirmed_readback=True
+                    return self._identity_lookup(call)
                 self._move(call,'identity_policy');return self._prompt(call)
-            return self._availability(call)
+            if digit=='0' or yes_no is False:
+                call.identity.reset();call.patient_name='';call.patient=None
+                self._move(call,'identity_name');return self._prompt(call)
+            # An actual correction is data, not an unsuccessful yes/no answer.
+            old=call.identity.requested;call.identity.requested='last_name'
+            if call.identity.accept_name(text,self.dialogue_model if self.enabled(call,'dialogue') else None,today=clinic_now().date()):
+                call.patient_name=call.identity.full_name
+                if not call.identity.missing and call.identity.birth_date:return self._identity_lookup(call)
+                self._move(call,'identity_birth' if not call.identity.missing else 'identity_name');return self._prompt(call)
+            call.identity.requested=old
+        elif call.state=='identity_phone':
+            from .identity import normalize_identifier
+            try:number=normalize_identifier(text,'phone')
+            except ValueError:number=''
+            if number:
+                call.caller_phone=phone_digits(number)
+                return self._identity_lookup(call,phone_checked=True)
         elif call.state=='identity_policy':
             from .identity import DIGIT_WORDS
-            words=text.casefold().strip(' .!').split()
-            policy=''.join(DIGIT_WORDS.get(w,w) for w in words)
-            if re.fullmatch(r'[0-9]{16}',policy):
+            policy=''.join(DIGIT_WORDS.get(w,w) for w in re.sub(r'[.,-]',' ',text.casefold()).split())
+            if re.fullmatch(r'[0-9]{4,16}',policy):
                 if not self.enabled(call,'crm'):return self._handoff(call,'crm_disabled')
-                call.patient=self.store.lookup_policy(call.key,policy)
-                if call.patient:return self._availability(call)
-                return self._handoff(call,'patient_not_found_after_oms')
+                if not call.identity.birth_date or call.identity.missing:return self._handoff(call,'identity_incomplete')
+                matches=self.store.identity_candidates(call.key,call.identity.parts if call.candidates else {},
+                    birth=call.identity.birth_date,policy=policy,cohort=[p['id'] for p in call.candidates] if call.candidates else None)
+                if len(matches)==1:
+                    if call.candidates:
+                        call.patient=matches[0];return self._availability(call)
+                    call.policy_candidate=matches[0]
+                    self._move(call,'identity_policy_confirm');return self._prompt(call)
+                return self._handoff(call,'ambiguous_identity_after_oms' if matches else 'patient_not_found_after_oms')
+        elif call.state=='identity_policy_confirm':
+            if digit=='1' or yes_no is True:
+                call.patient=call.policy_candidate
+                return self._availability(call)
+            if digit=='0' or yes_no is False:return self._handoff(call,'identity_oms_not_confirmed')
         elif call.state=='district':
             if digit and digit.isdigit():number=digit
             else:
@@ -445,6 +554,7 @@ class DemoCalls:
             'source_data':self.store.source_info(),'queries':list(call.queries),'doctor':call.doctor,'district':call.district,
             'offers':list(call.offers),'patient':call.patient,'analysis':call.analysis,'modules':call.modules,
             'extensions':call.extensions,'dictionary_revision':getattr(call,'dictionary_revision',None),'compiled_plan':[vars(n) for n in getattr(call,'plan',())],
+            'identity_form':{'parts':dict(call.identity.parts),'birth_date':call.identity.birth_date,'missing_fields':call.identity.missing+([] if call.identity.birth_date else ['birth_date']),'requested_field':call.identity.requested,'candidate_count':len(call.candidates),'caller_phone_available':bool(call.caller_phone)},
             'audio_files':[p.name for p in sorted((self.store.audio/call.key).glob('*.wav'))] if call.consent else [],
             'proposed_action':'Создана запись только в тестовой SQLite' if call.booking else 'Запись ещё не создана'}
 
@@ -461,7 +571,7 @@ class DemoCalls:
         result=self.document(call)
         if self.enabled(call,'tts'):
             try:
-                voice=self.rpc('tts','preview',{'text':prompt,'rate':1.3})
+                voice=self.rpc('tts','preview',{'text':prompt,'rate':1.0})
                 if voice.get('sample_rate')!=48000 or not voice.get('pcm_b64'):raise ValueError('Модуль не вернул речь в качестве сорок восемь килогерц')
                 result['audio']=voice
                 if call.consent:

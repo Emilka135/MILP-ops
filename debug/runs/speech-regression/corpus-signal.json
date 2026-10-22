@@ -1,0 +1,115 @@
+{
+  "method": "fixed_bytes_and_signal",
+  "naturalness": "requires human listening",
+  "items": [
+    {
+      "id": "missing_patronymic-1",
+      "rms": 4150.252566553643,
+      "clipped_fraction": 0.0,
+      "passed": true
+    },
+    {
+      "id": "missing_patronymic-2",
+      "rms": 3658.0717672182386,
+      "clipped_fraction": 0.0,
+      "passed": true
+    },
+    {
+      "id": "missing_patronymic-3",
+      "rms": 2684.656503720539,
+      "clipped_fraction": 0.0,
+      "passed": true
+    },
+    {
+      "id": "missing_patronymic-4",
+      "rms": 3297.588058039749,
+      "clipped_fraction": 0.0,
+      "passed": true
+    },
+    {
+      "id": "duplicate_appointment-1",
+      "rms": 3281.2657716648655,
+      "clipped_fraction": 0.0,
+      "passed": true
+    },
+    {
+      "id": "duplicate_appointment-2",
+      "rms": 2422.831048991095,
+      "clipped_fraction": 0.0,
+      "passed": true
+    },
+    {
+      "id": "duplicate_appointment-3",
+      "rms": 2892.5320141041,
+      "clipped_fraction": 0.0,
+      "passed": true
+    },
+    {
+      "id": "night_callback-1",
+      "rms": 4152.735233047743,
+      "clipped_fraction": 0.0,
+      "passed": true
+    },
+    {
+      "id": "night_callback-2",
+      "rms": 3658.4097317583355,
+      "clipped_fraction": 0.0,
+      "passed": true
+    },
+    {
+      "id": "night_callback-3",
+      "rms": 2169.4822351339853,
+      "clipped_fraction": 0.0,
+      "passed": true
+    },
+    {
+      "id": "night_no_callback-1",
+      "rms": 2853.476428399107,
+      "clipped_fraction": 0.0,
+      "passed": true
+    },
+    {
+      "id": "night_no_callback-2",
+      "rms": 4318.831262237293,
+      "clipped_fraction": 0.0,
+      "passed": true
+    },
+    {
+      "id": "night_no_callback-3",
+      "rms": 3697.4867049594845,
+      "clipped_fraction": 0.0,
+      "passed": true
+    },
+    {
+      "id": "doctor_choice-1",
+      "rms": 4044.142578995101,
+      "clipped_fraction": 0.0,
+      "passed": true
+    },
+    {
+      "id": "doctor_choice-2",
+      "rms": 2989.2335238139913,
+      "clipped_fraction": 0.0,
+      "passed": true
+    },
+    {
+      "id": "doctor_choice-3",
+      "rms": 4195.405902678909,
+      "clipped_fraction": 0.0,
+      "passed": true
+    },
+    {
+      "id": "operator-1",
+      "rms": 4103.111057353468,
+      "clipped_fraction": 0.0,
+      "passed": true
+    },
+    {
+      "id": "operator-2",
+      "rms": 2880.888807872405,
+      "clipped_fraction": 0.0,
+      "passed": true
+    }
+  ],
+  "passed": true
+}

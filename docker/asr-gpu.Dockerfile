@@ -7,6 +7,7 @@ RUN --mount=type=cache,id=clinic-voice-pip-gpu,target=/root/.cache/pip \
 COPY app /app/app
 COPY runtime/src /app/runtime/src
 COPY data /app/data
+COPY scenarios /app/scenarios
 COPY docs/openapi.json /app/docs/openapi.json
 RUN chmod -R a+rX /app && useradd -u 10001 -m clinic && mkdir -p /data /debug && chown clinic:clinic /data /debug
 ENV PYTHONPATH=/app:/app/runtime/src PYTHONUNBUFFERED=1 HOST=0.0.0.0 PORT=8080 \

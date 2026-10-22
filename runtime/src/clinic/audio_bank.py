@@ -27,6 +27,68 @@ class PromptBank:
         self.manifest = json.loads(path.read_text()) if path.exists() else {}
         self.hits = 0
         self.generated = 0
+        doctors_path = self.folder / 'doctors.json'
+        self.doctors = json.loads(doctors_path.read_text()) if doctors_path.exists() else {}
+
+    def refresh_doctors(self, doctors, rate=1.5):
+        """Publish a complete active directory only after every name is recorded.
+
+        Called after a successful read/import of the MIS directory. Repeated
+        snapshots reuse WAVs; rename, removal, model or pronunciation changes
+        invalidate the active index without deleting rollback recordings.
+        """
+        if not .5 <= rate <= 2.5:
+            raise ValueError('Speech rate must be 0.5–2.5')
+        if not isinstance(doctors, list) or len(doctors) > 5000:
+            raise ValueError('Expected complete doctor directory (max 5000)')
+        names = {}
+        for item in doctors:
+            if not isinstance(item, dict):
+                raise ValueError('Invalid doctor')
+            if not item.get('is_active', item.get('active', True)):
+                continue
+            name = ' '.join(str(item.get('full_name', '')).split())
+            if not 2 <= len(name.split()) <= 5 or len(name) > 180 or any(c in name for c in '{}<>\n'):
+                raise ValueError('Invalid doctor full name')
+            names[str(item['id'])] = name
+        with self.lock:
+            entries = {did: {'full_name': name, 'key': self.record(name, rate, 'doctor:'+did)}
+                       for did, name in sorted(names.items())}
+            snapshot = {'voice': self.voice, 'rate': float(rate), 'entries': entries}
+            snapshot['directory_sha256'] = hashlib.sha256(json.dumps(names, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+            temp = self.folder / 'doctors.tmp'
+            temp.write_text(json.dumps(snapshot, ensure_ascii=False, indent=2)+'\n')
+            os.replace(temp, self.folder / 'doctors.json')
+            self.doctors = snapshot
+        return {'doctors': len(entries), 'directory_sha256': snapshot['directory_sha256'], 'generated': self.generated}
+
+    def _doctor_audio(self, text, rate):
+        """Compose dynamic prompt around a prerecorded full name, without guessing cases."""
+        if self.doctors.get('voice') != self.voice or self.doctors.get('rate') != rate:
+            return None
+        entries = sorted(self.doctors.get('entries', {}).values(), key=lambda e: -len(e['full_name']))
+        for item in entries:
+            name = item['full_name']
+            position = text.casefold().find(name.casefold())
+            if position < 0:
+                continue
+            before, after = text[:position], text[position+len(name):]
+            # Match whole full names only; no slicing a longer surname.
+            if (before and before[-1].isalpha()) or (after and after[0].isalpha()):
+                continue
+            chunks = []
+            for part in (before, name, after):
+                if part.strip():
+                    status, result = self.render(part.strip(), rate, _compose=False)
+                    if status != 'ok':
+                        return status, result
+                    chunks.append(result['pcm'])
+            pcm = (b'\x00' * 800).join(chunks)
+            return 'ok', {'pcm': pcm, 'bytes': len(pcm), 'sample_rate': SAMPLE_RATE,
+                          'format': 'pcm16', 'duration_ms': len(pcm)*1000//16000,
+                          'engine': self.synth.name, 'rate': rate, 'audio_source': 'doctor_bank_composite',
+                          'doctor_audio_key': item['key'], 'directory_sha256': self.doctors['directory_sha256']}
+        return None
 
     def key(self, text, rate):
         return hashlib.sha256(
@@ -108,10 +170,14 @@ class PromptBank:
             os.replace(temp, self.folder / 'manifest.json')
             return {'key': key, 'duration_ms': self.manifest[key]['duration_ms'], 'recording_type': 'admin_upload'}
 
-    def render(self, text, rate):
+    def render(self, text, rate, _compose=True):
         key = self.key(text, rate)
         with self.lock:
             entry = self.manifest.get(key)
+            if entry and str(entry.get('source', '')).startswith('doctor:'):
+                active = {item['key'] for item in self.doctors.get('entries', {}).values()}
+                if self.doctors.get('voice') != self.voice or key not in active:
+                    entry = None
             if entry:
                 with wave.open(str(self.folder / entry["file"]), "rb") as wav:
                     if (
@@ -135,6 +201,10 @@ class PromptBank:
                     "audio_file": entry["file"],
                     "scenario_source": entry["source"],
                 }
+        if _compose:
+            composed = self._doctor_audio(text, rate)
+            if composed is not None:
+                return composed
         status, result = self.module.handle("synth", {"text": text, "rate": rate})
         result["audio_source"] = "dynamic_tts"
         result["audio_key"] = None

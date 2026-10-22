@@ -320,3 +320,28 @@
 - [x] 114 целевых pytest passed; настоящий act control-contracts: 77 + 27 passed, debug/runs/score-act/knowledge-control.log. Проверены ревизии после admin save, запрет произвольных путей/выходящих symlink, роли и отсутствие MIS writes.
 - [x] Порог свободного места приведён к прямому указанию пользователя: строго более 5 GiB и на /home, и на /.
 - [ ] Обновлённый UI агента пока не принят; полный аудиопрогон20 и импорт настоящего архива остаются обязательными отдельными проверками.
+## Speech regression — 22.10.2026
+
+- [x] `silero-stress==1.5`, whole-sentence context mode, explicit dependency failure; MIT CIS TTS remains selected.
+- [x] TTS accepts 0.75–2.5×; >2× uses chained atempo. Endpoint duration/pitch checks pass.
+- [x] Doctor-bank RPC pre-records full names, atomically updates active index, invalidates renamed/removed names and model/pronunciation changes; dynamic selection reuses name WAV. Real local smoke with three synthetic names passed.
+- [x] Fixed public synthetic corpus: 18 real WAV, four real voices, seed/voice/rate/model/spec/WAV hashes; generator refuses overwrite. Signal 18/18; 86 speech tests passed.
+- [ ] Actual CPU GigaAM ASR strict text screen is 15/18; three numeric-format mismatches preserved for semantic parser/trace validation. Do not claim full audio scenario acceptance until actual registrar-client/FSM trace reaches expected state under timeouts.
+- [ ] Integrate asynchronous bounded CRM directory refresh worker and validate initial85-doctor warm/rename on live read-only directory; do not block CRM transaction on TTS.
+- [ ] Human listening to native48k/telephone8k examples remains required for pronunciation/naturalness. ASR agreement is separate evidence.
+
+Evidence: `debug/runs/speech-regression/`; details [SPEECH_REGRESSION.md](docs/SPEECH_REGRESSION.md). No external MIS writes or live LLM calls were made by these tools.
+
+## Incremental identity — 22.10.2026
+
+- [x] Accepted the relevant baseline identity form/service and registrar-store hooks with tests. Frozen utterance + actual ASR text retain surname, first name and complete DOB; ask only patronymic, preserve DOB on answer/correction, then explicit readback before exact DB lookup. No-middle-name is an exact empty field.
+- [x] Preserve ё; reject model letter substitutions; never auto-confirm another phone owner, fuzzy spelling or ambiguous duplicate cohort. Per-session locks permit20 concurrent optional extractors; imported dialogue analysis does not look up real patients.
+- [x] Existing registrar/API/real-E5 protocols passed offline after adding the mandatory confirmation turn to two existing scenario tests; no external MIS/LLM calls.
+- [ ] Root integration must preserve existing baseline CRM IdentityService dispatch and baseline required-field identity.flow (owned by other module), then run complete phone/FSM/20-call acceptance. Exact hooks and a baseline contract expectation requiring one additional readback confirmation are documented in docs/INCREMENTAL_IDENTITY.md.
+
+## Интеграция готовой голосовой ветки — 22.10.2026
+
+- [x] Приняты коммиты17faba0/f2de5b4. Подключены сохранённые baseline CRM hooks/identity.flow, старый checkpoint не удалён. Исправлены две ошибки интеграции Rust: ответ одним отсутствующим словом доходил не до CRM; успешный identity_answer не устанавливал verified_patient. Добавлен реальный FSM regression, обязательный readback до lookup.
+- [x] 158 Python tests;63 tests offline Docker с настоящим E5;16 engine tests;act control77+32+27 и Rust23 passed. Последующие4CI-model-guard tests дополнительно входят в158host passed. CI никогда не вызывает optional generative identity API.
+- [x] Собран CRM image (Docker DNS потребовал --network host), offline image probe проверяет настоящий canonical MIS draft и identity_start. Обновлены Dockerfile COPY scenarios. Реальный CPU TTS+silero-stress/doctor-bank smoke passed; naturalness не объявляется доказанной. Артефакты debug/runs/speech-integration/.
+- [ ] Frozen ASR corpus по строгому текстовому сравнению всё ещё15/18; числовые расхождения не скрыты и fixtures не переписаны. Полный20audio/архив и night-reasoning API остаются отдельной непрошедшей приёмкой.

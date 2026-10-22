@@ -44,6 +44,8 @@ def test_added_hepatologist_inherits_all_gates_and_invalidates_cached_revision(t
     assert demo.calls[key].state=='identity_name'
     req('text',call_id=key,text='Иванов Иван Иванович')
     result=req('text',call_id=key,text='12.04.1985')
+    assert result['state']=='demo.identity_readback' and demo.calls[key].patient is None
+    result=req('dtmf',call_id=key,digit='1')
     assert result['state']=='demo.operator' and 'referral_not_verified' in result['flags']
     assert not store.tables()['tables']['bookings']
 
@@ -130,6 +132,8 @@ def test_new_specialty_completes_only_after_all_required_steps(tmp_path,semantic
     assert not store.tables()['tables']['bookings']
     req('dtmf',call_id=key,digit='1');req('dtmf',call_id=key,digit='1')
     req('text',call_id=key,text='Иванов Иван Иванович');r=req('text',call_id=key,text='12.04.1985')
+    assert r['state']=='demo.identity_readback' and demo.calls[key].patient is None
+    r=req('dtmf',call_id=key,digit='1')
     assert r['state']=='demo.slots' and not store.tables()['tables']['bookings']
     r=req('dtmf',call_id=key,digit='1')
     assert r['state']=='demo.booking_confirm' and not store.tables()['tables']['bookings']

@@ -13,7 +13,7 @@ def module_call(module, operation, args):
     request = urllib.request.Request(url.rstrip('/')+'/v1/'+operation,
         data=json.dumps(args,ensure_ascii=False).encode(),headers={'Content-Type':'application/json'},method='POST')
     try:
-        with open_http(request, timeout=120 if operation in {'bank.refresh','bank.audit'} else 15) as response:
+        with open_http(request, timeout=120 if operation in {'bank.refresh','bank.audit','bank.doctors.refresh'} else 15) as response:
             result=json.loads(response.read(4*1024*1024))
     except urllib.error.HTTPError as error:
         # A module can be reachable but reject pronunciation or input. Preserve

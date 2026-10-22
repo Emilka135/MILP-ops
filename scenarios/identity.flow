@@ -1,48 +1,95 @@
-# Shared speech identity subroutine; names are data, never transition commands.
+# Required-field form shared by booking, existing appointments and reminders.
 flow identity
-  rate 1.3
-  entry name
+  rate 1.0
+  entry begin
+
+state begin
+  call crm.identity_start caller_phone=$caller_phone locked_patient_id=$locked_patient_id
+  name -> name
+  error -> operator reason=identity_failed
 
 state name
-  say "Назовите фамилию, имя и отчество пациента полностью. Если удобнее номер карты, нажмите два."
+  say "{identity_question}"
   listen 20s field=full_name
-  dtmf 2 -> card
-  any -> remember_name
+  dtmf 2 -> use_policy
+  any -> remember_reply
   timeout 20s -> name
   retry 2 -> operator reason=identity_name_unclear
 
-state remember_name
-  set identity_full_name = $last_utterance
-  goto birth
+state use_policy
+  call crm.identity_use_policy
+  policy -> policy
+  error -> operator reason=identity_failed
 
 state birth
-  say "Назовите дату рождения пациента: день, месяц и год. Можно ввести восемь цифр."
+  say "{identity_question}"
   ask birth_date digits 8 timeout 25s
   listen 25s
-  ok -> lookup
+  ok -> remember_birth
   timeout -> birth
   retry 2 -> operator reason=identity_birth_unclear
 
-state lookup
-  call crm.identify full_name=$identity_full_name birth_date=$birth_date card_no=$identity_card_no locked_patient_id=$locked_patient_id
-  ok -> verified
-  empty -> not_found
-  many -> operator reason=ambiguous_identity
-  mismatch -> operator reason=identity_conflict
-  error -> operator reason=identity_failed
-
-state not_found
-  say "Карточку с такими данными не удалось найти. Проверим имя и дату рождения ещё раз."
-  loop 1 -> operator reason=patient_not_found
-  goto name
-
-state card
-  say "Введите номер карты и нажмите решётку или назовите номер по одной цифре."
-  ask identity_card_no digits 3-10 timeout 25s terminator "#"
+state phone
+  say "{identity_question}"
+  ask phone digits 10-15 timeout 25s terminator "#"
   listen 25s
-  ok -> birth
-  timeout -> card
-  retry 2 -> operator reason=identity_failed
+  ok -> remember_phone
+  timeout -> phone
+  retry 2 -> operator reason=identity_phone_unclear
+
+state policy
+  say "{identity_question}"
+  ask oms digits 4-16 timeout 25s terminator "#"
+  listen 25s
+  ok -> remember_policy
+  timeout -> policy
+  retry 2 -> operator reason=identity_policy_unclear
+
+state readback
+  say "{identity_question}"
+  listen 20s field=free_text
+  dtmf 1 -> yes_reply
+  dtmf 0 -> no_reply
+  any -> remember_reply
+  timeout 20s -> readback
+  retry 2 -> operator reason=identity_not_confirmed
+
+state remember_reply
+  set identity_reply = $last_utterance
+  goto collect
+
+state remember_birth
+  set identity_reply = $birth_date
+  goto collect
+
+state remember_phone
+  set identity_reply = $phone
+  goto collect
+
+state remember_policy
+  set identity_reply = $oms
+  goto collect
+
+state yes_reply
+  set identity_reply = "да"
+  goto collect
+
+state no_reply
+  set identity_reply = "нет"
+  goto collect
+
+state collect
+  call crm.identity_answer text=$identity_reply
+  name -> name
+  birth -> birth
+  phone -> phone
+  policy -> policy
+  readback -> readback
+  match_confirm -> readback
+  policy_confirm -> readback
+  ok -> verified
+  operator -> operator
+  error -> operator reason=identity_failed
 
 state verified
   return

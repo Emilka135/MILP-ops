@@ -120,6 +120,8 @@ class ClinicCrm:
     def __init__(self, reg: MockRegistry, stand=None):
         self.reg, self.stand = reg, stand
         self.module = CrmModule(reg, today=lambda: now().date())
+        from .identity_service import IdentityService
+        self.identity_form = IdentityService(reg, today=lambda: now().date())
         self.mutations = threading.Lock()
         self._last_slots_sync = None
         self.reg._conn.executescript(EXTRA_SCHEMA)
@@ -157,6 +159,9 @@ class ClinicCrm:
                                query=values if draft['method'] == 'GET' else None,
                                path_parameters=path_parameters)
                 return ('ready' if plan['complete'] else 'missing' if plan['missing_fields'] else 'invalid'), plan
+            if op == "identity_start": return self.identity_form.start(**args)
+            if op == "identity_answer": return self.identity_form.answer(**args)
+            if op == "identity_use_policy": return self.identity_form.use_policy(**args)
             if op == "control.insights":
                 from .insights_access import AccessError, verify_request
                 try:

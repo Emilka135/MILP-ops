@@ -484,7 +484,11 @@ impl Session {
                     if module == "crm"
                         && matches!(
                             op.as_str(),
-                            "identify" | "verify_card" | "verify_birth" | "find_patient"
+                            "identify"
+                                | "identity_answer"
+                                | "verify_card"
+                                | "verify_birth"
+                                | "find_patient"
                         )
                         && (op != "find_patient"
                             || args.get("birth_date").is_some_and(|v| !v.is_null()))
@@ -741,12 +745,6 @@ impl Session {
                     return self.enter("inbound.existing_start".into(), false);
                 }
             }
-        }
-        if self.flow == "identity"
-            && self.state == "name"
-            && ev.value.split_whitespace().count() < 3
-        {
-            return self.invalid();
         }
         if self.verified_patient.is_some()
             && ev.payload["vars"]["specialty"].is_string()
@@ -1057,11 +1055,77 @@ mod tests {
         let mut ev = Event::new("speech", "Запишите к хирургу");
         ev.payload = json!({"intent":"book","confidence":0.95,"vars":{"specialty":"хирург","patient_id":99,"slot_id":77,"has_referral":true}});
         let actions = s.handle(ev);
-        assert_eq!(s.state_name(), "identity.name");
+        assert_eq!(s.state_name(), "identity.begin");
         assert!(!s.vars.contains_key("patient_id"));
         assert!(!s.vars.contains_key("slot_id"));
-        assert!(!actions.iter().any(|a| a.kind == "call"));
+        assert!(
+            actions
+                .iter()
+                .any(|a| a.kind == "call" && a.args["op"] == "identity_start")
+        );
+        assert!(
+            !actions
+                .iter()
+                .any(|a| a.kind == "call" && a.args["op"] == "book")
+        );
     }
+    #[test]
+    fn incremental_identity_accepts_one_missing_word_and_only_trusts_confirmed_result() {
+        fn reply(s: &mut Session, status: &str, payload: Value) -> Vec<Action> {
+            let mut event = Event::new("module", status);
+            event.request_id = s.pending;
+            event.payload = payload;
+            s.handle(event)
+        }
+        fn say(s: &mut Session, text: &str) -> Vec<Action> {
+            let mut event = Event::new("speech", text);
+            event.payload = json!({"intent":"provided_data","confidence":0.99});
+            s.handle(event)
+        }
+        let mut s = Session::new("identity", Map::new()).unwrap();
+        let actions = s.start();
+        assert!(actions.iter().any(|a| a.args["op"] == "identity_start"));
+        reply(
+            &mut s,
+            "name",
+            json!({"identity_question":"Назовите ФИО и дату рождения."}),
+        );
+        assert_eq!(s.state_name(), "identity.name");
+        let actions = say(&mut s, "Иванов Иван родился 12 апреля 1985 года");
+        assert!(actions.iter().any(|a| a.args["op"] == "identity_answer"));
+        reply(
+            &mut s,
+            "name",
+            json!({"identity_question":"Назовите отчество.", "identity_birth_date":"1985-04-12"}),
+        );
+        assert!(s.verified_patient.is_none());
+        let actions = say(&mut s, "Петрович");
+        assert!(
+            actions
+                .iter()
+                .any(|a| a.args["op"] == "identity_answer" && a.args["args"]["text"] == "Петрович")
+        );
+        reply(
+            &mut s,
+            "readback",
+            json!({"identity_question":"Правильно ли я понял ФИО и дату?"}),
+        );
+        assert_eq!(s.state_name(), "identity.readback");
+        assert!(s.verified_patient.is_none());
+        let actions = s.handle(Event::new("dtmf", "1"));
+        assert!(
+            actions
+                .iter()
+                .any(|a| a.args["op"] == "identity_answer" && a.args["args"]["text"] == "да")
+        );
+        reply(
+            &mut s,
+            "ok",
+            json!({"patient_id":1,"patient_full_name":"Иванов Иван Петрович","patient_birth_date":"1985-04-12"}),
+        );
+        assert_eq!(s.verified_patient, Some(json!(1)));
+    }
+
     #[test]
     fn changed_offer_invalidates_consent() {
         let mut s = Session::new("inbound", Map::new()).unwrap();

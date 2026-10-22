@@ -292,7 +292,7 @@ class Speech:
                 path,
                 (settings or {}).get('voice') or os.environ.get("TTS_SPEAKER") or None,
                 device=os.environ.get("TTS_DEVICE", "cpu"),
-                stress=os.environ.get("TTS_STRESS", "dict"),
+                stress=os.environ.get("TTS_STRESS", "context"),
             )
             self.module = TtsModule(synth, cache_size=64)
             from .audio_bank import PromptBank
@@ -312,10 +312,12 @@ class Speech:
             if op == "preview":
                 from calls.tts.silero import to_pcm16
                 rate = float(args.get('rate',1.5))
-                if not .5 <= rate <= 2:raise ValueError('Недопустимая скорость речи')
+                if not .5 <= rate <= 2.5:raise ValueError('Недопустимая скорость речи')
                 audio=self.module.synth.synth_quality(str(args['text']),rate)
                 pcm=to_pcm16(audio)
                 return 'ok',{'pcm':pcm,'sample_rate':48000,'format':'pcm16','duration_ms':len(audio)*1000//48000,'engine':self.module.synth.name}
+            if op == "bank.doctors.refresh":
+                return "ok", self.bank.refresh_doctors(args["doctors"], float(args.get("rate", 1.5)))
             if op == "bank.audit":
                 from .admin_rpc import module_call
                 return 'ok',self.bank.audit(os.environ.get('SCENARIO_DIR','scenarios'),lambda pcm:module_call('asr','transcribe',{'pcm_b64':__import__('base64').b64encode(pcm).decode(),'rate':8000})['text'])

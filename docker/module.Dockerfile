@@ -17,6 +17,7 @@ RUN if [ "$MODULE" = "tts" ]; then apt-get update && apt-get install -y --no-ins
 COPY app /app/app
 COPY runtime/src /app/runtime/src
 COPY data /app/data
+COPY scenarios /app/scenarios
 COPY docs/openapi.json /app/docs/openapi.json
 RUN chmod -R a+rX /app && useradd -u 10001 -m clinic && mkdir -p /data /audio && chown clinic:clinic /data /audio
 ENV PYTHONPATH=/app:/app/runtime/src PYTHONUNBUFFERED=1 HOST=0.0.0.0 PORT=8080
