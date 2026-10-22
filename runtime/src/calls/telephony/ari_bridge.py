@@ -58,6 +58,9 @@ class WsClient:
         if b" 101 " not in head.split(b"\r\n", 1)[0]:
             raise ConnectionError(head.split(b"\r\n", 1)[0].decode(errors="replace"))
         self._buf = head.split(b"\r\n\r\n", 1)[1]
+        # The connection/handshake deadline is not an idle-call deadline.
+        # ARI can be silent between calls; closing it every 30 s detaches Stasis.
+        self.sock.settimeout(None)
 
     def _read(self, n: int) -> bytes:
         while len(self._buf) < n:

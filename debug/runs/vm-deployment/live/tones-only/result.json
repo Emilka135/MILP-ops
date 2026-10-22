@@ -1,0 +1,33 @@
+{
+  "status": "passed",
+  "mode": "tones-only",
+  "call_id": "vm-live-tones-only-0efc38815fa6",
+  "booking_id": 4,
+  "agent_mode": "openai",
+  "model_call_verified": true,
+  "scope": "real local speech / production VAD / Rust / real gateway / DBI; synthetic patient only",
+  "reschedule": {
+    "booking_id": 4,
+    "confirmed": false,
+    "booking_status": "booked",
+    "stand_acknowledged": true,
+    "confirmation_scope": "stand",
+    "slot_id": 719,
+    "slot_date": "2026-10-21",
+    "slot_time": "11:00",
+    "slot_date_spoken": "двадцать первого октября, в среду",
+    "slot_time_spoken": "одиннадцать ноль ноль",
+    "doctor": "Рыбакова Элина Тагировна",
+    "doctor_id": 73,
+    "cabinet": "403",
+    "specialty": "терапевт",
+    "specialty_dative": "терапевту"
+  },
+  "cleanup": {
+    "booking_id": 4,
+    "confirmed": false,
+    "booking_status": "cancelled",
+    "stand_acknowledged": true,
+    "confirmation_scope": "stand"
+  }
+}

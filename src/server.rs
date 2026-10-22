@@ -32,6 +32,15 @@ struct Call {
     started: Instant,
 }
 impl Call {
+    fn prompt_done(&mut self, prompt_id: Option<u64>) {
+        // Only the last current prompt can start the patient's response window.
+        // Old acknowledgements after barge-in must not postpone a newer step.
+        if !self.session.finished && self.clips.is_empty() && prompt_id == Some(self.prompt_id) {
+            self.deadline =
+                Some(Instant::now() + Duration::from_secs_f64(self.timeout_secs.max(1.0)));
+        }
+    }
+
     fn snapshot(&self) -> Value {
         let hidden = [
             "snils",
@@ -166,7 +175,7 @@ impl App {
                 _ => {}
             }
         }
-        if c.session.finished {
+        if c.session.finished || !c.clips.is_empty() {
             c.deadline = None;
         }
         let archive = self
@@ -204,10 +213,7 @@ impl App {
             return Ok(c.clips.pop_front().unwrap_or_else(||json!({"generation":c.generation,"finished":c.session.finished,"status":c.session.status,"listening":c.session.listening})));
         }
         if op == "call.prompt_done" {
-            if !c.session.finished {
-                c.deadline =
-                    Some(Instant::now() + Duration::from_secs_f64(c.timeout_secs.max(1.0)));
-            }
+            c.prompt_done(args["prompt_id"].as_u64());
             return Ok(c.snapshot());
         }
         if c.session.finished {
@@ -303,7 +309,11 @@ impl App {
         }
         let actions = c.session.handle(ev);
         self.drive(id, &mut c, actions).await;
-        if !c.session.finished && c.session.pending.is_none() && c.deadline.is_none() {
+        if !c.session.finished
+            && c.session.pending.is_none()
+            && c.deadline.is_none()
+            && c.clips.is_empty()
+        {
             c.deadline = Some(Instant::now() + Duration::from_secs_f64(c.timeout_secs.max(1.0)));
         }
         Ok(c.snapshot())
@@ -526,4 +536,78 @@ pub fn router(app: App) -> Router {
         .route("/v1/{op}", post(operation))
         .layer(DefaultBodyLimit::max(3 * 1024 * 1024))
         .with_state(app)
+}
+
+#[cfg(test)]
+mod prompt_timer_tests {
+    use super::*;
+
+    fn call() -> Call {
+        Call {
+            session: Session::new("inbound", serde_json::Map::new()).unwrap(),
+            prompts: vec![],
+            transcript: vec![],
+            clips: VecDeque::new(),
+            sms: vec![],
+            transfer: None,
+            errors: vec![],
+            deadline: None,
+            timeout_secs: 15.0,
+            generation: 2,
+            prompt_id: 3,
+            started: Instant::now(),
+        }
+    }
+
+    #[test]
+    fn response_window_starts_only_after_final_current_prompt() {
+        let mut c = call();
+        c.clips.push_back(json!({"prompt_id":3}));
+        c.prompt_done(Some(3));
+        assert!(c.deadline.is_none());
+        c.clips.clear();
+        c.prompt_done(Some(2));
+        assert!(c.deadline.is_none());
+        c.prompt_done(None);
+        assert!(c.deadline.is_none());
+        c.prompt_done(Some(3));
+        assert!(
+            c.deadline
+                .unwrap()
+                .duration_since(Instant::now())
+                .as_secs_f64()
+                > 14.0
+        );
+    }
+
+    #[test]
+    fn finished_session_never_rearms() {
+        let mut c = call();
+        c.session.finished = true;
+        c.prompt_done(Some(3));
+        assert!(c.deadline.is_none());
+    }
+
+    #[tokio::test]
+    async fn queued_speech_suspends_the_response_timer() {
+        let app = App::new(Bus::new(HashMap::new(), 1, 1));
+        let mut c = call();
+        c.clips.push_back(json!({"prompt_id":3}));
+        app.drive(
+            "timer-regression",
+            &mut c,
+            vec![Action {
+                kind: "timer".into(),
+                text: String::new(),
+                rate: 1.5,
+                args: json!({"seconds":15}),
+                request_id: None,
+            }],
+        )
+        .await;
+        assert!(c.deadline.is_none());
+        c.clips.clear();
+        c.prompt_done(Some(3));
+        assert!(c.deadline.is_some());
+    }
 }

@@ -1,0 +1,16 @@
+{
+  "status": "passed",
+  "mode": "speech-only",
+  "call_id": "vm-live-speech-only-55257b4fcdcf",
+  "booking_id": 2,
+  "agent_mode": "openai",
+  "model_calls": null,
+  "scope": "real local speech / production VAD / Rust / real gateway / DBI; synthetic patient only",
+  "cleanup": {
+    "booking_id": 2,
+    "confirmed": false,
+    "booking_status": "cancelled",
+    "stand_acknowledged": true,
+    "confirmation_scope": "stand"
+  }
+}

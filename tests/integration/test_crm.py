@@ -59,6 +59,15 @@ def book(c, key="first", slot=1, patient=3):
     )
 
 
+def test_api_capitalization_does_not_hide_imported_slots(clinic):
+    c, stand = clinic
+    stand.mock.data['doctors'][0]['specialty'] = 'Терапевт'
+    status, _ = c.pull()
+    assert status == 'ok'
+    assert c.reg.doctors()[0]['specialty'] == 'терапевт'
+    assert c.reg.find_slots(specialty='терапевт')
+
+
 def test_actual_stand_contract_and_local_confirmation(clinic):
     c, stand = clinic
     status, result = book(c)

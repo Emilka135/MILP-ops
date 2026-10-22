@@ -6,6 +6,18 @@ from pathlib import Path
 def normalized(text):return re.sub(r'\s+',' ',re.sub(r'[^а-яёa-z0-9\s-]',' ',text.casefold().replace('ё','е'))).strip()
 
 
+def canonical_specialty(value):
+    """Use one database spelling for imported, API and spoken specialties."""
+    dictionary = SpecialtyDictionary()
+    policy = dictionary.policy(str(value))
+    if policy is not None:
+        return policy['label'].casefold()
+    resolved = dictionary.resolve(str(value))
+    if resolved['status'] == 'resolved':
+        return resolved['label'].casefold()
+    return ' '.join(str(value).casefold().split())
+
+
 class SpecialtyDictionary:
     def __init__(self,path=None):
         configured=Path(os.environ.get('MODULE_SETTINGS_FILE','/module-config/modules.json')).with_name('specialties.json')
