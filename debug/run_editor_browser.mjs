@@ -54,6 +54,8 @@ try{
   const from=page.locator('[data-id="scenario_1.start"] [data-handleid="new"]');
   const to=page.locator('[data-id="scenario_1.end_1"] .react-flow__handle.target');
   stage='connect-drag-source';
+  // Compact cards reveal their connection control when the user points at them.
+  await page.locator('[data-id="scenario_1.start"]').hover();
   await from.hover();
   const sourceBox=await from.boundingBox(),targetBox=await to.boundingBox();
   assert.ok(sourceBox&&targetBox,'Both connection handles must be visible');
