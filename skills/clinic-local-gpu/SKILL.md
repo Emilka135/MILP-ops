@@ -17,6 +17,8 @@ Use the checked model files already present before downloading replacements. Kee
 
 Validate real TTS -> audible WAV -> actual ASR and the scenario result; never substitute silence. Test speech, DTMF and mixed input separately. Store every run under debug/runs/<clear-name>/ including actual audio, result JSON and screenshots. Verify the observer's microphone test in a browser. ASR correctness does not prove natural prosody: provide high-quality listening examples and preserve failed comparisons.
 
+Use silero-stress on complete Russian utterances, preserving explicit reviewed pronunciations. Maintain prerecorded doctor full names from the active doctor directory, invalidated by directory/model/voice changes. For regression calls use a versioned synthetic WAV corpus with frozen voice/rate choices across 0.75–2.5; Actions verifies and replays it without regenerating it. Read the delivery skill's [test and recovery requirements](../clinic-module-delivery/references/score-acceptance.md) when changing this corpus or runtime error handling.
+
 The launch command must print the real localhost URL and a stop command that retains data. Mark a backup stub explicitly. Preserve local .env and secrets; demo calls must not mutate the real DBI API even when live keys are saved. Do not require VM/Gitea credentials to complete a local build.
 
 If a necessary next action requires an unavailable password, passphrase or secret, save the precise progress and blocker to TODO.md without the secret, explain what credential is needed and how to provide it locally, then end the chat turn and wait. Do not keep retrying authentication or continue dependent work after asking.
