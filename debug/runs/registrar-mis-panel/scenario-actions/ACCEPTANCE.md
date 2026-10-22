@@ -1,0 +1,21 @@
+# Actions: административные изменения и предложения регистратора
+
+`node debug/run_registrar_scenario_actions.mjs` — passed: 7 проверок настоящим Chromium, настоящие HTTP-запросы к editor Repository и к Learning, запись в изолированную SQLite. Подмены ответов браузера и `module_call` отсутствуют. Проверены скриншоты 01–04.
+
+Команда ожидает `npm ci --prefix scenario-editor` и готовый `npm run build --prefix scenario-editor`. Chrome: `/opt/google/chrome/chrome` по умолчанию; `CHROME_PATH=''` выбирает браузер Playwright. Python: `PYTHON`; вывод: `SCENARIO_ACTIONS_OUTPUT` (относительный или абсолютный каталог).
+
+Скрипт запускает `debug/registrar_scenario_server.py`, который создаёт временную копию сценариев, настоящие `Repository`, `Learning(MockRegistry SQLite)` и два собственных HTTP-сервера на случайных loopback-портах. CRM-адаптер разрешает только операции Learning; модели, TTS, ASR и внешняя МИС не вызываются. Браузер имеет таймаут 12 с, общий прогон 150 с, сервер — 240 с; finally завершает свои процессы и удаляет временную БД/учётные данные. Продакшен-сервисы не затрагиваются.
+
+Доказательства:
+
+- 01: администратор изменил реальный существующий блок `inbound.welcome` и сохранил его через UI; HTTP `/api/project` подтвердил текст и новую revision.
+- 02: история восстановила прежний текст. Изменения не объявляются развёрнутыми на живые звонки.
+- 03: синтетический runtime-архив сохранён через настоящий Learning, отображаются точная сохранённая расшифровка, последовательность trace и независимо заданный последний шаг `inbound.operator`. Сам FSM этим прогоном **не выполнялся**.
+- 04: user/user предложил исправление конкретного шага из звонка. В SQLite появилась одна запись queued для линии 100 и две метки; общий project revision остался прежним; линия 101 пуста. Query-параметр с чужой линией не меняет привязку пользователя.
+- Настоящий backend отказал в записи наблюдателю (403 для workshop, 401 для анонимной админки), глобальном редактировании регистратору (403), предложении для чужого звонка (400).
+- Настоящая ночная подготовка перевела queued → prepared. Вызов Learning.review вернул blocked: развёртывание персональных версий ещё не подключено. Это **не** успешная активация.
+- `sqlite-effects.json` независимо показывает scoped case, две метки, ноль записей на приём, неизменный project revision, реальные вызванные операции и их статусы.
+
+`PYTHONPATH=runtime/src:. python -m pytest -q tests/integration/test_learning.py` — 6 passed (`learning-tests.log`). Контроль диска прошёл (`space-after.json`).
+
+Для будущего прогона с реальным Session-архивом: `SCENARIO_ACTIONS_ARCHIVE=/abs/archive.json node debug/run_registrar_scenario_actions.mjs`. JSON должен иметь `call_id`, `trace`, `transcript` с role/state/text/step_index и независимый `expected_target`. При отсутствии snapshot graph сервер прикрепляет снимок тестового Repository. Источник помечается `provided_json_archive`, но runner по-прежнему не заявляет, что сам выполнил FSM или ASR. Стандартная маскировка длинных цифровых строк Learning применяется; передаваемый синтетический тест не должен содержать настоящие данные пациентов.

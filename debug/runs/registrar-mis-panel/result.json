@@ -1,0 +1,20 @@
+{
+  "status": "passed",
+  "scope": "Real Chromium and real clipboard; synthetic HTTP fixtures; no MIS/ASR/model execution",
+  "checks": [
+    "Archive warnings remain visible while saved calls are usable",
+    "Archive response panel is to the right of the call",
+    "Actual browser clipboard contains exact FIO, NULL, JSON, empty and long values",
+    "Every parameter and SQL text has a working copy control",
+    "Right panel resizes with real pointer and keyboard",
+    "Clipboard API denial falls back to actual execCommand copy",
+    "Clipboard failure gives visible manual-copy instruction",
+    "Changing calls clears previous result and clipboard feedback",
+    "Empty query and missing result are distinguished",
+    "Late archive response cannot replace the newer selection",
+    "Live onStep response populates the same right panel",
+    "900px layout keeps the response adjacent without page overflow",
+    "390px screen has no page overflow and supports copying"
+  ],
+  "errors": []
+}

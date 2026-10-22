@@ -305,3 +305,11 @@
 - [x] В Rust общий budget одного HTTP turn 55с, раздельные bounded queues и настраиваемые workers/timeouts для модулей; снят CRM180с. Очередь+исполнение входят в deadline.
 - [x] Настоящий act job twenty-call-queues:20barrier-сессий×3turn×2HTTPмодуля, правильная корреляция120запросов; тест общего deadline. cargo check/clippy прошли. Лог debug/runs/score-act/twenty-queues.log.
 - [ ] Полный20audio профиль с реальными ASR/TTS и target/архивом ещё должен пройти отдельно; очередь-only не объявлять приёмкой звонков.
+### Панель ответов регистратора (feature/registrar-mis-panel)
+
+- [x] Панель фактического ответа справа от текущего/архивного звонка; копирование всех значений, NULL/JSON, SQL и параметров, видимые ошибки clipboard и fallback.
+- [x] Warnings недоступного телефонного архива сохраняются в UI; задержанный ответ открытия не заменяет последний выбранный звонок.
+- [x] Реальный Chromium: 13 проверок с синтетическими HTTP fixtures, screenshots просмотрены; 7 серверных тестов, сборка passed. Подробности и границы доказательств: `debug/runs/registrar-mis-panel/ACCEPTANCE.md`.
+- [ ] Проверить интегрированный звуковой звонок → настоящий ASR → FSM → панель вместе с обновлениями остальных модулей; production МИС этим модулем не вызывалась.
+
+- [x] Дополнительная Actions-проверка admin save/restore и серого предложения регистратора: `node debug/run_registrar_scenario_actions.mjs`, 7 реальных browser/HTTP/SQLite проверок, 6 Learning tests passed. Evidence: `debug/runs/registrar-mis-panel/scenario-actions/ACCEPTANCE.md`. Approval блокируется штатно; активация не заявлена. Поддержан ввод внешнего Session-архива с независимым `expected_target`; встроенный trace синтетический и не доказывает запуск FSM.

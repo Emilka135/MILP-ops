@@ -22,3 +22,15 @@
 .quest-sidebar>.query-inspector:first-child{border-top:0;margin-top:0;padding-top:0;padding-bottom:18px;border-bottom:1px solid #b8cabc;margin-bottom:20px}.query-inspector article p{overflow-wrap:anywhere}
 
 .quest-main{margin:0 auto}
+
+/* Navigation stays left; the actual response is adjacent to the call on its right. */
+.workshop-layout{grid-template-columns:220px minmax(0,1fr) 6px var(--sidebar-width,360px);max-width:2200px}
+.query-sidebar{min-width:0;background:#fafaf1;padding:20px 16px;overflow:hidden}
+.query-sidebar>.query-inspector{position:sticky;top:12px;margin-top:0;padding-top:0;border-top:0}
+.quest-main{box-sizing:border-box;max-width:none;padding:28px 20px}
+.query-inspector .query-results td,.query-inspector .query-results th{white-space:normal}
+.query-follow{font-size:11px;margin-top:10px;color:#306f54}
+.archive-warning{padding:10px;border:1px solid #cdbd75;border-radius:6px;background:#fff5d7;font-size:12px;line-height:1.6}
+@media(max-width:1400px){.neighbor-map,.neighbor-map.no-previous{grid-template-columns:1fr;padding:18px}.short-branch{display:none}.past-step{max-width:80%;margin:auto}.proposal-layout{grid-template-columns:1fr}.quest-heading h1{font-size:24px}}
+@media(max-width:1100px){.workshop-layout{grid-template-columns:minmax(0,1fr) 6px minmax(260px,var(--sidebar-width,360px))}.quest-sidebar{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:12px;align-items:start;border-bottom:1px solid #dfe5d8}.quest-sidebar .mentor,.quest-sidebar .skills-earned{display:none}.quest-sidebar .recent-calls{flex:1;min-width:180px;max-height:130px;margin:0}.quest-sidebar h2{margin:10px 0}.registrar-filter{max-width:150px}.quest-main{grid-column:1}.query-sidebar{grid-column:3}.workshop-splitter{grid-column:2}}
+@media(max-width:760px){.workshop-layout{display:flex;flex-direction:column}.quest-main{width:100%;padding:20px 12px}.query-sidebar{order:1;width:100%;box-sizing:border-box;border-top:2px solid #b8cabc}.quest-sidebar{order:2}.query-sidebar>.query-inspector{position:static}.workshop-splitter{display:none}.query-results{max-height:300px}.workshop-header{flex-wrap:wrap;gap:12px}.workshop-header-right{flex-wrap:wrap}.neighbor-options{grid-template-columns:1fr}.quest-heading{display:block}.observer-call header{flex-wrap:wrap}.observer-call{min-width:0}.copy-text{min-width:50px}}
