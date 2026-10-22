@@ -290,3 +290,15 @@
 3195ffd — 09:55 МСК. SHA проверенного среза кабинет не показывает;
 конкурсная оценка опубликованной версии ещё не подтверждена.
 
+
+## Speech regression — 22.10.2026
+
+- [x] `silero-stress==1.5`, whole-sentence context mode, explicit dependency failure; MIT CIS TTS remains selected.
+- [x] TTS accepts 0.75–2.5×; >2× uses chained atempo. Endpoint duration/pitch checks pass.
+- [x] Doctor-bank RPC pre-records full names, atomically updates active index, invalidates renamed/removed names and model/pronunciation changes; dynamic selection reuses name WAV. Real local smoke with three synthetic names passed.
+- [x] Fixed public synthetic corpus: 18 real WAV, four real voices, seed/voice/rate/model/spec/WAV hashes; generator refuses overwrite. Signal 18/18; 86 speech tests passed.
+- [ ] Actual CPU GigaAM ASR strict text screen is 15/18; three numeric-format mismatches preserved for semantic parser/trace validation. Do not claim full audio scenario acceptance until actual registrar-client/FSM trace reaches expected state under timeouts.
+- [ ] Integrate asynchronous bounded CRM directory refresh worker and validate initial85-doctor warm/rename on live read-only directory; do not block CRM transaction on TTS.
+- [ ] Human listening to native48k/telephone8k examples remains required for pronunciation/naturalness. ASR agreement is separate evidence.
+
+Evidence: `debug/runs/speech-regression/`; details [SPEECH_REGRESSION.md](docs/SPEECH_REGRESSION.md). No external MIS writes or live LLM calls were made by these tools.

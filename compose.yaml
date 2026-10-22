@@ -40,6 +40,7 @@ services:
     environment:
       <<: *environment
       CRM_DB: /data/clinic.sqlite
+      TTS_DOCTOR_BANK_SYNC: "1"
       CONTROL_KEY_FILE: /control/editor-rpc.key
       STAND_URL: ${STAND_URL:-}
       STAND_TOKEN: ${STAND_TOKEN:-${DBI_API_TOKEN:-}}
@@ -104,7 +105,7 @@ services:
       <<: *environment
       TTS_MODEL: /models/v5_cis_base.pt
       TTS_SPEAKER: ${TTS_SPEAKER:-ru_ekaterina}
-      TTS_STRESS: "dict"
+      TTS_STRESS: "context"
       SCENARIO_DIR: /scenarios
       PROMPT_DIR: /audio
       ASR_URL: http://asr:8080

@@ -135,7 +135,7 @@ class SileroTTS:
         speaker: str | None = None,
         device: str = "cpu",
         threads: int = 2,
-        stress: str = "auto",
+        stress: str = "context",
     ) -> None:
         import torch  # type: ignore[import-not-found]
 
@@ -181,7 +181,7 @@ def _escape(text: str) -> str:
     return text.replace("&", "и").replace("<", "").replace(">", "")
 
 
-def load_synth(model_path: str | Path = DEFAULT_MODEL, speaker: str | None = None, stress: str = "auto") -> Synth:
+def load_synth(model_path: str | Path = DEFAULT_MODEL, speaker: str | None = None, stress: str = "context") -> Synth:
     try:
         return SileroTTS(model_path, speaker, stress=stress)
     except Exception:  # pragma: no cover - torch / model absent
@@ -218,7 +218,7 @@ class TtsModule:
         if op != "synth":
             return "error", {"error": f"unknown op {op}"}
         rate = float(args.get("rate", 1.0))
-        if not 0.5 <= rate <= 2.0:
+        if not 0.5 <= rate <= 2.5:
             return "error", {"error": f"rate {rate} out of range"}
         pcm, ms = self.render(str(args["text"]), rate)
         return "ok", {"duration_ms": ms, "sample_rate": SAMPLE_RATE, "format": "pcm16", "bytes": len(pcm), "pcm": pcm, "engine": self.synth.name, "rate": rate}

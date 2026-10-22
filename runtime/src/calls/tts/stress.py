@@ -250,6 +250,20 @@ class SileroStressAccentor:
         return got if "+" in got else None
 
 
+class ContextAccentor(SileroStressAccentor):
+    """Accent a complete sentence; preserve optional caller-supplied + marks.
+
+    Calling an OOV fallback once per word discards homograph context. The
+    installed MIT model supplies ordinary/generated prompts without requiring
+    an administrator to enumerate every word or surname in a dictionary.
+    """
+    name='silero-context'
+
+    def __call__(self,text):
+        text=_WORD_RE.sub(lambda m:ABBREVIATIONS.get(m.group(0).lower(),m.group(0)),text)
+        return str(self._accentor(text,words_to_ignore=sorted(CLITICS)))
+
+
 class NoStress:
     name = "off"
 
@@ -265,6 +279,10 @@ def load_accentor(mode: str = "auto") -> Accentor:
         return NoStress()
     if mode == "dict":
         return DictAccentor()
+    if mode == 'context':
+        # Explicitly configured dependency: never claim auto accentuation when
+        # the package/weights are missing from a container.
+        return ContextAccentor()
     silero: SileroStressAccentor | None = None
     try:
         silero = SileroStressAccentor()

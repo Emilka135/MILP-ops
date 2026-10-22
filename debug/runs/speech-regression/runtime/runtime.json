@@ -1,0 +1,38 @@
+{
+  "passed": true,
+  "model": "silero-v5-cis-base",
+  "speaker": "ru_ekaterina",
+  "pipeline_version": "ru-clinic-4:pcm48-atempo-resample-2:8441e3d82a06263e519ba376f19b7a71a13e1b50e3b16ed79337bae231e631c3",
+  "initial": {
+    "doctors": 2,
+    "directory_sha256": "9e4bf95faee4ea84e6b92a12811451cf37657285d33626ef9e77de88dae712aa",
+    "generated": 2
+  },
+  "same_snapshot": {
+    "doctors": 2,
+    "directory_sha256": "9e4bf95faee4ea84e6b92a12811451cf37657285d33626ef9e77de88dae712aa",
+    "generated": 2
+  },
+  "changed_snapshot": {
+    "doctors": 1,
+    "directory_sha256": "88530469f7870eb4bb1b3a604b4ab1ddc8b4c407e6fcacb225fd523a33820ca1",
+    "generated": 3
+  },
+  "reused_name_in_dynamic_prompt": true,
+  "removed_doctors_inactive": true,
+  "stress_samples": [
+    {
+      "text": "Врач Семёнов Алексей Петрович.",
+      "accented": "Вр+ач Сем+ёнов Алекс+ей Петр+ович."
+    },
+    {
+      "text": "Я уже готов открыть все ваши замки.",
+      "accented": "+Я уж+е гот+ов откр+ыть вс+е в+аши замк+и."
+    },
+    {
+      "text": "Фам+илия врача.",
+      "accented": "Фам+илия врач+а."
+    }
+  ],
+  "naturalness": "requires human listening; not proved by ASR"
+}
