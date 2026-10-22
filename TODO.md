@@ -297,3 +297,5 @@
 - [x] Warnings недоступного телефонного архива сохраняются в UI; задержанный ответ открытия не заменяет последний выбранный звонок.
 - [x] Реальный Chromium: 13 проверок с синтетическими HTTP fixtures, screenshots просмотрены; 7 серверных тестов, сборка passed. Подробности и границы доказательств: `debug/runs/registrar-mis-panel/ACCEPTANCE.md`.
 - [ ] Проверить интегрированный звуковой звонок → настоящий ASR → FSM → панель вместе с обновлениями остальных модулей; production МИС этим модулем не вызывалась.
+
+- [x] Дополнительная Actions-проверка admin save/restore и серого предложения регистратора: `node debug/run_registrar_scenario_actions.mjs`, 7 реальных browser/HTTP/SQLite проверок, 6 Learning tests passed. Evidence: `debug/runs/registrar-mis-panel/scenario-actions/ACCEPTANCE.md`. Approval блокируется штатно; активация не заявлена. Поддержан ввод внешнего Session-архива с независимым `expected_target`; встроенный trace синтетический и не доказывает запуск FSM.
