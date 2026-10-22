@@ -28,4 +28,3 @@ crm_address=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress
 docker run --rm -u 0 --network host --env-file .env -e CRM_URL="http://$crm_address:8080" -v "$PWD:/workspace" -v /opt/hackathon/sip:/organizer:ro -v /opt/hackathon/sip.env:/organizer-env/sip.env:ro -w /workspace --entrypoint python clinic-voice-crm debug/run_vm_reminder.py "$@" > debug/runs/sip-outbound-reminder/run.log 2>&1
 tail -n 5 debug/runs/sip-outbound-reminder/run.log
 python3 tools/check_space.py
-
