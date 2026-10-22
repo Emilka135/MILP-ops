@@ -299,3 +299,9 @@
 - [ ] Проверить интегрированный звуковой звонок → настоящий ASR → FSM → панель вместе с обновлениями остальных модулей; production МИС этим модулем не вызывалась.
 
 - [x] Дополнительная Actions-проверка admin save/restore и серого предложения регистратора: `node debug/run_registrar_scenario_actions.mjs`, 7 реальных browser/HTTP/SQLite проверок, 6 Learning tests passed. Evidence: `debug/runs/registrar-mis-panel/scenario-actions/ACCEPTANCE.md`. Approval блокируется штатно; активация не заявлена. Поддержан ввод внешнего Session-архива с независимым `expected_target`; встроенный trace синтетический и не доказывает запуск FSM.
+
+### WIP: рабочая область по единственному HTML-эталону
+
+Сохранён промежуточный перенос регистратора на спокойную рабочую тему из `adjust-web-page-styles (1).zip`: панель звонков слева, МИС справа, разговор/автомат в центре, React docking/resizing, сохранение расположения, настройки темы, Схемы/Справка через реальный workshop API и подготовленный knowledge contract. Подставные роли/sql.js/speechSynthesis/записи из HTML не переносились; исходный MIT notice сохранён. Административный editor/main.jsx и ObserverCall.jsx не менялись.
+
+Сборка прошла. Модуль пока НЕ ПРИНЯТ: предстоят браузерные проверки перетаскивания/resize/reset/темы/390px, обновление прежних тестов под новый рабочий поток и проверка реального knowledge endpoint после интеграции root. Сохранены существующие API auth, archive/proposals, clipboard и защита от поздних ответов.
