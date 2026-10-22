@@ -165,6 +165,16 @@ class Nlu:
             vars["said_time"] = it.time.strftime("%H:%M")
         if it.daypart and not identity_context:
             vars["said_daypart"] = it.daypart
+        if not identity_context and identity_field != 'full_name':
+            from .availability_constraints import parse as parse_availability
+            constraints = parse_availability(text, today)
+            if constraints['evidence'] or constraints['needs_clarification']:
+                vars['availability_constraints'] = constraints
+                if constraints['excluded_weekdays'] or constraints['excluded_dates']:
+                    vars.pop('said_date', None)
+                    if len(constraints['dates']) == 1: vars['said_date'] = constraints['dates'][0]
+                if constraints['time_from'] is not None or constraints['time_to'] is not None:
+                    vars.pop('said_time', None)
         if meaning and intent=='greeting' and any(k in vars for k in ('said_date','said_time','said_daypart')):intent='unknown'
         return "ok", {
             "intent": intent,

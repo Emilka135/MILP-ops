@@ -506,6 +506,9 @@ class ClinicCrm:
         if op in ("book", "reschedule") and slot is None:
             return "error", {"error": "slot not found"}
         if slot:
+            from .availability_constraints import matches
+            if not matches(args.get('availability_constraints'), slot.starts_at):
+                return 'error', {'error': 'slot_violates_availability_constraints'}
             doctor = self.reg._q(
                 "SELECT active FROM doctors WHERE id=?", (slot.doctor_id,)
             )[0]

@@ -387,3 +387,10 @@ Evidence: `debug/runs/speech-regression/`; details [SPEECH_REGRESSION.md](docs/S
 - [x] Влит33d41a8 в feature/score-acceptance. После merge Chromium:22UI+8настоящихHTTP/SQLite/knowledge проверок на ASR/FSM архиве из предыдущего20call прогона; screenshots лично проверены. MIS справа, панели переносятся/изменяются, admin save/restore сохранены.
 - [x] Новые browser runners добавлены в visual-editor Actions; исправлено значение CHROME_PATH='' для Playwright Chromium в runner панели. Workflow act проверяется отдельно.
 - [ ] Продолжить незавершённые stash-изменения, исправить провалившиеся CI и свернуть полностью merged служебные ветки в одну ветку публикации.
+
+## Завершение сохранённых ограничений времени —22.10.2026
+
+- [x] Восстановлен parser из сохранённого checkpoint. Дописаны отсутствовавшие validate/sql_filter/matches; неизвестные/неоднозначные ограничения failclosed доSQL. Подключены через NLU→Rust→стандартныеCRMоперации/agent planner; ограничения действуют доLIMIT3дня и повторно перед записью. Отрицания сохраняются между репликами, новая временная информация снимает старое согласие.
+- [x] Детерминированные80проверок passed,135parser/CRM/recovery passed;22engine tests иclippy passed. Полный exploratoryDOCX прогон выявил отдельные старые label/FSM долги и отсутствовавший на момент старта binary; они не объявляются принятыми.
+- [x] ОбъединённыйUI прошёл настоящий visual-editor act (33server tests,22UI+8реальныхHTTP checks истарыйadminbrowser).
+- [x] ИтоговыйE5набор146passed; настоящийact control77+36+80+58unittest+68+27 passed. Модуль готов к публикации; model settings/reminder/checkpoint остатки идут следующим шагом.

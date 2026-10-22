@@ -423,12 +423,21 @@ class MockRegistry:
         if day:
             where.append("date(s.starts_at) = ?")
             params.append(day.isoformat())
+        from .availability import current
+        constraints = current()
+        if constraints.get("time_from") is not None or constraints.get("time_to") is not None:
+            # Structured bounds use the regulation's windows, not legacy halves.
+            t_from = t_to = None
         if t_from:
             where.append("time(s.starts_at) >= ?")
             params.append(t_from)
         if t_to:
             where.append("time(s.starts_at) < ?")
             params.append(t_to)
+        from .availability import positional_filter
+        clause, extra = positional_filter()
+        where.append(clause)
+        params.extend(extra)
         rows = self._q(
             "SELECT s.id, s.doctor_id, d.full_name, d.specialty, d.cabinet, s.starts_at FROM slots s JOIN doctors d ON d.id = s.doctor_id "
             "WHERE " + " AND ".join(where) + " ORDER BY s.starts_at LIMIT ?", params + [limit],
@@ -457,11 +466,13 @@ class MockRegistry:
 
     def next_day(self, specialty: str, after: date, limit_days: int = 60, doctor_id: Optional[int] = None) -> Optional[date]:
         """First day strictly after ``after`` with a free slot for the specialty."""
+        from .availability import positional_filter
+        clause, extra = positional_filter()
         rows = self._q(
             "SELECT date(s.starts_at) AS d FROM slots s JOIN doctors d ON d.id = s.doctor_id WHERE s.status = 'free' "
             "AND d.specialty = ? AND date(s.starts_at) > ? AND date(s.starts_at) <= ? AND s.starts_at >= ?"
-            + (" AND d.id = ?" if doctor_id else "") + " ORDER BY s.starts_at LIMIT 1",
-            [specialty, after.isoformat(), (after + timedelta(days=limit_days)).isoformat(), self.now().isoformat(timespec="minutes")] + ([doctor_id] if doctor_id else []),
+            + (" AND d.id = ?" if doctor_id else "") + " AND (" + clause + ") ORDER BY s.starts_at LIMIT 1",
+            [specialty, after.isoformat(), (after + timedelta(days=limit_days)).isoformat(), self.now().isoformat(timespec="minutes")] + ([doctor_id] if doctor_id else []) + extra,
         )
         return date.fromisoformat(rows[0]["d"]) if rows else None
 
@@ -714,3 +725,7 @@ def _seed_rows(reg: MockRegistry, start: date, days: int) -> None:
     reg.add_patient("Иванов", "Иван", "Иванович", date(1980, 5, 12), "12345678901", "1001", "79035551234")
     reg.add_patient("Иванова", "Анна", "Ивановна", date(2015, 3, 1), "22345678901", "1002", "79035551234")
     reg.add_patient("Петрова", "Мария", "Сергеевна", date(1992, 11, 23), "32345678901", "1003", "79165550000")
+    if 'oms' not in {r['name'] for r in reg._q('PRAGMA table_info(patients)')}:
+        reg._x('ALTER TABLE patients ADD COLUMN oms TEXT')
+    for name,policy in [('Иванов','1234567890123456'),('Иванова','2345678901234567'),('Петрова','3456789012345678')]:
+        reg._x('UPDATE patients SET oms=? WHERE last_name=? AND oms IS NULL',(policy,name))

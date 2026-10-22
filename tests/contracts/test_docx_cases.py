@@ -167,7 +167,8 @@ def test_entities_source_text_never_supplies_write_authority(nlu,case):
 def test_entities_source_time_constraints_survive(nlu,field,expected):
     text=re.findall('«([^»]+)»',DIALOGUES[5]['input'])[0]
     actual=interpretation(nlu,text)
-    assert actual['vars'].get(field)==expected,actual
+    value = actual['vars'].get('availability_constraints', {}).get(field) if field == 'excluded_weekdays' else actual['vars'].get(field)
+    assert value == expected, actual
 
 
 @pytest.mark.parametrize('case',TRIGGERS,ids=lambda c:c['id']+'.fsm.entry')
@@ -206,7 +207,7 @@ def test_fsm_control_dialogues(nlu,dialogue,tmp_path,monkeypatch):
     elif number==6:
         frames=probe([speech(nlu,quotes[0])])
         assert frames[-1]['vars'].get('said_daypart')=='afternoon',frames
-        assert frames[-1]['vars'].get('excluded_weekdays')==[4],frames
+        assert frames[-1]['vars'].get('availability_constraints', {}).get('excluded_weekdays') == [4], frames
     elif number in {7,8}:
         monkeypatch.setenv('CRM_NOW','2026-10-15T11:00:00+04:00')
         monkeypatch.setenv('MODULE_SETTINGS_FILE',str(tmp_path/'modules.json'))

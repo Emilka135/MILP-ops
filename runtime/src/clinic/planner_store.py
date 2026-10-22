@@ -59,7 +59,10 @@ def normalize_constraints(args):
         for value in excluded
     ):
         raise ValueError("invalid_excluded")
+    from .availability_constraints import validate
+    availability = validate(args.get('availability_constraints'))
     return {
+        **({'availability_constraints': availability} if args.get('availability_constraints') else {}),
         "specialty": specialty.strip(),
         "said_date": day,
         "said_time": clock,
@@ -105,7 +108,10 @@ def slots(reg, args, now):
         if now.tzinfo is None
         else now.astimezone(CLINIC_ZONE)
     )
+    availability = normalized.get('availability_constraints', {})
     window = DAYPART_WINDOWS.get(normalized["said_daypart"])
+    if availability.get('time_from') is not None or availability.get('time_to') is not None:
+        window = None
     params = {
         "specialty": specialty,
         "now": at.replace(tzinfo=None).isoformat(timespec="minutes"),
@@ -118,9 +124,13 @@ def slots(reg, args, now):
         "excluded": json.dumps(normalized["excluded"]),
         "slots_per_day": SLOTS_PER_DAY,
     }
+    from .availability_constraints import sql_filter
+    clause, bound = sql_filter(availability)
+    query = SQL if clause == '1=1' else SQL.replace(' AND NOT EXISTS', ' AND (' + clause + ')\n AND NOT EXISTS', 1)
+    params.update(bound)
     return "ok", {
-        "slots": reg.execute(SQL, params),
-        "sql": SQL,
+        "slots": reg.execute(query, params),
+        "sql": query,
         "params": params,
         "max_days": 3,
         "max_slots_per_day": SLOTS_PER_DAY,

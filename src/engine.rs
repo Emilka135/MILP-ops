@@ -214,6 +214,45 @@ impl Session {
             self.vars
                 .insert("said_daypart_spoken".into(), json!(spoken));
         }
+        let value = if key == "availability_constraints" {
+            let mut combined = self
+                .vars
+                .get(key)
+                .and_then(Value::as_object)
+                .cloned()
+                .unwrap_or_default();
+            if let Some(incoming) = value.as_object() {
+                for (field, item) in incoming {
+                    if matches!(field.as_str(), "excluded_weekdays" | "excluded_dates") {
+                        let mut values = combined
+                            .get(field)
+                            .and_then(Value::as_array)
+                            .cloned()
+                            .unwrap_or_default();
+                        for entry in item.as_array().into_iter().flatten() {
+                            if !values.contains(entry) {
+                                values.push(entry.clone());
+                            }
+                        }
+                        combined.insert(field.clone(), Value::Array(values));
+                    } else if matches!(field.as_str(), "time_from_inclusive" | "time_to_inclusive")
+                        && incoming
+                            .get(field.trim_end_matches("_inclusive"))
+                            .is_none_or(Value::is_null)
+                        || matches!(field.as_str(), "weekdays" | "dates")
+                            && item.as_array().is_some_and(Vec::is_empty)
+                        || item.is_null()
+                    {
+                        continue;
+                    } else {
+                        combined.insert(field.clone(), item.clone());
+                    }
+                }
+            }
+            Value::Object(combined)
+        } else {
+            value
+        };
         self.vars.insert(key.into(), value);
     }
     fn render(&self, template: &str) -> String {
@@ -353,6 +392,8 @@ impl Session {
                     if a["module"] == "crm" && matches!(a["op"].as_str(), "cancel"|"reschedule"|"confirm") {
                         args.insert("patient_id".into(),self.verified_patient.clone().unwrap_or(Value::Null));
                     }
+                    if ((a["module"] == "agent" && a["op"] == "offer") || (a["module"] == "crm" && matches!(a["op"].as_str(), "find_slots"|"next_day"|"check_day"|"day_parts"|"nearest_in_day_part"|"list_slots"|"pick_time"|"nearest_in_part"|"agent_slots"|"book"|"reschedule")))
+                        && let Some(spec) = self.vars.get("availability_constraints") { args.insert("availability_constraints".into(), spec.clone()); }
                     self.pending_call=Some((a["module"].clone(),a["op"].clone(),Value::Object(args.clone())));
                     actions.push(Action { request_id: self.pending, ..Action::new("call", json!({"module": a["module"], "op": a["op"], "args": args})) });
                 }
@@ -659,11 +700,16 @@ impl Session {
                             | "said_daypart"
                             | "for_other"
                             | "doctor_surname"
+                            | "availability_constraints"
                     )
                 {
                     if matches!(
                         k.as_str(),
-                        "specialty" | "said_date" | "said_time" | "said_daypart"
+                        "specialty"
+                            | "said_date"
+                            | "said_time"
+                            | "said_daypart"
+                            | "availability_constraints"
                     ) && self.vars.get(k) != Some(v)
                     {
                         self.verified_slot = None;
@@ -1235,6 +1281,30 @@ mod tests {
             json!({"patient_id":1,"patient_full_name":"Иванов Иван Петрович","patient_birth_date":"1985-04-12"}),
         );
         assert_eq!(s.verified_patient, Some(json!(1)));
+    }
+
+    #[test]
+    fn negative_preferences_survive_turns_and_reach_the_slot_rpc() {
+        let mut session = Session::new("inbound", Map::new()).unwrap();
+        session.start();
+        session.verified_slot = Some(json!(8));
+        session.approval = Some("previous-offer".into());
+        let mut first = Event::new("speech", "После двенадцати");
+        first.payload = json!({"intent":"unknown","vars":{"availability_constraints":{"time_from":"12:00","time_from_inclusive":false}}});
+        session.handle(first);
+        assert!(session.verified_slot.is_none() && session.approval.is_none());
+        let mut second = Event::new("speech", "Не в пятницу");
+        second.payload = json!({"intent":"unknown","vars":{"availability_constraints":{"excluded_weekdays":[4],"time_from":null,"time_from_inclusive":true}}});
+        session.handle(second);
+        let actions = session.enter("inbound.book_find_slot".into(), false);
+        let call = actions
+            .iter()
+            .find(|a| a.kind == "call" && a.args["op"] == "find_slots")
+            .unwrap();
+        let spec = &call.args["args"]["availability_constraints"];
+        assert_eq!(spec["excluded_weekdays"], json!([4]));
+        assert_eq!(spec["time_from"], "12:00");
+        assert_eq!(spec["time_from_inclusive"], false);
     }
 
     #[test]

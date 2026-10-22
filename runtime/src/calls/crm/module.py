@@ -63,7 +63,9 @@ class CrmModule:
         if fn is None:
             return "error", {"error": f"unknown op {op}"}
         try:
-            return fn(**{k: v for k, v in args.items() if v is not None})
+            from .availability import request_constraints
+            with request_constraints(args.get("availability_constraints")):
+                return fn(**{k: v for k, v in args.items() if v is not None})
         except SlotTaken as exc:
             return "taken", {"error": str(exc)}
         except RegistryError as exc:
@@ -77,6 +79,24 @@ class CrmModule:
             self.on_write(kind, payload)
 
     # --- identification ------------------------------------------------------------------
+
+    def op_identity_start(self,**args):
+        from clinic.identity_service import IdentityService
+        if not hasattr(self,'_identity_form'):self._identity_form=IdentityService(self.reg,self.today)
+        return self._identity_form.start(**args)
+
+    def op_identity_answer(self,**args):
+        if not hasattr(self,'_identity_form'):return 'error',{'error':'identity_not_started'}
+        return self._identity_form.answer(**args)
+
+    def op_identity_use_policy(self,**args):
+        if not hasattr(self,'_identity_form'):return 'error',{'error':'identity_not_started'}
+        return self._identity_form.use_policy(**args)
+
+    def op_verify_booking_identity(self,patient_id,booking_id,**_):
+        booking=self.reg.booking(int(booking_id))
+        if not booking or booking.patient_id!=int(patient_id):return 'mismatch',{}
+        return 'ok',{'booking_id':booking.id}
 
     def _patient_payload(self, p: Patient) -> dict:
         return {"patient_id": p.id, "patient_name": p.short_name, "patient_full_name": p.full_name, "patient_birth_date": p.birth_date.isoformat() if p.birth_date else None}
