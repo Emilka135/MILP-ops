@@ -66,6 +66,16 @@
       "registrar": "100"
     },
     {
+      "operation": "learning.cases",
+      "status": "ok",
+      "registrar": "100"
+    },
+    {
+      "operation": "learning.calls",
+      "status": "ok",
+      "registrar": "100"
+    },
+    {
       "operation": "learning.call",
       "status": "ok",
       "registrar": "100"

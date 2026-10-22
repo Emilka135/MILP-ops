@@ -325,3 +325,10 @@
 - [x] 114 целевых pytest passed; настоящий act control-contracts: 77 + 27 passed, debug/runs/score-act/knowledge-control.log. Проверены ревизии после admin save, запрет произвольных путей/выходящих symlink, роли и отсутствие MIS writes.
 - [x] Порог свободного места приведён к прямому указанию пользователя: строго более 5 GiB и на /home, и на /.
 - [ ] Обновлённый UI агента пока не принят; полный аудиопрогон20 и импорт настоящего архива остаются обязательными отдельными проверками.
+
+### Рабочая область регистратора: локальная приёмка — 22.10.2026
+
+- [x] Рабочая тема и docking из единственного `adjust-web-page-styles (1).zip`, MIT notice, без переноса fake auth/sql.js/speechSynthesis/записей. Звонки слева, МИС справа, разговор/автомат в центре; админский editor и ObserverCall.jsx не менялись.
+- [x] 22 Chromium UI проверки: все четыре края мышью, отдельное окно, resize обеих осей и клавиатура, Escape/reset, сохранение layout/темы, 900/390px, clipboard, гонки и предупреждения. Screenshot 01–05 просмотрены.
+- [x] 8 настоящих browser→editor/Repository/Learning/knowledge проверок: документы/шаги единого scenarios, scoped-предложение из схемы, queued line100, неизменный общий сценарий, ACL и blocked activation. 25 целевых серверных тестов и сборка прошли.
+- [ ] Выполнить новые UI runners в act/Actions на опубликованном SHA и общий audio→ASR→FSM→архив прогон. Локальная UI-приёмка не заменяет эти проверки. Полные доказательства: `debug/runs/registrar-mis-panel/ACCEPTANCE.md`.

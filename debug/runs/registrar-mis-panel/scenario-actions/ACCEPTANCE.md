@@ -19,3 +19,7 @@
 `PYTHONPATH=runtime/src:. python -m pytest -q tests/integration/test_learning.py` — 6 passed (`learning-tests.log`). Контроль диска прошёл (`space-after.json`).
 
 Для будущего прогона с реальным Session-архивом: `SCENARIO_ACTIONS_ARCHIVE=/abs/archive.json node debug/run_registrar_scenario_actions.mjs`. JSON должен иметь `call_id`, `trace`, `transcript` с role/state/text/step_index и независимый `expected_target`. При отсутствии snapshot graph сервер прикрепляет снимок тестового Repository. Источник помечается `provided_json_archive`, но runner по-прежнему не заявляет, что сам выполнил FSM или ASR. Стандартная маскировка длинных цифровых строк Learning применяется; передаваемый синтетический тест не должен содержать настоящие данные пациентов.
+
+## Рабочая область по пользовательскому HTML-эталону
+
+Повторный прогон нового UI: **8 passed**. Дополнительно настоящим Chromium прочитан документ `guide` через knowledge API и его текст сопоставлен с HTTP-ответом; открыт реальный `.flow`, выбран шаг; ссылка администратора ведёт в тот же `/` editor. Сотрудник открывает шаг через «Схемы / Справка» и подаёт привязанную к звонку/линии правку, а не сохраняет глобальный проект. Снимок `05-real-knowledge.png` просмотрен. Скриншоты административного save/restore остались прежними без изменения интерфейса. Встроенный архив остаётся явно синтетическим, и заявление об исполнении FSM отсутствует.
