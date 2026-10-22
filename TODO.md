@@ -314,6 +314,11 @@
 
 - [x] Дополнительная Actions-проверка admin save/restore и серого предложения регистратора: `node debug/run_registrar_scenario_actions.mjs`, 7 реальных browser/HTTP/SQLite проверок, 6 Learning tests passed. Evidence: `debug/runs/registrar-mis-panel/scenario-actions/ACCEPTANCE.md`. Approval блокируется штатно; активация не заявлена. Поддержан ввод внешнего Session-архива с независимым `expected_target`; встроенный trace синтетический и не доказывает запуск FSM.
 
+### WIP: рабочая область по единственному HTML-эталону
+
+Сохранён промежуточный перенос регистратора на спокойную рабочую тему из `adjust-web-page-styles (1).zip`: панель звонков слева, МИС справа, разговор/автомат в центре, React docking/resizing, сохранение расположения, настройки темы, Схемы/Справка через реальный workshop API и подготовленный knowledge contract. Подставные роли/sql.js/speechSynthesis/записи из HTML не переносились; исходный MIT notice сохранён. Административный editor/main.jsx и ObserverCall.jsx не менялись.
+
+Сборка прошла. Модуль пока НЕ ПРИНЯТ: предстоят браузерные проверки перетаскивания/resize/reset/темы/390px, обновление прежних тестов под новый рабочий поток и проверка реального knowledge endpoint после интеграции root. Сохранены существующие API auth, archive/proposals, clipboard и защита от поздних ответов.
 ## Единый пакет сценариев — 22.10.2026
 
 - [x] FSM, документация, регламент, контракт МИС и инструкции сотрудников/ИИ собраны в scenarios/. Старые пути оставлены ссылками на один источник. Knowledge API читает настоящий пакет без CRM/моделей; ручной запрос остаётся проверенным offline draft без сетевых вызовов. Направления относятся только к необязательной локальной БД клиники.
@@ -369,3 +374,16 @@ Evidence: `debug/runs/speech-regression/`; details [SPEECH_REGRESSION.md](docs/S
 - [x] Архитектура, модульные пробелы тестов и критерии максимальной приёмки обновлены в scenarios/docs/SCORE_PLAN.md, команды/границы нагрузки в CONCURRENT_CALLS.md.
 - [ ] CPU-подготовка нового hosted Actions job ещё должна пройти удалённо; локальныйact использовал существующий закрытыйGPUстенд. Не объявлять общийCI зелёным: DOCX gate красный.
 - [ ] Endpoint/noise и20полных SIP/booking диалогов остаются отдельным приоритетом. РучнойMISdraft пока API, отдельная UI форма не завершена. НовыйUI33d41a8 опубликован агентом, root его не сливал.
+
+### Рабочая область регистратора: локальная приёмка — 22.10.2026
+
+- [x] Рабочая тема и docking из единственного `adjust-web-page-styles (1).zip`, MIT notice, без переноса fake auth/sql.js/speechSynthesis/записей. Звонки слева, МИС справа, разговор/автомат в центре; админский editor и ObserverCall.jsx не менялись.
+- [x] 22 Chromium UI проверки: все четыре края мышью, отдельное окно, resize обеих осей и клавиатура, Escape/reset, сохранение layout/темы, 900/390px, clipboard, гонки и предупреждения. Screenshot 01–05 просмотрены.
+- [x] 8 настоящих browser→editor/Repository/Learning/knowledge проверок: документы/шаги единого scenarios, scoped-предложение из схемы, queued line100, неизменный общий сценарий, ACL и blocked activation. 25 целевых серверных тестов и сборка прошли.
+- [ ] Выполнить новые UI runners в act/Actions на опубликованном SHA и общий audio→ASR→FSM→архив прогон. Локальная UI-приёмка не заменяет эти проверки. Полные доказательства: `debug/runs/registrar-mis-panel/ACCEPTANCE.md`.
+
+## Единая ветка: объединённый UI —22.10.2026
+
+- [x] Влит33d41a8 в feature/score-acceptance. После merge Chromium:22UI+8настоящихHTTP/SQLite/knowledge проверок на ASR/FSM архиве из предыдущего20call прогона; screenshots лично проверены. MIS справа, панели переносятся/изменяются, admin save/restore сохранены.
+- [x] Новые browser runners добавлены в visual-editor Actions; исправлено значение CHROME_PATH='' для Playwright Chromium в runner панели. Workflow act проверяется отдельно.
+- [ ] Продолжить незавершённые stash-изменения, исправить провалившиеся CI и свернуть полностью merged служебные ветки в одну ветку публикации.

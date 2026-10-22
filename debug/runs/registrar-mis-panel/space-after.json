@@ -3,14 +3,14 @@
   "filesystems": [
     {
       "path": "/home",
-      "free_bytes": 19524530176,
-      "reserve_bytes": 10737418240,
+      "free_bytes": 19384819712,
+      "reserve_bytes": 5368709120,
       "planned_bytes": 0,
       "ok": true
     },
     {
       "path": "/",
-      "free_bytes": 160392400896,
+      "free_bytes": 160375623680,
       "reserve_bytes": 5368709120,
       "planned_bytes": 0,
       "ok": true

@@ -4,6 +4,7 @@
   "checks": [
     "Admin edits an existing block in Chromium and saves through real Repository HTTP",
     "Admin restores the actual saved historical version",
+    "Real knowledge API supplies exact local documents and flow steps; admin link opens the existing editor",
     "Actual archived transcript and trace display exactly, including the final recorded state; this is archive validation only",
     "Registrar proposal persists as queued on line 100 despite forged query scope; line 101 remains empty and common project is unchanged",
     "Real backend denies observer writes, registrar global edits, and proposals for calls outside the owned archive",

@@ -4,20 +4,21 @@
  */
 import {chromium} from '../scenario-editor/node_modules/playwright/index.mjs';
 import {spawn} from 'node:child_process';
-import {mkdir,writeFile} from 'node:fs/promises';
+import {mkdir,writeFile,readFile,rm} from 'node:fs/promises';
 import assert from 'node:assert/strict';
 const root=new URL('..',import.meta.url).pathname,out=root+'debug/runs/registrar-mis-panel/';
-await mkdir(out,{recursive:true});
+await mkdir(out,{recursive:true});await rm(out+'failure.png',{force:true});
 const port=Number(process.env.MIS_PANEL_TEST_PORT||5187),base=`http://127.0.0.1:${port}`;
 const server=spawn(process.execPath,[root+'scenario-editor/node_modules/vite/bin/vite.js','--host','127.0.0.1','--port',String(port),'--strictPort'],{cwd:root+'scenario-editor',stdio:['ignore','pipe','pipe']});
 let serverLog='',browser;server.stdout.on('data',b=>serverLog+=b);server.stderr.on('data',b=>serverLog+=b);
 const checks=[],errors=[];
+const helpText=await readFile(root+'docs/acceptance/GOAL.md','utf8');
 const long='Очень длинное значение '.repeat(80)+'КОНЕЦ';
 const makeCall=(id,result=[{full_name:'Фёдоров Пётр Ильич',nullable:null,nested:{поле:'значение'},empty:'',long}])=>({call_id:id,archive_source:'local',created_at:'2026-10-21T12:00:00+03:00',kind:'text',can_propose:false,trace:['demo.start'],graph:{titles:{start:'Проверка записи'},nodes:{start:{id:'demo.start',title:'Проверка записи',lines:['Сохранённая реплика']}},branches:{}},transcript:[{role:'assistant',text:'Сохранённая реплика',step_index:0,state:'demo.start'}],source_data:{mode:'file_snapshot',sources:[]},queries:[{id:'q-'+id,state:'demo.start',step_index:0,sql:'SELECT * FROM doctors WHERE id=:doctor',params:{doctor:42,optional:null,filter:{specialty:'офтальмолог'}},result}]});
 const calls={first:makeCall('first'),second:makeCall('second',[{doctor:'Другой врач',value:0,confirmed:false}]),empty:makeCall('empty',[]),missing:makeCall('missing')};delete calls.missing.queries[0].result;
 try{
  for(let i=0;i<100;i++){try{if((await fetch(base)).ok)break}catch{}if(server.exitCode!==null)throw Error(serverLog);await new Promise(r=>setTimeout(r,100));if(i===99)throw Error('Vite did not start')}
- browser=await chromium.launch({executablePath:process.env.CHROME_PATH||'/opt/google/chrome/chrome',headless:true,args:['--no-sandbox']});
+ browser=await chromium.launch({executablePath:process.env.CHROME_PATH===undefined?'/opt/google/chrome/chrome':process.env.CHROME_PATH||undefined,headless:true,args:['--no-sandbox']});
  const context=await browser.newContext({viewport:{width:1660,height:1050},permissions:['clipboard-read','clipboard-write']});
  const page=await context.newPage();page.setDefaultTimeout(8000);page.on('pageerror',e=>errors.push(String(e)));
  let slowStarted,releaseSlow;const slowStartedPromise=new Promise(r=>slowStarted=r),slowRelease=new Promise(r=>releaseSlow=r);
@@ -26,6 +27,8 @@ try{
   if(path==='/api/me')data={role:'observer',registrar:'100'};
   else if(path==='/api/workshop/calls')data={calls:Object.values(calls),warnings:['Телефонный архив временно недоступен. Сохранённые тестовые разговоры доступны.']};
   else if(path==='/api/workshop/cases')data={cases:[],badges:{},labelled_examples:0};
+  else if(path==='/api/workshop/knowledge')data={revision:'fixture-project',flows:[{name:'demo',title:'Проверка реального каталога',entry:'start',state_count:1}],documents:[{id:'acceptance-goal',title:'Условия приёмки',path:'docs/acceptance/GOAL.md',format:'markdown'}]};
+  else if(path==='/api/workshop/knowledge/document')data={id:'acceptance-goal',title:'Условия приёмки',path:'docs/acceptance/GOAL.md',format:'markdown',content:helpText};
   else if(path==='/api/workshop/step')data={current:{id:'demo.start',title:'Начало',lines:[]},parents:[],next:[]};
   else if(path==='/api/workshop/call'){const id=url.searchParams.get('id');if(id==='slow'){slowStarted();await slowRelease;data=makeCall('slow')}else data=calls[id]}
   else if(path==='/api/demo-call/start')data={...calls.first,call_id:'live-fixture',state:'demo.start',title:'Текущий звонок',prompt:'Проверочный вопрос',steps:[{title:'Начало'}],finished:false};
@@ -50,7 +53,7 @@ try{
  await btn('Копировать текст запроса').click();assert.equal(await page.evaluate(()=>navigator.clipboard.readText()),calls.first.queries[0].sql);checks.push('Every parameter and SQL text has a working copy control');
  await inspector.locator('.query-results').first().evaluate(el=>el.scrollLeft=0);
  await page.evaluate(()=>window.scrollTo(0,0));
- const splitter=page.getByLabel('Ширина панели базы данных'),before=Number(await splitter.getAttribute('aria-valuenow')),box=await splitter.boundingBox();await page.mouse.move(box.x+3,box.y+70);await page.mouse.down();await page.mouse.move(box.x-100,box.y+70,{steps:8});await page.mouse.up();assert.ok(Number(await splitter.getAttribute('aria-valuenow'))>before+70);await splitter.focus();await page.keyboard.press('Home');assert.equal(Number(await splitter.getAttribute('aria-valuenow')),260);await splitter.dblclick();checks.push('Right panel resizes with real pointer and keyboard');
+ const splitter=page.getByLabel('Ширина панели базы данных'),before=Number(await splitter.getAttribute('aria-valuenow')),box=await splitter.boundingBox();await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();await page.mouse.move(box.x-100,box.y+box.height/2,{steps:8});await page.mouse.up();assert.ok(Number(await splitter.getAttribute('aria-valuenow'))>before+70);await splitter.focus();await page.keyboard.press('Home');assert.equal(Number(await splitter.getAttribute('aria-valuenow')),225);await splitter.dblclick();checks.push('Right panel resizes with real pointer and keyboard');
  await page.screenshot({path:out+'01-right-panel-archive.png',fullPage:true});
  // Exercise the actual legacy browser copy operation after Clipboard API denial.
  await page.evaluate(()=>{window.savedClipboard=navigator.clipboard;Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:()=>Promise.reject(Error('Denied'))}})});
@@ -61,9 +64,25 @@ try{
  await open('empty');await inspector.getByText('Запрос вернул пустой список. Совпадений нет.').waitFor();
  await open('missing');await inspector.getByText('Результат запроса не сохранён.').waitFor();checks.push('Empty query and missing result are distinguished');
  await page.getByLabel('Номер звонка').fill('slow');await page.getByRole('button',{name:'Открыть звонок',exact:true}).click();await slowStartedPromise;await open('second');releaseSlow();await page.waitForTimeout(300);assert.equal(await inspector.locator('.query-call').innerText(),'Звонок: second');checks.push('Late archive response cannot replace the newer selection');
- await page.getByRole('button',{name:'Начать пробный звонок',exact:true}).click();await inspector.locator('.query-call').filter({hasText:'live-fixture'}).waitFor();assert.ok((await inspector.innerText()).includes('Фёдоров'));checks.push('Live onStep response populates the same right panel');
+ await page.getByRole('button',{name:'Пробный звонок',exact:true}).click();await page.getByRole('button',{name:'Начать пробный звонок',exact:true}).click();await inspector.locator('.query-call').filter({hasText:'live-fixture'}).waitFor();assert.ok((await inspector.innerText()).includes('Фёдоров'));checks.push('Live onStep response populates the same right panel');
  await page.screenshot({path:out+'02-right-panel-live.png',fullPage:true});
- await page.setViewportSize({width:900,height:900});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1));const mediumMain=await page.locator('.quest-main').boundingBox(),mediumPane=await page.locator('.query-sidebar').boundingBox();assert.ok(mediumPane.x>=mediumMain.x+mediumMain.width);checks.push('900px layout keeps the response adjacent without page overflow');
+ // Stable React children must survive every panel placement; no DOM reparenting.
+ await page.evaluate(()=>{window.inspectorBeforeDock=document.querySelector('.query-inspector')});
+ const host=page.locator('.dock-workspace'),misPanel=page.locator('[data-panel="mis"]'),misGrip=page.getByRole('button',{name:'Переместить панель МИС',exact:true});
+ async function dragMis(x,y){const grip=await misGrip.boundingBox();await page.mouse.move(grip.x+35,grip.y+grip.height/2);await page.mouse.down();await page.mouse.move(x,y,{steps:14});await page.mouse.up()}
+ let work=await host.boundingBox();await dragMis(work.x+work.width/2,work.y+20);assert.equal(await misPanel.getAttribute('data-placement'),'top');assert.ok(await page.evaluate(()=>window.inspectorBeforeDock===document.querySelector('.query-inspector')));checks.push('Real pointer docks MIS at the top without remounting its React content');
+ const verticalResize=page.getByLabel('Высота панели базы данных'),heightBefore=Number(await verticalResize.getAttribute('aria-valuenow'));await verticalResize.focus();await page.keyboard.press('ArrowDown');assert.ok(Number(await verticalResize.getAttribute('aria-valuenow'))>heightBefore);checks.push('Docked top panel supports keyboard height resizing');
+ work=await host.boundingBox();for(const [side,x,y] of [['left',work.x+20,work.y+work.height/2],['bottom',work.x+work.width/2,work.y+work.height-20],['right',work.x+work.width-20,work.y+work.height/2]]){await dragMis(x,y);assert.equal(await misPanel.getAttribute('data-placement'),side);assert.ok(await page.evaluate(()=>window.inspectorBeforeDock===document.querySelector('.query-inspector')))}checks.push('Actual pointer moves the panel to all four edges while retaining its React subtree');
+ work=await host.boundingBox();await dragMis(work.x+work.width*.55,work.y+work.height*.4);assert.equal(await misPanel.getAttribute('data-placement'),'float');
+ const floatingResize=page.getByLabel('Размер плавающей панели МИС'),floatBefore=await misPanel.boundingBox(),resizeBox=await floatingResize.boundingBox();await page.mouse.move(resizeBox.x+6,resizeBox.y+6);await page.mouse.down();await page.mouse.move(resizeBox.x+48,resizeBox.y+36,{steps:8});await page.mouse.up();const floatAfter=await misPanel.boundingBox();assert.ok(floatAfter.width>floatBefore.width+25);assert.ok(floatAfter.height>floatBefore.height+15);await floatingResize.focus();await page.keyboard.press('ArrowDown');assert.ok((await misPanel.boundingBox()).height>floatAfter.height);checks.push('Floating panel resizes in both dimensions with real pointer and keyboard');
+ const stored=await page.evaluate(()=>localStorage.getItem('clinic-workspace-layout-v1')),cancelGrip=await misGrip.boundingBox();await page.mouse.move(cancelGrip.x+20,cancelGrip.y+10);await page.mouse.down();await page.mouse.move(work.x+15,work.y+100,{steps:6});await page.keyboard.press('Escape');await page.mouse.up();assert.equal(await misPanel.getAttribute('data-placement'),'float');assert.equal(await page.evaluate(()=>localStorage.getItem('clinic-workspace-layout-v1')),stored);checks.push('Escape cancels a panel drag without changing saved layout');
+ await page.getByLabel('Расположение панели Звонки').selectOption('bottom');assert.equal(await page.locator('[data-panel="calls"]').getAttribute('data-placement'),'bottom');checks.push('Keyboard-accessible placement control docks calls at the bottom');
+ await page.getByLabel('Тема рабочего места').selectOption('dark');assert.equal(await page.locator('.registrar-workshop').getAttribute('data-theme'),'dark');await page.screenshot({path:out+'04-floating-dark.png',fullPage:true});
+ await page.reload();await misPanel.waitFor();assert.equal(await misPanel.getAttribute('data-placement'),'float');assert.equal(await page.locator('[data-panel="calls"]').getAttribute('data-placement'),'bottom');assert.equal(await page.locator('.registrar-workshop').getAttribute('data-theme'),'dark');assert.equal(await page.evaluate(()=>localStorage.getItem('clinic-workspace-layout-v1')),stored.replace('"side":"left"','"side":"bottom"'));checks.push('Panel placement, size and dark theme survive reload');
+ await page.getByRole('button',{name:'Вернуть исходный вид',exact:true}).click();assert.equal(await misPanel.getAttribute('data-placement'),'right');assert.equal(await page.locator('[data-panel="calls"]').getAttribute('data-placement'),'left');checks.push('Reset restores calls-left and MIS-right defaults');
+ await page.getByLabel('Тема рабочего места').selectOption('light');await page.getByRole('button',{name:'Схемы / Справка',exact:true}).click();await page.getByRole('button',{name:'Условия приёмки',exact:false}).click();assert.equal(await page.locator('.knowledge-content').textContent(),helpText);assert.equal(await page.locator('.knowledge-editor').count(),0);await page.screenshot({path:out+'05-schemas-help.png',fullPage:true});checks.push('Read-only help renders exact repository document text and does not offer the admin editor to observer');
+ await page.getByRole('button',{name:'Разговор',exact:true}).click();await page.getByRole('button',{name:'Начать пробный звонок',exact:true}).click();await inspector.locator('.query-call').filter({hasText:'live-fixture'}).waitFor();
+ await page.setViewportSize({width:900,height:900});await page.waitForFunction(()=>{const main=document.querySelector('.quest-main').getBoundingClientRect(),pane=document.querySelector('.query-sidebar').getBoundingClientRect();return pane.left>=main.right-.5&&pane.right<=innerWidth+1});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1));checks.push('900px layout keeps the response adjacent without page overflow');
  await page.setViewportSize({width:390,height:844});await inspector.scrollIntoViewIfNeeded();
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),'Narrow page must not overflow horizontally');
  await inspector.getByRole('button',{name:'Копировать full_name, строка 1',exact:true}).click();assert.equal(await page.evaluate(()=>navigator.clipboard.readText()),'Фёдоров Пётр Ильич');
