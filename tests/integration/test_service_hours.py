@@ -17,7 +17,8 @@ def test_regulation_hours_and_dated_exception_use_same_database(tmp_path, monkey
     load(reg, {'CRM_SERVICE_CALENDAR':str(calendar)})
     assert not crm.handle('meta',{})[1]['operator_available']
     assert crm.handle('callback_request', {'call_id':'closed','preferred_date':'2026-10-17','preferred_time':'11:00'})[0] == 'invalid'
-    assert crm.handle('callback_request', {'call_id':'open','preferred_date':'2026-10-19','preferred_time':'08:00'})[0] == 'ok'
+    assert crm.handle('callback_request', {'call_id':'early','preferred_date':'2026-10-19','preferred_time':'08:00'})[0] == 'invalid'
+    assert crm.handle('callback_request', {'call_id':'open','preferred_date':'2026-10-19','preferred_time':'10:00'})[0] == 'ok'
     assert crm.handle('schedule.service',{})[1]['schedule']['source'] == 'clinic_order'
 
 

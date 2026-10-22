@@ -107,7 +107,7 @@ def execute(base, output_dir="debug/runs/dtmf-only", *, operator_available=True)
         if operator_available:
             assert state["status"] == "transfer", state
         else:
-            assert state["state"] == "callback.ask", state
+            assert state["state"] == "callback.ask_consent", state
             assert state["vars"]["operator_available"] is False, state
             assert state["transfer"] is None and not state["finished"] and not state["errors"], state
     return {

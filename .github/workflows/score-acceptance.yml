@@ -48,6 +48,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
       - name: Replay fixed audio integrity and identity regressions without external models
         run: python -m pytest tests/integration/test_incremental_identity.py tests/integration/test_speech_regression.py tests/contracts/test_identity_readback.py -q --timeout=30 --junitxml=debug/runs/score-acceptance/speech-regression.xml
+      - name: Verify duplicate booking and night recovery against disposable MIS
+        run: python -m pytest tests/integration/test_dialogue_recovery.py tests/integration/test_crm.py tests/integration/test_service_hours.py -q --timeout=30 --junitxml=debug/runs/score-acceptance/recovery.xml
       - name: Exercise administrator changes and provisional registrar edits
         run: python -m pytest tests/integration/test_scenario_editor.py tests/integration/test_learning.py tests/integration/test_workshop_access.py -q --timeout=30 --junitxml=debug/runs/score-acceptance/scenario-editing.xml
       - uses: actions/upload-artifact@v4

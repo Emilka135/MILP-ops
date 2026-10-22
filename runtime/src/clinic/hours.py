@@ -75,3 +75,12 @@ def summary(reg):
             + time_to_words(time.fromisoformat(row["closes"]))
         )
     return "; ".join(parts)
+
+
+def callback_open(reg, at):
+    """Registrar operating hours intersect the explicit 10:00–16:00 callback window."""
+    return time(10) <= at.time().replace(tzinfo=None) <= time(16) and is_open(reg, at)
+
+
+def callback_summary(reg):
+    return "с десяти до шестнадцати часов в рабочие дни регистратуры"

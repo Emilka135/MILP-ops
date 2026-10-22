@@ -126,10 +126,13 @@ impl App {
                             "operation_key".into(),
                             json!(format!("{id}:{}", a.request_id.unwrap_or(0))),
                         );
-                        if op == "callback_request" {
+                        if matches!(
+                            op,
+                            "callback_request" | "recovery.route" | "booking_request"
+                        ) {
                             p.insert(
                                 "context".into(),
-                                json!({"vars":c.session.vars,"history":c.session.history}),
+                                json!({"vars":c.session.vars,"history":c.session.history,"dialogue":c.transcript}),
                             );
                         }
                     }

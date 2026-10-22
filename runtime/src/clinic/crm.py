@@ -66,9 +66,11 @@ class StrictStand:
         if plan['invalid_fields']:
             raise MisError("Некорректные поля МИС: " + ', '.join(plan['invalid_fields']), 400, "MIS_INVALID_FIELDS")
         method, path, body, query = plan['method'], plan['path'], plan['body'], plan['query']
-        with self.lock:
-            if not self.bucket.acquire(timeout=60):
-                raise MisError("Лимит МИС: повторите позже", 429, "ПРЕВЫШЕН_ЛИМИТ")
+        if not self.lock.acquire(timeout=2):
+            raise MisError("Очередь МИС занята", 429, "MIS_LOCAL_BUSY")
+        try:
+            if not self.bucket.acquire(timeout=5):
+                raise MisError("Лимит МИС: повторите позже", 429, "MIS_LOCAL_BUSY")
             url = self.client.base_url + path
             if query:
                 url += "?" + urllib.parse.urlencode(query)
@@ -86,6 +88,8 @@ class StrictStand:
                     retry_after=self.client._retry_after(headers),
                 )
             return json.loads(raw) if raw else {}
+        finally:
+            self.lock.release()
 
     def pages(self, path):
         result = []
@@ -125,6 +129,13 @@ class ClinicCrm:
         self.mutations = threading.Lock()
         self._last_slots_sync = None
         self.reg._conn.executescript(EXTRA_SCHEMA)
+        from . import booking_conflict, recovery
+        self.reg._conn.executescript(booking_conflict.SCHEMA + recovery.SCHEMA)
+        self.recovery_reasoner = None  # Explicit production integration only; never a CI dependency.
+        self.recovery_analyses = set()
+        self.recovery_analysis_lock = threading.Lock()
+        self.recovery_analysis_budget = threading.BoundedSemaphore(1)
+        self.doctor_bank_sync = None
         from .planner_store import SCHEMA as PLAN_SCHEMA
 
         self.reg._conn.executescript(PLAN_SCHEMA)
@@ -148,6 +159,26 @@ class ClinicCrm:
 
     def handle(self, op, args):
         try:
+            if op == "booking_conflict":
+                from .booking_conflict import check
+                if not self.mutations.acquire(timeout=2):
+                    return "busy", {"error": "mutation_queue_busy", "retry_after": 2}
+                try:
+                    return check(self, args, now())
+                finally:
+                    self.mutations.release()
+            if op == "recovery.route":
+                from .recovery import route
+                return route(self, args, now())
+            if op == "booking_request":
+                call_id = str(args.get("call_id") or "")
+                if not call_id or args.get("consent") is not True:
+                    return "invalid", {"error": "explicit_request_consent_required"}
+                context = args.get("context", {})
+                self.reg._x("INSERT OR IGNORE INTO booking_requests(call_id,patient_id,phone,context,created_at) VALUES(?,?,?,?,?)",
+                            (call_id, args.get("patient_id"), str(args.get("phone") or ""), json.dumps(context, ensure_ascii=False), now().isoformat()))
+                self.reg.record_operator_request(call_id, "booking_request_no_callback", json.dumps({"context": context, "contact_policy": "sms_after_confirmed_booking"}, ensure_ascii=False))
+                return "ok", {"request_saved": True, "booking_confirmed": False, "sms_enqueued": False}
             if op == "prepare_mis":
                 from .mis_contract import prepare
                 operation = str(args.get('operation_id', ''))
@@ -226,8 +257,9 @@ class ClinicCrm:
                     "operator_available": os.environ.get("OPERATOR_AVAILABLE", "1")
                     == "1"
                     and self.hours.is_open(self.reg, now()),
-                    "callback_hours": self.hours.summary(self.reg),
+                    "callback_hours": self.hours.callback_summary(self.reg),
                     "hours_source": "service_hours / service_calendar",
+                    "doctor_bank_sync": self.doctor_bank_sync.status if self.doctor_bank_sync else "disabled",
                 }
             if op == "callback_request":
                 preferred = None
@@ -235,15 +267,18 @@ class ClinicCrm:
                     if not args.get("preferred_time"):
                         return "invalid", {}
                     day = args.get("preferred_date") or now().date().isoformat()
-                    preferred = datetime.fromisoformat(
-                        f"{day}T{args['preferred_time']}"
-                    ).replace(tzinfo=CLINIC_TZ)
+                    try:
+                        preferred = datetime.fromisoformat(
+                            f"{day}T{args['preferred_time']}"
+                        ).replace(tzinfo=CLINIC_TZ)
+                    except (ValueError, TypeError):
+                        return "invalid", {}
                     if not args.get("preferred_date") and preferred <= now():
                         preferred += timedelta(days=1)
                     if (
                         preferred <= now()
                         or preferred > now() + timedelta(days=365)
-                        or not self.hours.is_open(self.reg, preferred)
+                        or not self.hours.callback_open(self.reg, preferred)
                     ):
                         return "invalid", {}
                 self.reg._x(
@@ -304,8 +339,15 @@ class ClinicCrm:
                 )
                 return "ok", {**self.module._patient_payload(patient), "booking_id":booking.id}
             if op in ("book", "cancel", "reschedule", "confirm"):
-                with self.mutations:
-                    return self.mutate(op, args)
+                if not self.mutations.acquire(timeout=2):
+                    return "busy", {"error": "mutation_queue_busy", "retry_after": 2}
+                try:
+                    result = self.mutate(op, args)
+                    if result[0] == "error" and "operation_state" not in result[1]:
+                        self.reg._x("DELETE FROM transaction_failures WHERE call_id=?", (str(args.get("call_id") or ""),))
+                    return result
+                finally:
+                    self.mutations.release()
             if op == "stand.status":
                 rows = self.reg.execute(
                     "SELECT key,op,state,remote_id,created_at FROM operations ORDER BY created_at DESC LIMIT 100"
@@ -356,6 +398,11 @@ class ClinicCrm:
                 }
             if op == "sms_enqueue":
                 v = args.get("vars", {})
+                booking = self.reg.booking(int(v.get("booking_id") or 0))
+                expected = "cancelled" if args.get("template") == "cancelled" else "booked"
+                synced = booking and self.reg._q("SELECT 1 FROM bookings WHERE id=? AND sync_state='synced'", (booking.id,))
+                if booking is None or booking.status != expected or not synced or booking.patient_id != int(v.get("patient_id") or 0):
+                    return "error", {"error": "confirmed_booking_required"}
                 p = self.reg.patient_by_id(int(v.get("patient_id", 0)))
                 if p is None or not p.phone:
                     return "error", {"error": "phone is missing"}
@@ -483,6 +530,21 @@ class ClinicCrm:
                 return "error", {"error":"referral_not_verified"}
             if self.stand and (self._last_slots_sync is None or time.monotonic()-self._last_slots_sync>300):
                 return "error", {"error":"availability_not_synchronized"}
+        if op == "book":
+            from .specialty_dictionary import canonical_specialty
+            # A lost acknowledgement must never become a second visit under a
+            # new operation key, even when a new free slot was selected.
+            for pending in self.reg._q("SELECT key,args FROM operations WHERE op IN ('book','reschedule') AND state IN ('pending','uncertain')"):
+                previous = json.loads(pending["args"])
+                previous_slot = self.reg.slot(int(previous.get("slot_id") or 0))
+                if int(previous.get("patient_id") or 0) == pid and previous_slot and canonical_specialty(previous_slot.specialty) == canonical_specialty(slot.specialty):
+                    self.reg._x("INSERT OR REPLACE INTO transaction_failures VALUES(?,?,?,?,?)",
+                                (str(args.get("call_id") or ""), pending["key"], "uncertain", "RECONCILIATION_REQUIRED", now().isoformat()))
+                    return "error", {"error": "operation requires reconciliation", "operation_state": "uncertain", "error_kind": "mis_transaction"}
+            from .booking_conflict import check
+            status, conflict = check(self, {"patient_id": pid, "specialty": slot.specialty, "call_id": args.get("call_id")}, now(), allow_consent=True)
+            if status == "conflict":
+                return status, conflict
         # Persist intent and reserve the target BEFORE contacting the remote API.
         with self.reg._lock:
             conn = self.reg._conn
@@ -675,9 +737,19 @@ class ClinicCrm:
                 "stand_reconciliation",
                 json.dumps({"operation_key": key, "state": state}),
             )
+            # Only a runtime remote transaction failure enters this route. Form
+            # validation and CI failures never insert a transaction failure row.
+            local_busy = getattr(exc, "code", "") == "MIS_LOCAL_BUSY"
+            form_error = getattr(exc, "code", "") in {"MIS_MISSING_FIELDS", "MIS_INVALID_FIELDS", "MIS_UNKNOWN_OPERATION"}
+            if self.stand and op != "confirm" and not form_error and not local_busy:
+                self.reg._x("INSERT OR REPLACE INTO transaction_failures VALUES(?,?,?,?,?)",
+                            (str(args.get("call_id") or ""), key, state, str(getattr(exc, "code", type(exc).__name__)), now().isoformat()))
+            if local_busy:
+                return "busy", {"error": "mis_budget_busy", "operation_state": state, "retry_after": 5}
             return "error", {
                 "error": "МИС не подтвердила изменение; передаю оператору",
                 "operation_state": state,
+                "error_kind": "validation" if form_error else "mis_transaction" if self.stand else "local_transaction",
             }
 
     def pull(self):
@@ -710,7 +782,14 @@ class ClinicCrm:
                 conn.execute("ROLLBACK")
                 raise
         self._last_slots_sync = time.monotonic()
-        return "ok", {"visits": len(visits), "doctors": len(doctors)}
+        bank_status = "disabled"
+        if os.environ.get("TTS_DOCTOR_BANK_SYNC") == "1":
+            if self.doctor_bank_sync is None:
+                from .doctor_bank_sync import DoctorBankSync
+                from .admin_rpc import module_call
+                self.doctor_bank_sync = DoctorBankSync(module_call)
+            bank_status = self.doctor_bank_sync.enqueue(doctors)
+        return "ok", {"visits": len(visits), "doctors": len(doctors), "doctor_bank_sync": bank_status}
 
     def refresh_availability(self):
         """Read-only API reconciliation shares the single CRM rate limiter."""

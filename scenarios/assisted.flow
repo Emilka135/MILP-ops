@@ -40,7 +40,9 @@ state book
   call crm.book patient_id=$patient_id slot_id=$slot_id
   ok -> success
   taken -> offer_fetch
-  error -> operator reason=crm_error
+  conflict -> conflict_race
+  busy -> recovery.overload
+  error -> recovery.route
 
 state success
   set agent_completed = true
@@ -78,16 +80,22 @@ state operator
   end transfer
 
 state identify_full
-  enter identity.name -> ask_request
+  enter identity.begin -> ask_request
 
 state requirements
   call crm.referral_required specialty=$specialty
   required -> verify_referral
-  not_required -> offer_fetch
+  not_required -> conflict_check
   error -> operator reason=unknown_specialty
 
 state verify_referral
   call crm.check_referral patient_id=$patient_id specialty=$specialty
-  ok -> offer_fetch
+  ok -> conflict_check
   missing -> operator reason=referral_not_verified
   error -> operator reason=crm_error
+
+state conflict_check
+  enter booking_conflict.check -> offer_fetch
+
+state conflict_race
+  enter booking_conflict.ask -> offer_fetch

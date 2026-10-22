@@ -5,7 +5,7 @@ flow voice
 
 state identity
   set intent = book
-  enter identity.name -> ready
+  enter identity.begin -> ready
 
 state ready
   goto inbound.book_entry

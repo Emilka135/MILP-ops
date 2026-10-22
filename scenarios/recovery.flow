@@ -1,0 +1,52 @@
+flow recovery
+  rate 1.5
+  entry route
+
+state route
+  call crm.recovery.route
+  operator -> transfer
+  callback -> night
+  form_error -> form_error
+  busy -> overload
+  error -> form_error
+
+state transfer
+  say "{recovery_message}"
+  transfer reason=mis_transaction
+  end transfer
+
+state form_error
+  switch operator_available
+  case false -> callback.ask_consent
+  default -> form_handoff
+
+state overload
+  say "Система записи сейчас занята. Передам ваш вопрос регистратору."
+  switch operator_available
+  case false -> callback.ask_consent
+  default -> form_handoff
+
+state form_handoff
+  say "Не удалось проверить данные. Передам ваш вопрос регистратору."
+  set reason = data_validation
+  goto inbound.operator
+
+state night
+  switch reasoning_available
+  case true -> reasoning_notice
+  default -> callback.ask_consent
+
+state reasoning_notice
+  say "Оператора сейчас нет на месте. Вашим запросом занимается ИИ, пожалуйста, подождите."
+  call crm.recovery.route analyze=true
+  clarify -> clarify
+  callback -> callback.ask_consent
+  operator -> transfer
+  error -> callback.ask_consent
+
+state clarify
+  say "{recovery_question}"
+  listen 20s
+  any -> callback.ask_consent
+  timeout 20s -> callback.ask_consent
+  silence -> callback.ask_consent
