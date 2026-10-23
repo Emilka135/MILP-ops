@@ -1,0 +1,25 @@
+time="2026-10-22T18:01:41+03:00" level=info msg="Using docker host 'unix:///var/run/docker.sock', and daemon socket 'unix:///var/run/docker.sock'"
+[twenty real audio calls/audio] ⭐ Run Set up job
+[twenty real audio calls/audio] 🚀  Start image=catthehacker/ubuntu:act-24.04
+[twenty real audio calls/audio]   🐳  docker pull image=catthehacker/ubuntu:act-24.04 platform= username= forcePull=false
+[twenty real audio calls/audio]   🐳  docker create image=catthehacker/ubuntu:act-24.04 platform= entrypoint=["tail" "-f" "/dev/null"] cmd=[] network="clinic-concurrent-acceptance_isolated"
+[twenty real audio calls/audio]   🐳  docker run image=catthehacker/ubuntu:act-24.04 platform= entrypoint=["tail" "-f" "/dev/null"] cmd=[] network="clinic-concurrent-acceptance_isolated"
+[twenty real audio calls/audio]   🐳  docker exec cmd=[node --no-warnings -e console.log(process.execPath)] user= workdir=
+[twenty real audio calls/audio]   ✅  Success - Set up job
+[twenty real audio calls/audio]   ☁  git clone 'https://github.com/actions/setup-python' # ref=v5
+[twenty real audio calls/audio]   ☁  git clone 'https://github.com/dtolnay/rust-toolchain' # ref=1.98.0
+[twenty real audio calls/audio] ⭐ Run Pre dtolnay/rust-toolchain@1.98.0
+[twenty real audio calls/audio]   ✅  Success - Pre dtolnay/rust-toolchain@1.98.0 [20.352731ms]
+[twenty real audio calls/audio]   ☁  git clone 'https://github.com/actions/upload-artifact' # ref=v4
+[twenty real audio calls/audio] ⭐ Run Main actions/checkout@v4
+[twenty real audio calls/audio]   ✅  Success - Main actions/checkout@v4 [805.773µs]
+[twenty real audio calls/audio] ⭐ Run Main Twenty simultaneous speech, tones and mixed calls with independent targets
+[twenty real audio calls/audio]   🐳  docker exec cmd=[bash -e /var/run/act/workflow/6] user= workdir=
+[twenty real audio calls/audio]   | {"status": "passed", "mode": "speech", "concurrent_calls": 20, "turns": 40, "max_turn_s": 1.296969345999969, "p95_turn_s": 1.1813535490000504, "total_s": 2.0219769720024487}
+[twenty real audio calls/audio]   | {"status": "passed", "mode": "dtmf", "concurrent_calls": 20, "turns": 40, "max_turn_s": 0.18142511300175101, "p95_turn_s": 0.18125045499982662, "total_s": 0.5765922669997963}
+[twenty real audio calls/audio]   | {"status": "passed", "mode": "mixed", "concurrent_calls": 20, "turns": 40, "max_turn_s": 1.2693795439990936, "p95_turn_s": 1.1568184489988198, "total_s": 1.8394832340018183}
+[twenty real audio calls/audio]   ✅  Success - Main Twenty simultaneous speech, tones and mixed calls with independent targets [5.229851179s]
+[twenty real audio calls/audio] ⭐ Run Complete job
+[twenty real audio calls/audio] Cleaning up container for job audio
+[twenty real audio calls/audio]   ✅  Success - Complete job
+[twenty real audio calls/audio] 🏁  Job succeeded

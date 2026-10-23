@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "seed": 20261022,
+  "synthetic": true,
+  "case_timeout_seconds": 60,
+  "corpus_timeout_seconds": 600,
+  "items": [
+    {
+      "id": "missing_patronymic-1",
+      "case": "missing_patronymic",
+      "turn": 1,
+      "text": "Хочу записаться к офтальмологу.",
+      "voice": "ru_alexandr",
+      "speed": 0.75,
+      "target_state": "appointment_confirmation",
+      "file": "missing_patronymic-1.wav"
+    },
+    {
+      "id": "missing_patronymic-2",
+      "case": "missing_patronymic",
+      "turn": 2,
+      "text": "Иванов Иван, родился двенадцатого апреля тысяча девятьсот восемьдесят пятого года.",
+      "voice": "ru_alexandr",
+      "speed": 2.5,
+      "target_state": "appointment_confirmation",
+      "file": "missing_patronymic-2.wav"
+    },
+    {
+      "id": "missing_patronymic-3",
+      "case": "missing_patronymic",
+      "turn": 3,
+      "text": "Отчество Петрович.",
+      "voice": "ru_dmitriy",
+      "speed": 0.75,
+      "target_state": "appointment_confirmation",
+      "file": "missing_patronymic-3.wav"
+    },
+    {
+      "id": "missing_patronymic-4",
+      "case": "missing_patronymic",
+      "turn": 4,
+      "text": "Да, всё верно.",
+      "voice": "ru_dmitriy",
+      "speed": 1,
+      "target_state": "appointment_confirmation",
+      "file": "missing_patronymic-4.wav"
+    },
+    {
+      "id": "duplicate_appointment-1",
+      "case": "duplicate_appointment",
+      "turn": 1,
+      "text": "Запишите меня к офтальмологу.",
+      "voice": "ru_dmitriy",
+      "speed": 0.75,
+      "target_state": "duplicate_confirmation",
+      "file": "duplicate_appointment-1.wav"
+    },
+    {
+      "id": "duplicate_appointment-2",
+      "case": "duplicate_appointment",
+      "turn": 2,
+      "text": "Я уже записан на сегодня в четырнадцать часов.",
+      "voice": "ru_dmitriy",
+      "speed": 0.75,
+      "target_state": "duplicate_confirmation",
+      "file": "duplicate_appointment-2.wav"
+    },
+    {
+      "id": "duplicate_appointment-3",
+      "case": "duplicate_appointment",
+      "turn": 3,
+      "text": "Старую запись отменять не нужно.",
+      "voice": "ru_dmitriy",
+      "speed": 1,
+      "target_state": "duplicate_confirmation",
+      "file": "duplicate_appointment-3.wav"
+    },
+    {
+      "id": "night_callback-1",
+      "case": "night_callback",
+      "turn": 1,
+      "text": "Хочу записаться к терапевту.",
+      "voice": "ru_alexandr",
+      "speed": 2,
+      "target_state": "callback_saved",
+      "file": "night_callback-1.wav"
+    },
+    {
+      "id": "night_callback-2",
+      "case": "night_callback",
+      "turn": 2,
+      "text": "Да, пусть регистратор перезвонит.",
+      "voice": "ru_ekaterina",
+      "speed": 2,
+      "target_state": "callback_saved",
+      "file": "night_callback-2.wav"
+    },
+    {
+      "id": "night_callback-3",
+      "case": "night_callback",
+      "turn": 3,
+      "text": "Завтра с двенадцати до тринадцати.",
+      "voice": "ru_dmitriy",
+      "speed": 2.5,
+      "target_state": "callback_saved",
+      "file": "night_callback-3.wav"
+    },
+    {
+      "id": "night_no_callback-1",
+      "case": "night_no_callback",
+      "turn": 1,
+      "text": "Запишите меня к терапевту.",
+      "voice": "ru_dmitriy",
+      "speed": 1.75,
+      "target_state": "request_saved",
+      "file": "night_no_callback-1.wav"
+    },
+    {
+      "id": "night_no_callback-2",
+      "case": "night_no_callback",
+      "turn": 2,
+      "text": "Нет, перезванивать не нужно.",
+      "voice": "ru_ekaterina",
+      "speed": 1,
+      "target_state": "request_saved",
+      "file": "night_no_callback-2.wav"
+    },
+    {
+      "id": "night_no_callback-3",
+      "case": "night_no_callback",
+      "turn": 3,
+      "text": "Да, оставьте заявку и пришлите сообщение.",
+      "voice": "ru_oksana",
+      "speed": 0.75,
+      "target_state": "request_saved",
+      "file": "night_no_callback-3.wav"
+    },
+    {
+      "id": "doctor_choice-1",
+      "case": "doctor_choice",
+      "turn": 1,
+      "text": "Хочу к врачу Семёнову.",
+      "voice": "ru_ekaterina",
+      "speed": 1.25,
+      "target_state": "doctor_selected",
+      "file": "doctor_choice-1.wav"
+    },
+    {
+      "id": "doctor_choice-2",
+      "case": "doctor_choice",
+      "turn": 2,
+      "text": "Врач Семёнов Алексей Петрович.",
+      "voice": "ru_dmitriy",
+      "speed": 1.75,
+      "target_state": "doctor_selected",
+      "file": "doctor_choice-2.wav"
+    },
+    {
+      "id": "doctor_choice-3",
+      "case": "doctor_choice",
+      "turn": 3,
+      "text": "Да, подтверждаю выбор врача.",
+      "voice": "ru_alexandr",
+      "speed": 1.5,
+      "target_state": "doctor_selected",
+      "file": "doctor_choice-3.wav"
+    },
+    {
+      "id": "operator-1",
+      "case": "operator",
+      "turn": 1,
+      "text": "Переключите меня на оператора.",
+      "voice": "ru_ekaterina",
+      "speed": 0.75,
+      "target_state": "operator_requested",
+      "file": "operator-1.wav"
+    },
+    {
+      "id": "operator-2",
+      "case": "operator",
+      "turn": 2,
+      "text": "Да, я подожду.",
+      "voice": "ru_dmitriy",
+      "speed": 1,
+      "target_state": "operator_requested",
+      "file": "operator-2.wav"
+    }
+  ]
+}

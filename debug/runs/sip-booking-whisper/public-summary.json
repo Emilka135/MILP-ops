@@ -1,0 +1,19 @@
+{
+  "synthetic_data_only": true,
+  "sip_status": 200,
+  "rtp_in": 1833,
+  "duration_seconds": 52.504758168011904,
+  "booking_passed": true,
+  "cleanup_acknowledged": true,
+  "asr_model": "openai/whisper-large-v3",
+  "configuration_tests_passed": 2,
+  "rust_results": [
+    "test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s",
+    "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+    "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+    "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+    "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+    "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "raw_evidence_location": "VM debug/runs/sip-booking-whisper (not published)"
+}

@@ -1,0 +1,93 @@
+name: DOCX module contracts
+on: [push, pull_request, workflow_dispatch]
+permissions: {contents: read}
+concurrency:
+  group: docx-contracts-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  contracts:
+    name: DOCX / ${{ matrix.module }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        module: [source, label, entities, fsm, mis, audio, capacity]
+    env:
+      APP_MODE: demo
+      AGENT_MODE: deterministic
+      NLU_EMBEDDER: e5
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      OPENAI_API_KEY: ''
+      OPENROUTER_API_KEY: ''
+      DBI_API_TOKEN: ''
+      STAND_TOKEN: ''
+      SMS_GATEWAY_TOKEN: ''
+      CLINIC_CONTRACT_RUN_ID: '${{ github.run_id }}-${{ github.run_attempt }}'
+      CLINIC_ACCEPTANCE_TEST: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Install CPU test dependencies
+        run: |
+          python -m pip install --upgrade -r requirements/bootstrap.txt
+          python -m pip install -r requirements/dev.txt
+      - uses: actions/cache@v4
+        if: contains(fromJSON('["label","entities","fsm","capacity"]'), matrix.module)
+        with:
+          path: modules/nlu/models/multilingual-e5-small
+          key: docx-e5-761b726dd34fb83930e26aab4e9ac3899aa1fa78-${{ runner.os }}
+      - name: Verify pinned CPU encoder
+        if: contains(fromJSON('["label","entities","fsm","capacity"]'), matrix.module)
+        run: python tools/download_nlu.py
+      - uses: dtolnay/rust-toolchain@1.98.0
+        if: contains(fromJSON('["fsm","audio"]'), matrix.module)
+      - name: Compile actual scenario replay probe
+        if: contains(fromJSON('["fsm","audio"]'), matrix.module)
+        run: cargo build --locked --bin contract-replay
+      - name: Probe contract self-check
+        if: matrix.module == 'fsm'
+        run: python -m pytest tests/contracts/test_replay.py -v --junitxml=debug/runs/docx-contracts/replay.xml
+      - name: Validate read/create/update request constructor and missing fields
+        if: matrix.module == 'mis'
+        run: python -m pytest tests/contracts/test_mis_constructor.py -v --junitxml=debug/runs/docx-contracts/mis-constructor.xml
+      - name: Prevent missing or dynamic system notices
+        if: matrix.module == 'audio'
+        run: python -m pytest tests/contracts/test_system_notices.py -v --junitxml=debug/runs/docx-contracts/system-notices.xml
+      - name: Execute source examples against module
+        if: matrix.module != 'capacity'
+        run: python debug/run_docx_contracts.py --module '${{ matrix.module }}'
+      - name: Require 100 real encoder requests per minute on two CPU cores
+        if: matrix.module == 'capacity'
+        run: python debug/run_nlu_capacity.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: docx-contract-${{ matrix.module }}
+          path: debug/runs/docx-contracts/
+  coverage:
+    name: DOCX / all source examples accounted for
+    needs: contracts
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      CLINIC_CONTRACT_RUN_ID: '${{ github.run_id }}-${{ github.run_attempt }}'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: docx-contract-*
+          merge-multiple: true
+          path: debug/runs/docx-contracts/
+      - name: Reject unexecuted source/module contracts
+        run: python debug/check_docx_coverage.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: docx-contract-coverage
+          path: debug/runs/docx-contracts/coverage.json

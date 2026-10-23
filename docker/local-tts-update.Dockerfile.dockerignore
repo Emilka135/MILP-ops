@@ -1,0 +1,12 @@
+**
+!runtime
+!runtime/src
+!runtime/src/**
+!modules
+!modules/tts
+!modules/tts/models
+!modules/tts/models/accentor
+!modules/tts/models/accentor/**
+
+!scenarios
+!scenarios/**

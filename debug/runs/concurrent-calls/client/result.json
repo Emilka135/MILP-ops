@@ -1,0 +1,83 @@
+{
+  "status": "passed",
+  "scope": "Real editor HTTP, Repository history and Learning SQLite; synthetic archive unless provided; no models/MIS/FSM execution",
+  "checks": [
+    "Admin edits an existing block in Chromium and saves through real Repository HTTP",
+    "Admin restores the actual saved historical version",
+    "Actual archived transcript and trace display exactly, including the final recorded state; this is archive validation only",
+    "Registrar proposal persists as queued on line 100 despite forged query scope; line 101 remains empty and common project is unchanged",
+    "Real backend denies observer writes, registrar global edits, and proposals for calls outside the owned archive",
+    "Real nightly preparation does not activate a profile; Learning explicitly blocks approval without deployment",
+    "Independent SQLite snapshot confirms scoped case, two labels, zero bookings and unchanged common project"
+  ],
+  "effects": {
+    "admin_saved_revision": "77986e9a987c6da3309b0ecf46cc5928643dc28bfe29327223233c7c3691a4b5",
+    "restored_revision": "088e6fba0477b49998f5efa1d38c6fc42682815b37dec9d6f7f79beeffc14d3b",
+    "archived": {
+      "call_id": "load-1d0ac2096480-03",
+      "trace": [
+        "voice.identity",
+        "identity.begin",
+        "identity.name",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "target_state": "callback.ask_consent",
+      "transcript": [
+        {
+          "role": "assistant",
+          "text": "Назовите фамилию, имя и отчество пациента. Если удобнее назвать номер полиса ОМС, нажмите два.",
+          "state": "identity.name",
+          "step_index": 2,
+          "source": "scenario"
+        },
+        {
+          "role": "patient",
+          "text": "Да, всё верно.",
+          "state": "identity.name",
+          "step_index": 2,
+          "source": "real_asr"
+        },
+        {
+          "role": "assistant",
+          "text": "Назовите фамилию, имя и отчество пациента. Если удобнее назвать номер полиса ОМС, нажмите два.",
+          "state": "identity.name",
+          "step_index": 3,
+          "source": "scenario"
+        },
+        {
+          "role": "patient",
+          "text": "Переключите меня на оператора.",
+          "state": "identity.name",
+          "step_index": 3,
+          "source": "real_asr"
+        },
+        {
+          "role": "assistant",
+          "text": "Регистратор сейчас недоступен. Хотите, чтобы он перезвонил вам позже? Обратный звонок можно выбрать с десяти до шестнадцати часов. Один — да. Два — нет.",
+          "state": "callback.ask_consent",
+          "step_index": 5,
+          "source": "scenario"
+        }
+      ],
+      "archive_origin": "provided_json_archive",
+      "actual_fsm_executed_by_this_runner": false
+    },
+    "queued_case": {
+      "id": 1,
+      "status": "queued",
+      "registrar": "100",
+      "source_state": "identity.name",
+      "call_id": "load-1d0ac2096480-03"
+    },
+    "review": {
+      "status": "blocked",
+      "payload": {
+        "error": "Развёртывание персональных версий ещё не подключено. Предложение сохранено для проверки."
+      }
+    },
+    "sqlite_verified": true
+  },
+  "errors": []
+}

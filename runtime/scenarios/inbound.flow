@@ -1,0 +1,416 @@
+# Входящий звонок в регистратуру.
+# Политика: сначала DTMF; 60 с без нажатий → ASR; речь без понятного намерения → оператор.
+# Личные данные в подсказках не произносятся: идентификация по СНИЛС / дате рождения / номеру карты.
+flow inbound
+  rate 1.5
+  entry welcome
+
+# ---------------------------------------------------------------- 0. приветствие (только DTMF)
+state welcome
+  say "Здравствуйте! Это голосовой помощник поликлиники. Разговор записывается. Чтобы записаться к врачу, нажмите 1. Если запись уже есть и вы хотите её подтвердить, перенести или отменить — нажмите 2. Режим работы и праздничные дни — нажмите 3. Для связи с оператором нажмите 0."
+  dtmf 1 -> intent_book
+  dtmf 2 -> intent_existing
+  dtmf 3 -> info_menu
+  dtmf 0 -> operator reason=requested
+  timeout 60s -> listen_free
+  invalid -> welcome
+  retry 3 -> operator reason=no_valid_input
+
+# 60 с без нажатий: слушаем речь. Понятное намерение → сценарий, непонятное → оператор, тишина → завершаем.
+state listen_free
+  say "Скажите, пожалуйста, чем могу помочь?"
+  listen 10s
+  intent emergency|complaint|medical|operator -> operator reason=human_only
+  intent book|referral -> intent_book
+  intent reschedule|cancel|confirm|my_booking -> intent_existing
+  intent info_schedule -> info_schedule
+  intent info_holidays -> info_holidays
+  intent info_address|info_docs -> info_other
+  silence -> goodbye_silent
+  any -> operator reason=speech_unclassified
+  timeout 10s -> goodbye_silent
+
+state goodbye_silent
+  say "К сожалению, я вас не слышу. Перезвоните нам, пожалуйста, ещё раз. Всего доброго!"
+  end no_input
+
+# ---------------------------------------------------------------- 1. справка (без идентификации)
+state info_menu
+  say "Режим работы поликлиники — нажмите 1. Работа в праздничные дни — нажмите 2. Адрес и документы — нажмите 3. Вернуться в начало — нажмите 9."
+  dtmf 1 -> info_schedule
+  dtmf 2 -> info_holidays
+  dtmf 3 -> info_other
+  dtmf 9 -> welcome
+  timeout 15s -> info_menu
+  retry 2 -> welcome
+
+state info_schedule
+  call crm.clinic_info said_date=$said_date
+  ok -> info_say
+  error -> operator reason=crm_error
+
+state info_holidays
+  call crm.holidays
+  ok -> info_say
+  error -> operator reason=crm_error
+
+state info_other
+  set info_text = "Адрес поликлиники и список документов для приёма указаны на нашем сайте и в СМС после записи. На приём возьмите паспорт и полис. Мы никогда не просим сообщать коды из СМС."
+  goto info_say
+
+state info_say
+  say "{info_text} Чтобы записаться к врачу, нажмите 1. Повторить — 2. Завершить — 0."
+  dtmf 1 -> intent_book
+  dtmf 2 -> info_say
+  dtmf 0 -> goodbye
+  timeout 15s -> goodbye
+  retry 2 -> goodbye
+
+state goodbye
+  say "Спасибо за звонок. Всего доброго!"
+  end done
+
+# ---------------------------------------------------------------- 2. идентификация пациента
+state intent_book
+  set intent = book
+  goto id_start
+
+state intent_existing
+  set intent = existing
+  goto id_start
+
+state id_start
+  call crm.lookup_phone phone=$caller_phone
+  ok -> id_self_or_other
+  many -> id_self_or_other
+  empty -> id_ask_method
+  error -> operator reason=crm_error
+
+state id_self_or_other
+  say "Вы обращаетесь по поводу себя или другого человека? Нажмите 1 — себя, 2 — другого."
+  dtmf 1 -> id_self
+  dtmf 2 -> id_other
+  timeout 15s -> id_self_or_other
+  retry 2 -> operator reason=no_valid_input
+
+state id_self
+  set for_other = false
+  goto id_birth_check
+
+state id_other
+  set for_other = true
+  goto id_ask_method
+
+# Телефон известен → подтверждаем личность датой рождения (ДДММГГГГ).
+state id_birth_check
+  say "Для подтверждения введите вашу дату рождения: день, месяц и год — восемь цифр."
+  ask birth_date digits 8 timeout 25s
+  ok -> id_verify_birth
+  timeout -> id_birth_check
+  retry 2 -> operator reason=identity_failed
+
+state id_verify_birth
+  call crm.find_patient phone=$caller_phone birth_date=$birth_date
+  ok -> id_done
+  empty -> id_birth_mismatch
+  many -> operator reason=ambiguous_identity
+  error -> operator reason=crm_error
+
+state id_birth_mismatch
+  say "Дата рождения не совпадает с данными поликлиники."
+  goto id_ask_method
+
+# Телефон неизвестен или звонят за другого: СНИЛС / номер карты / телефон из карты.
+state id_ask_method
+  say "Назовите пациента одним из способов. Нажмите 1, чтобы ввести номер СНИЛС, 2 — номер карты поликлиники, 3 — номер телефона, указанный в карте пациента."
+  dtmf 1 -> id_ask_snils
+  dtmf 2 -> id_ask_card
+  dtmf 3 -> id_ask_phone
+  timeout 15s -> id_ask_method
+  retry 2 -> operator reason=identity_failed
+
+state id_ask_snils
+  say "Введите одиннадцать цифр СНИЛС."
+  ask snils digits 11 timeout 30s
+  ok -> id_lookup_snils
+  timeout -> id_ask_snils
+  retry 2 -> operator reason=identity_failed
+
+state id_lookup_snils
+  call crm.find_patient snils=$snils
+  ok -> id_done
+  empty -> id_not_found
+  many -> operator reason=ambiguous_identity
+  error -> operator reason=crm_error
+
+state id_ask_card
+  say "Введите номер карты поликлиники и нажмите решётку."
+  ask card_no digits 3-10 timeout 30s terminator "#"
+  ok -> id_lookup_card
+  timeout -> id_ask_card
+  retry 2 -> operator reason=identity_failed
+
+state id_lookup_card
+  call crm.find_patient card_no=$card_no
+  ok -> id_done
+  empty -> id_not_found
+  many -> operator reason=ambiguous_identity
+  error -> operator reason=crm_error
+
+state id_ask_phone
+  say "Введите номер телефона, указанный в карте пациента: десять цифр, начиная с кода оператора."
+  ask phone digits 10-11 timeout 30s
+  ok -> id_lookup_phone
+  timeout -> id_ask_phone
+  retry 2 -> operator reason=identity_failed
+
+state id_lookup_phone
+  call crm.find_patient phone=$phone
+  ok -> id_done
+  many -> id_birth_for_phone
+  empty -> id_not_found
+  error -> operator reason=crm_error
+
+state id_birth_for_phone
+  say "На этот номер записано несколько пациентов. Введите дату рождения пациента: восемь цифр."
+  ask birth_date digits 8 timeout 25s
+  ok -> id_verify_birth_phone
+  timeout -> id_birth_for_phone
+  retry 2 -> operator reason=identity_failed
+
+state id_verify_birth_phone
+  call crm.find_patient phone=$phone birth_date=$birth_date
+  ok -> id_done
+  empty -> id_not_found
+  many -> operator reason=ambiguous_identity
+  error -> operator reason=crm_error
+
+state id_not_found
+  say "Пациент с такими данными не найден."
+  loop 1 -> operator reason=patient_not_found
+  goto id_ask_method
+
+state id_done
+  switch intent
+  case book -> book_entry
+  case existing -> existing_start
+  default -> operator reason=internal
+
+# ---------------------------------------------------------------- 3. новая запись
+# Специальность уже прозвучала в речи («к кардиологу в пятницу утром») → меню пропускаем.
+state book_entry
+  switch specialty
+  case none -> book_start
+  default -> book_referral_check
+
+state book_start
+  say "К кому вы хотите записаться? Терапевт — нажмите 1. Педиатр — 2. Хирург — 3. Офтальмолог — 4. Отоларинголог — 5. Другой специалист — 6."
+  dtmf 1 -> book_set_1
+  dtmf 2 -> book_set_2
+  dtmf 3 -> book_set_3
+  dtmf 4 -> book_set_4
+  dtmf 5 -> book_set_5
+  dtmf 6 -> book_ask_specialty
+  dtmf 0 -> operator reason=requested
+  timeout 20s -> book_ask_specialty
+  retry 2 -> operator reason=no_valid_input
+
+state book_set_1
+  set specialty = терапевт
+  goto book_referral_check
+
+state book_set_2
+  set specialty = педиатр
+  goto book_referral_check
+
+state book_set_3
+  set specialty = хирург
+  goto book_referral_check
+
+state book_set_4
+  set specialty = офтальмолог
+  goto book_referral_check
+
+state book_set_5
+  set specialty = отоларинголог
+  goto book_referral_check
+
+state book_ask_specialty
+  say "Назовите специалиста, к которому хотите записаться. Можно сразу сказать удобный день и время."
+  listen 8s
+  loop 2 -> operator reason=no_specialty
+  intent emergency|complaint|medical|operator -> operator reason=human_only
+  any -> book_specialty_from_speech
+  silence -> book_ask_specialty
+  timeout 8s -> book_ask_specialty
+  retry 2 -> operator reason=no_specialty
+
+state book_specialty_from_speech
+  switch specialty
+  case none -> book_specialty_unknown
+  default -> book_referral_check
+
+# Конкретный врач по фамилии — автомат не рискует, передаём человеку со всем контекстом.
+state book_specialty_unknown
+  switch doctor_surname
+  case none -> book_ask_specialty
+  default -> operator reason=specific_doctor
+
+state book_referral_check
+  call crm.referral_required specialty=$specialty
+  required -> book_ask_referral
+  not_required -> book_find_slot
+  error -> operator reason=crm_error
+
+state book_ask_referral
+  say "Для записи к {specialty_dative} нужно направление терапевта, полученное не раньше чем месяц назад. Если такое направление есть, нажмите 1. Если нет — нажмите 2, и я запишу к терапевту. Для связи с оператором нажмите 0."
+  dtmf 1 -> book_has_referral
+  dtmf 2 -> book_set_1
+  dtmf 0 -> operator reason=referral_question
+  yes -> book_has_referral
+  no -> book_set_1
+  timeout 20s -> book_ask_referral
+  retry 2 -> operator reason=referral_unclear
+
+state book_has_referral
+  set has_referral = true
+  goto book_find_slot
+
+state book_find_slot
+  call crm.find_slots specialty=$specialty said_date=$said_date said_daypart=$said_daypart said_time=$said_time
+  ok -> book_offer
+  relaxed -> book_offer_relaxed
+  empty -> operator reason=no_slots
+  error -> operator reason=crm_error
+
+state book_offer_relaxed
+  say "На указанное время свободных мест нет."
+  goto book_offer
+
+state book_offer
+  say "Ближайшая запись к {specialty_dative}: {slot_date_spoken}, в {slot_time_spoken}, врач {doctor}. Подходит? Нажмите 1 — да, 2 — предложить другой день, 0 — оператор. Можно назвать удобный день."
+  dtmf 1 -> book_do
+  dtmf 2 -> book_next_day
+  dtmf 0 -> operator reason=requested
+  intent emergency|complaint|medical|operator -> operator reason=human_only
+  date -> book_check_day
+  daypart -> book_part_from_offer
+  yes -> book_do
+  no -> book_next_day
+  silence -> book_offer
+  timeout 15s -> book_offer
+  retry 2 -> operator reason=no_valid_input
+
+state book_next_day
+  call crm.next_day specialty=$specialty after=$slot_date offers=$offers
+  ok -> book_offer
+  too_many -> operator reason=no_suitable_day
+  empty -> operator reason=no_slots
+  error -> operator reason=crm_error
+
+state book_check_day
+  call crm.check_day specialty=$specialty said_date=$said_date
+  ok -> book_offer
+  other_day -> book_offer_other_day
+  past -> book_offer
+  empty -> operator reason=no_slots
+  error -> operator reason=crm_error
+
+state book_offer_other_day
+  say "На {asked_day_spoken} свободного времени нет."
+  goto book_offer
+
+state book_part_from_offer
+  call crm.nearest_in_part specialty=$specialty said_daypart=$said_daypart from_day=$slot_date
+  ok -> book_offer
+  empty -> operator reason=no_slots
+  error -> operator reason=crm_error
+
+state book_do
+  call crm.book patient_id=$patient_id slot_id=$slot_id
+  ok -> book_done
+  taken -> book_taken
+  error -> operator reason=crm_error
+
+state book_taken
+  say "К сожалению, это время только что заняли. Ищу другое."
+  goto book_find_slot
+
+state book_done
+  say "Готово! Запись оформлена: {patient_name}, к {specialty_dative}, {slot_date_spoken}, в {slot_time_spoken}, кабинет {cabinet}, врач {doctor}. Повторяю: {slot_date_spoken}, {slot_time_spoken}. Мы отправим СМС с деталями. На приём возьмите паспорт и полис. Всего доброго!"
+  sms booked
+  end booked
+
+# ---------------------------------------------------------------- 4. существующая запись
+state existing_start
+  call crm.my_booking patient_id=$patient_id
+  ok -> existing_route
+  empty -> existing_none
+  error -> operator reason=crm_error
+
+# Намерение уже прозвучало («отмените запись») → сразу к подтверждению, меню не нужно.
+state existing_route
+  switch last_intent
+  case cancel -> cancel_confirm
+  case reschedule -> reschedule.rs_start
+  default -> existing_menu
+
+state existing_none
+  say "У пациента {patient_name} нет предстоящих записей. Хотите записаться? Нажмите 1 — да, 0 — завершить."
+  dtmf 1 -> book_start
+  dtmf 0 -> goodbye
+  yes -> book_start
+  no -> goodbye
+  timeout 15s -> existing_none
+  retry 2 -> goodbye
+
+state existing_menu
+  say "{patient_name}: запись к {specialty_dative}, {slot_date_spoken}, в {slot_time_spoken}, врач {doctor}. Подтвердить — нажмите 1. Отменить — 0. Перенести — 2. Оператор — 9."
+  dtmf 1 -> confirm_do
+  dtmf 0 -> cancel_confirm
+  dtmf 2 -> reschedule.rs_start
+  dtmf 9 -> operator reason=requested
+  intent emergency|complaint|medical|operator -> operator reason=human_only
+  intent confirm -> confirm_do
+  intent cancel -> cancel_confirm
+  intent reschedule -> reschedule.rs_start
+  yes -> confirm_do
+  silence -> existing_menu
+  timeout 20s -> existing_menu
+  retry 2 -> operator reason=no_valid_input
+
+state cancel_confirm
+  say "Вы уверены, что хотите отменить запись {slot_date_spoken} в {slot_time_spoken}? Нажмите 1 — да, отменить. 2 — нет, оставить запись."
+  dtmf 1 -> cancel_do
+  dtmf 2 -> existing_menu
+  yes -> cancel_do
+  no -> existing_menu
+  silence -> cancel_confirm
+  timeout 15s -> cancel_confirm
+  retry 2 -> operator reason=no_valid_input
+
+state cancel_do
+  call crm.cancel booking_id=$booking_id
+  ok -> cancel_done
+  error -> operator reason=crm_error
+
+state cancel_done
+  say "Запись пациента {patient_name} к {specialty_dative} {slot_date_spoken} отменена. Мы отправим СМС. Чтобы записаться снова, позвоните нам. Всего доброго!"
+  sms cancelled
+  end cancelled
+
+state confirm_do
+  call crm.confirm booking_id=$booking_id
+  ok -> confirm_done
+  error -> operator reason=crm_error
+
+state confirm_done
+  say "Спасибо! Запись пациента {patient_name} к {specialty_dative} {slot_date_spoken} в {slot_time_spoken} подтверждена. Ждём вас. Всего доброго!"
+  sms confirmed
+  end confirmed
+
+# ---------------------------------------------------------------- 5. оператор
+state operator
+  say "Перевожу на оператора. Все данные разговора сохранены, повторять ничего не придётся."
+  transfer reason=$reason
+  end transfer

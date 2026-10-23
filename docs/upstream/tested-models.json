@@ -1,0 +1,23 @@
+{
+  "tts": {
+    "url": "https://models.silero.ai/models/tts/ru/v5_5_ru.pt",
+    "sha256": "50081637b602126ee06cb3bc8a744d25651d2da149ee8864b9a379bfdd934437",
+    "bytes": 145420684
+  },
+  "asr": {
+    "repo": "istupakov/gigaam-v3-onnx",
+    "quantization": "int8",
+    "revision": "322c3b29492673eb7d0b434bfa9dfb8653e34d02",
+    "files": {
+      "LICENSE.txt": "f00de6715714c7a63d08639cdbfaa40224eefc407302614bd19f1a8b98c875aa",
+      "v3_e2e_rnnt_decoder.int8.onnx": "89014e134865615b91e037157e46e389b1271e6072460efc010ea08e61e23146",
+      "README.md": "5fe26483daa57aaccaa0b59981c0787951df3fc90444f26c7c454dc4342f9f57",
+      "config.json": "0641fcf73f4af791c73f05083e38a658ff5dcbee3534a0c61396c10f4b97f0fe",
+      "v3_e2e_rnnt_joint.int8.onnx": "ade116563dbf66e503b0994efab6b5861412743e52bf31c39fc3fffa3783d5d1",
+      "v3_e2e_rnnt_vocab.txt": "39abae20e692998290c574e606f11a9edef2902a1995463fcff63d1490cf22b7",
+      "v3_e2e_rnnt_decoder.onnx": "7b0a16d67fd2cb37061decc93c69e364a9ab27afee3c57495d55b1c974cf7231",
+      "v3_e2e_rnnt_joint.onnx": "602ff7017a93311aad34df1437c8d7f49911353c13d6eae7a6ee7b041339465c",
+      "v3_e2e_rnnt_encoder.int8.onnx": "4e0e076a6076cd110277e529b8ac8f32cd5297f7fbebad5341ae8ddb7d00817b"
+    }
+  }
+}

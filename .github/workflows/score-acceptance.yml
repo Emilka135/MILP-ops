@@ -1,0 +1,67 @@
+name: score acceptance
+on: [push, pull_request, workflow_dispatch]
+permissions: {contents: read}
+concurrency:
+  group: score-acceptance-${{ github.ref }}
+  cancel-in-progress: true
+env:
+  APP_MODE: demo
+  CLINIC_ACCEPTANCE_TEST: '1'
+  AGENT_MODE: deterministic
+  OPENAI_API_KEY: ''
+  OPENROUTER_API_KEY: ''
+  DBI_API_TOKEN: ''
+  STAND_TOKEN: ''
+  STAND_URL: ''
+  SMS_GATEWAY_URL: ''
+jobs:
+  twenty-call-queues:
+    name: twenty concurrent sessions and shared turn budget
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.98.0
+      - name: Exercise actual per-module HTTP queues with twenty simultaneous sessions
+        run: |
+          mkdir -p debug/runs/score-acceptance
+          set -o pipefail
+          cargo test --locked --lib -- --nocapture 2>&1 | tee debug/runs/score-acceptance/twenty-call-queues.log
+      - uses: actions/upload-artifact@v4
+        if: always() && !env.ACT
+        with:
+          name: twenty-call-queues
+          path: debug/runs/score-acceptance/twenty-call-queues.log
+  control-contracts:
+    name: isolated evidence and scenario editing
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Install lightweight control test dependencies
+        run: python -m pip install pytest==9.1.0 pytest-timeout==2.4.0 numpy==2.4.3
+      - name: Reject stale evidence and external contract connections
+        run: python -m pytest tests/contracts/test_evidence_integrity.py tests/contracts/test_mis_constructor.py tests/contracts/test_scenario_knowledge.py tests/integration/test_storage_guard.py -q --timeout=30 --junitxml=debug/runs/score-acceptance/evidence.xml
+      - name: Install audio tempo tool for fixed speech regressions
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
+      - name: Compare callback clock notation without hiding changed hours or negation
+        run: python -m pytest tests/integration/test_tts_quality_policy.py tests/integration/test_audio_release.py tests/integration/test_tts_normalization.py -q --timeout=30 --junitxml=debug/runs/score-acceptance/audio-policy.xml
+      - name: Bound difficult time clarification and both LLM API contracts without external calls
+        run: python -m pytest tests/integration/test_temporal_dialogue.py tests/integration/test_reminder_identity.py -q --timeout=30 --junitxml=debug/runs/score-acceptance/time-clarification.xml
+      - name: Replay fixed audio integrity and identity regressions without external models
+        run: python -m pytest tests/integration/test_incremental_identity.py tests/integration/test_speech_regression.py tests/contracts/test_identity_readback.py -q --timeout=30 --junitxml=debug/runs/score-acceptance/speech-regression.xml
+      - name: Keep negative availability preferences through SQL and write guards
+        run: python -m pytest tests/contracts/test_availability_constraints.py tests/integration/test_availability_pipeline.py -k "not real_nlu" -q --timeout=30 --junitxml=debug/runs/score-acceptance/availability.xml
+      - name: Keep all legacy safety dialogs and knowledge checks passing
+        run: python tests/test_safety.py
+      - name: Verify duplicate booking and night recovery against disposable MIS
+        run: python -m pytest tests/integration/test_dialogue_recovery.py tests/integration/test_crm.py tests/integration/test_service_hours.py -q --timeout=30 --junitxml=debug/runs/score-acceptance/recovery.xml
+      - name: Exercise administrator changes and provisional registrar edits
+        run: python -m pytest tests/integration/test_scenario_editor.py tests/integration/test_learning.py tests/integration/test_workshop_access.py -q --timeout=30 --junitxml=debug/runs/score-acceptance/scenario-editing.xml
+      - uses: actions/upload-artifact@v4
+        if: always() && !env.ACT
+        with:
+          name: score-control-contracts
+          path: debug/runs/score-acceptance/

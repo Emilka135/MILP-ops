@@ -1,0 +1,19 @@
+{
+  "status": "passed",
+  "filesystems": [
+    {
+      "path": "/home",
+      "free_bytes": 19384819712,
+      "reserve_bytes": 5368709120,
+      "planned_bytes": 0,
+      "ok": true
+    },
+    {
+      "path": "/",
+      "free_bytes": 160375623680,
+      "reserve_bytes": 5368709120,
+      "planned_bytes": 0,
+      "ok": true
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+import React,{useEffect,useState} from 'react';
+export default function AccountsPanel({api}){
+ const [accounts,setAccounts]=useState([]),[form,setForm]=useState({username:'',registrar:'',label:'',password:''}),[error,setError]=useState(''),[saved,setSaved]=useState('');
+ async function load(){try{setAccounts((await api('accounts')).accounts)}catch(e){setError(e.message)}}
+ useEffect(()=>{load()},[]);
+ async function submit(e){e.preventDefault();try{await api('accounts',form);setSaved('Доступ создан для '+form.label+'. Логин: '+form.username+'. Вход: '+location.origin+'/registrar');setForm({...form,password:''});setError('');await load()}catch(err){setError(err.message)}}
+ return <div><p className="muted">Каждый сотрудник видит разговоры своего рабочего номера и может предлагать исправления. Общий сценарий доступен администратору.</p><form onSubmit={submit} className="account-form">{[['label','Имя сотрудника'],['username','Логин'],['registrar','Рабочий номер'],['password','Пароль, не меньше 12 символов']].map(([key,title])=><label className="field" key={key}><span>{title}</span><input aria-label={title} type={key==='password'?'password':'text'} value={form[key]} required autoComplete="off" onChange={e=>setForm({...form,[key]:e.target.value})}/></label>)}{error&&<p role="alert">{error}</p>}{saved&&<p role="status">{saved}</p>}<button className="primary">Выдать доступ</button></form><h3>Рабочие места</h3>{accounts.map(a=><div className="version" key={a.username}><div><strong>{a.label||a.username}</strong><small>{a.username} · номер {a.registrar}</small></div><span>Регистратор</span></div>)}</div>
+}

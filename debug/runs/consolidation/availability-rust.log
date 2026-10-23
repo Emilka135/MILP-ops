@@ -1,0 +1,30 @@
+   Compiling clinic-voice v0.1.0 (/home/alpaca/GitHub/calls/prodxak/clinic-voice)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.53s
+     Running unittests src/lib.rs (target/debug/deps/clinic_voice-954d405b31162dc6)
+
+running 22 tests
+test engine::tests::changed_offer_invalidates_consent ... ok
+test engine::tests::notices_preserve_pending_request_without_replaying_it ... ok
+test engine::tests::every_identity_subroutine_initializes_the_required_field_form ... ok
+test engine::tests::medical_yes_never_confirms ... ok
+test engine::tests::ordinary_speech_cannot_change_an_inflight_request ... ok
+test engine::tests::runtime_transaction_failure_uses_operator_phrase_only_on_confirmed_route ... ok
+test engine::tests::callback_refusal_offers_explicit_request_without_booking_or_sms ... ok
+test engine::tests::back_does_not_replay_write ... ok
+test engine::tests::duplicate_extra_booking_requires_separate_consent_then_returns_to_offer ... ok
+test engine::tests::negative_preferences_survive_turns_and_reach_the_slot_rpc ... ok
+test engine::tests::duplicate_keep_does_not_create_or_announce_a_booking ... ok
+test engine::tests::linked_targets_equal_reference_dispatch ... ok
+test engine::tests::priority_requests_interrupt_pending_modules ... ok
+test engine::tests::reminder_cancel_requires_explicit_confirmation ... ok
+test engine::tests::all_mutations_and_receipts_reject_unverified_entry ... ok
+test engine::tests::speech_does_not_inject_trusted_identifiers ... ok
+test engine::tests::incremental_identity_accepts_one_missing_word_and_only_trusts_confirmed_result ... ok
+test engine::tests::unknown_flow_is_error ... ok
+test engine::tests::typed_free_text_field_is_preserved ... ok
+test engine::tests::stale_result_does_not_cross_calls ... ok
+test engine::tests::tone_escape_interrupts_pending_request ... ok
+test engine::tests::spoken_cancel_yes_is_contextual ... ok
+
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+

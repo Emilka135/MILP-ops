@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "calls"
+version = "0.0.1"
+description = "Telephony voice-interaction platform: deterministic DTMF, VAD, ASR gateway, dialog engine"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+    "numpy>=1.26",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-timeout>=2.3",
+]
+# optional ML back-ends – each container installs only its own extra
+tts = ["torch>=2.1", "omegaconf>=2.3", "silero-stress>=1.5"]  # Silero v5_cis_base (torch.package) + OOV accentor
+asr = ["onnx-asr>=0.6", "onnxruntime>=1.17"]        # GigaAM v3 / T-one via ONNX; the Deeray runtime ships as its own image
+nlu = ["sentence-transformers>=3.0", "torch>=2.1"]  # deepvk/USER-bge-m3 verifier (CPU)
+xlsx = ["openpyxl>=3.1"]                            # import the doctors' schedule handed out as Excel
+http = ["requests>=2.32"]                           # optional; stdlib urllib is used by default
+
+[project.scripts]
+calls-service = "calls.services.__main__:main"
+calls-compile-scenarios = "calls.scenario.compile:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q -m 'not full' --timeout=120"
+markers = [
+    "full: full factorial acceptance matrices (slow); run with `pytest -m full`",
+]

@@ -1,0 +1,7 @@
+{
+  "scope": "Observed first live speech acceptance before switching to a second synthetic patient",
+  "input": "Тестов Иван Иванович.",
+  "actual_asr": "Тистов Иван Иванович.",
+  "behavior": "identity lookup rejected the mismatched surname and asked for the name again; no visit created",
+  "limitation": "The successful corpus with Иванов is a separate synthetic card, not a fuzzy repair of this identity"
+}

@@ -1,0 +1,100 @@
+test_dialog_01_chest_pain_mid_recording (__main__.TestControlDialogs.test_dialog_01_chest_pain_mid_recording)
+№ 1 ! «Запишите к терапевту» → «ой, у меня вообще-то сильно давит в груди». ... ok
+test_dialog_02_what_to_drink_from_headache (__main__.TestControlDialogs.test_dialog_02_what_to_drink_from_headache)
+№ 2 ! «Что мне выпить от головной боли?» — граничная фраза без препаратов. ... ok
+test_dialog_03_cholesterol_values (__main__.TestControlDialogs.test_dialog_03_cholesterol_values)
+№ 3 ! «Какой у меня холестерин?» — значения не сообщаются. ... ok
+test_dialog_04_third_party_record (__main__.TestControlDialogs.test_dialog_04_third_party_record)
+№ 4 ! Посторонний спрашивает о записи Смирновой — сведения не выдаются. ... ok
+test_dialog_05_connect_to_human (__main__.TestControlDialogs.test_dialog_05_connect_to_human)
+№ 5 ! «Соедините с человеком» на любом шаге — немедленный перевод. ... ok
+test_dialog_06_lor_not_friday_afternoon (__main__.TestControlDialogs.test_dialog_06_lor_not_friday_afternoon)
+№ 6 «Мне к лору, но лучше не в пятницу, после обеда» — не ломает сценарий. ... ok
+test_dialog_07_cancel_with_two_active_records (__main__.TestControlDialogs.test_dialog_07_cancel_with_two_active_records)
+№ 7 «Отмените мою запись» при двух активных записях. ... ok
+test_dialog_08_neurologist_without_referral (__main__.TestControlDialogs.test_dialog_08_neurologist_without_referral)
+№ 8 «Запишите к неврологу» без направления — сначала терапевт. ... ok
+test_dialog_09_home_visit_after_deadline (__main__.TestControlDialogs.test_dialog_09_home_visit_after_deadline)
+№ 9 Вызов на дом в 15:10 — предложение на завтра и неотложная помощь. ... ok
+test_dialog_10_outbound_wrong_person (__main__.TestControlDialogs.test_dialog_10_outbound_wrong_person)
+№ 10 Исходящий звонок: трубку взял другой человек — без деталей записи. ... ok
+test_dialog_11_outbound_voicemail (__main__.TestControlDialogs.test_dialog_11_outbound_voicemail)
+№ 11 Автоответчик — нейтральное сообщение без персональных данных. ... ok
+test_dialog_12_misunderstanding_and_silence (__main__.TestControlDialogs.test_dialog_12_misunderstanding_and_silence)
+№ 12 Пациент говорит неразборчиво: тишина — R-17, база знаний не выдумывает. ... ok
+test_dialog_13_mis_timeout (__main__.TestControlDialogs.test_dialog_13_mis_timeout)
+№ 13 МИС не отвечает 6 секунд дважды: safety не мешает, данные не теряются. ... ok
+test_dialog_14_are_you_a_robot (__main__.TestControlDialogs.test_dialog_14_are_you_a_robot)
+№ 14 «Вы робот?» — честный ответ и предложение соединить с сотрудником. ... ok
+test_dialog_15_record_opt_out (__main__.TestControlDialogs.test_dialog_15_record_opt_out)
+№ 15 «Я против записи разговора» — запись отключается, обслуживание идёт. ... ok
+test_dialog_16_complaint (__main__.TestControlDialogs.test_dialog_16_complaint)
+№ 16 «Хочу пожаловаться на регистратуру» — старший администратор, R-03. ... ok
+test_all_answers_are_speakable (__main__.TestKnowledgeBase.test_all_answers_are_speakable) ... ok
+test_answer_never_raises (__main__.TestKnowledgeBase.test_answer_never_raises) ... ok
+test_answer_none_for_service_outside_kb (__main__.TestKnowledgeBase.test_answer_none_for_service_outside_kb)
+Услуги вне справочника — честный None, движок переводит по R-08/R-10. ... ok
+test_answer_returns_none_when_unknown (__main__.TestKnowledgeBase.test_answer_returns_none_when_unknown) ... ok
+test_answers_have_no_digits_or_abbreviations (__main__.TestKnowledgeBase.test_answers_have_no_digits_or_abbreviations) ... ok
+test_fallback_when_file_missing (__main__.TestKnowledgeBase.test_fallback_when_file_missing) ... ok
+test_lab_terms_from_reglament (__main__.TestKnowledgeBase.test_lab_terms_from_reglament) ... ok
+test_medical_answers_have_no_values (__main__.TestKnowledgeBase.test_medical_answers_have_no_values) ... ok
+test_price_unknown_is_forwarded_not_invented (__main__.TestKnowledgeBase.test_price_unknown_is_forwarded_not_invented) ... ok
+test_prices_from_price_list (__main__.TestKnowledgeBase.test_prices_from_price_list) ... ok
+test_stats (__main__.TestKnowledgeBase.test_stats) ... ok
+test_third_party_and_outbound_answers_are_discreet (__main__.TestKnowledgeBase.test_third_party_and_outbound_answers_are_discreet) ... ok
+test_topic_lookup (__main__.TestKnowledgeBase.test_topic_lookup) ... ok
+test_waiting_terms_from_reglament (__main__.TestKnowledgeBase.test_waiting_terms_from_reglament) ... ok
+test_working_hours_from_reglament (__main__.TestKnowledgeBase.test_working_hours_from_reglament) ... ok
+test_lab_context_promotes_neutral_question_to_medical (__main__.TestNegationAndContext.test_lab_context_promotes_neutral_question_to_medical)
+В сценарии С-08 «а там всё нормально?» — вопрос о значениях (R-04). ... ok
+test_medical_question_variants (__main__.TestNegationAndContext.test_medical_question_variants)
+Медицинские вопросы — только граничная фраза. ... ok
+test_negation_does_not_hide_real_flag (__main__.TestNegationAndContext.test_negation_does_not_hide_real_flag)
+Отрицание части фразы не отменяет флаг (в т. ч. «не может дышать»). ... ok
+test_negation_is_not_a_flag (__main__.TestNegationAndContext.test_negation_is_not_a_flag)
+«не болит» / «нет боли в груди» — не флаг. ... ok
+test_normal_patient_phrases_are_ok (__main__.TestNegationAndContext.test_normal_patient_phrases_are_ok)
+Обычные реплики диалога не должны срабатывать. ... ok
+test_past_experience_present_tense_is_hard (__main__.TestNegationAndContext.test_past_experience_present_tense_is_hard)
+Если сейчас плохо — срабатывание жёсткое. ... ok
+test_soft_third_party_past_experience (__main__.TestNegationAndContext.test_soft_third_party_past_experience)
+Прошедшее время чужого опыта: фраза про 103, но сценарий не рвём. ... ok
+test_symptom_without_question_is_not_medical (__main__.TestNegationAndContext.test_symptom_without_question_is_not_medical)
+Простое упоминание симптома в сценарии записи не рвёт диалог. ... ok
+test_ambulance_already_called (__main__.TestRedFlagsCategoryA.test_ambulance_already_called)
+С-14: «уже вызвали скорую» — всё равно категория А, R-01 (флаг не зависит от того, вызвана помощь). ... ok
+test_case_and_typos (__main__.TestRedFlagsCategoryA.test_case_and_typos)
+Регистр и типичные опечатки распознавания речи. ... ok
+test_category_a_beats_everything (__main__.TestRedFlagsCategoryA.test_category_a_beats_everything)
+Красный флаг категории А перекрывает любую другую реплику. ... ok
+test_category_a_groups_present (__main__.TestRedFlagsCategoryA.test_category_a_groups_present)
+В словаре присутствуют все группы категории А раздела 7.4 и ветвь С-14. ... ok
+test_category_b_acute_states (__main__.TestRedFlagsCategoryA.test_category_b_acute_states)
+Категория Б — острое состояние, R-11, регистратор P1. ... ok
+test_fuzzy_typo_fix_does_not_break_words (__main__.TestRedFlagsCategoryA.test_fuzzy_typo_fix_does_not_break_words)
+Нечёткое исправление опечаток не портит обычные слова. ... ok
+test_required_blocking_phrases (__main__.TestRedFlagsCategoryA.test_required_blocking_phrases)
+11 блокирующих формулировок из задания жюри. ... ok
+test_word_order_and_morphology (__main__.TestRedFlagsCategoryA.test_word_order_and_morphology)
+Словоформы и порядок слов не должны спасать флаг. ... ok
+test_every_control_dialog_turn_is_handled (__main__.TestSafetyBeforeKnowledge.test_every_control_dialog_turn_is_handled)
+Все реплики пациентов из Приложения Д обрабатываются без исключений. ... ok
+test_red_flag_wins_over_answer (__main__.TestSafetyBeforeKnowledge.test_red_flag_wins_over_answer) ... ok
+test_all_matches_is_safe (__main__.TestSafetyRobustness.test_all_matches_is_safe) ... ok
+test_boundary_phrase_variants (__main__.TestSafetyRobustness.test_boundary_phrase_variants) ... ok
+test_check_never_raises (__main__.TestSafetyRobustness.test_check_never_raises) ... ok
+test_context_is_optional_and_safe (__main__.TestSafetyRobustness.test_context_is_optional_and_safe) ... ok
+test_contract_fields_filled (__main__.TestSafetyRobustness.test_contract_fields_filled) ... ok
+test_empty_and_noise_are_silence (__main__.TestSafetyRobustness.test_empty_and_noise_are_silence) ... ok
+test_glossary_fallback (__main__.TestSafetyRobustness.test_glossary_fallback)
+Даже без файла словаря категория А не пропадает. ... ok
+test_reply_hints_are_short_and_relevant (__main__.TestSafetyRobustness.test_reply_hints_are_short_and_relevant) ... ok
+test_stats (__main__.TestSafetyRobustness.test_stats) ... ok
+
+----------------------------------------------------------------------
+Ran 58 tests in 0.194s
+
+OK
+
+прошло 58 из 58

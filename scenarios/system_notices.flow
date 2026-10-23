@@ -1,0 +1,28 @@
+# Fixed engine notices share the editable scenario and mandatory audio bank.
+# Rust reads these states directly; changing a phrase/rate requires a new audit.
+flow system_notices
+  rate 1.5
+  entry select
+
+state select
+  switch system_notice_key
+  case emergency -> emergency
+  case complaint -> complaint
+  case record_opt_out -> record_opt_out
+  default -> self_identity
+
+state emergency
+  say "Немедленно звоните сто три или сто двенадцать. Не ждите приёма в поликлинике."
+  end system_notice
+
+state complaint
+  say "Мне жаль, что так вышло. Передам обращение старшему администратору."
+  end system_notice
+
+state record_opt_out
+  say "Хорошо, аудиозапись разговора отключена."
+  end system_notice
+
+state self_identity
+  say "Я виртуальный помощник поликлиники. Если хотите поговорить с сотрудником, скажите об этом."
+  end system_notice

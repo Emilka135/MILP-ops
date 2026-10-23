@@ -1,0 +1,30 @@
+name: real-local-speech
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  roundtrip:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: dtolnay/rust-toolchain@1.98.0
+      - run: pip install --index-url https://download.pytorch.org/whl/cpu torch==2.14.1
+      - run: pip install -r requirements/base.txt -r requirements/asr.txt omegaconf==2.3.0
+      - run: python tools/download_models.py --tts --asr
+        env: {HF_HUB_DISABLE_XET: '1', HF_HUB_DISABLE_TELEMETRY: '1'}
+      - run: |
+          mkdir -p debug/runs
+          python tools/dev.py > debug/runs/stack.log 2>&1 &
+          echo $! > debug/runs/stack.pid
+          for attempt in $(seq 1 120); do curl --fail --silent http://127.0.0.1:8080/readyz && break; sleep 1; done
+          python debug/run_speech_roundtrip.py --orchestrator http://127.0.0.1:8080
+          python debug/run_speech_commands.py --orchestrator http://127.0.0.1:8080
+      - run: kill "$(cat debug/runs/stack.pid)"
+        if: always()
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: {name: real-speech-measurements, path: debug/runs/}

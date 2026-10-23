@@ -1,0 +1,2143 @@
+{
+  "status": "passed",
+  "synthetic": true,
+  "mode": "speech",
+  "concurrent_calls": 20,
+  "barrier_parties": 20,
+  "total_s": 2.0219769720024487,
+  "turns": 40,
+  "max_turn_s": 1.296969345999969,
+  "p95_turn_s": 1.1813535490000504,
+  "target": "callback.ask_consent",
+  "no_booking_changes": true,
+  "expected_scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17",
+  "actual_asr_probe": {
+    "text": "Переключите меня на оператора.",
+    "final": true,
+    "engine": "onnx-asr:gigaam-v3-e2e-rnnt",
+    "rtf": 0.007,
+    "provider": "CUDAExecutionProvider",
+    "device_id": 0,
+    "cuda_verified": true
+  },
+  "no_operations": true,
+  "no_sms": true,
+  "metrics_before": {
+    "calls": 140,
+    "modules": {
+      "agent": {
+        "completed": 0,
+        "expired": 0,
+        "queue_us": 0,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 0,
+        "submitted": 0
+      },
+      "asr": {
+        "completed": 160,
+        "expired": 0,
+        "queue_us": 58543011,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 28908065,
+        "submitted": 160
+      },
+      "crm": {
+        "completed": 860,
+        "expired": 0,
+        "queue_us": 4820289,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 4620306,
+        "submitted": 860
+      },
+      "nlu": {
+        "completed": 160,
+        "expired": 0,
+        "queue_us": 7160,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 1423365,
+        "submitted": 160
+      },
+      "operator": {
+        "completed": 20,
+        "expired": 0,
+        "queue_us": 598,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 260741,
+        "submitted": 20
+      },
+      "sms": {
+        "completed": 0,
+        "expired": 0,
+        "queue_us": 0,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 0,
+        "submitted": 0
+      },
+      "tts": {
+        "completed": 560,
+        "expired": 0,
+        "queue_us": 8147314,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 6209035,
+        "submitted": 560
+      }
+    }
+  },
+  "metrics_after": {
+    "calls": 160,
+    "modules": {
+      "agent": {
+        "completed": 0,
+        "expired": 0,
+        "queue_us": 0,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 0,
+        "submitted": 0
+      },
+      "asr": {
+        "completed": 200,
+        "expired": 0,
+        "queue_us": 71035526,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 35266716,
+        "submitted": 200
+      },
+      "crm": {
+        "completed": 968,
+        "expired": 0,
+        "queue_us": 5233299,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 5062358,
+        "submitted": 968
+      },
+      "nlu": {
+        "completed": 200,
+        "expired": 0,
+        "queue_us": 8847,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 1732851,
+        "submitted": 200
+      },
+      "operator": {
+        "completed": 20,
+        "expired": 0,
+        "queue_us": 598,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 260741,
+        "submitted": 20
+      },
+      "sms": {
+        "completed": 0,
+        "expired": 0,
+        "queue_us": 0,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 0,
+        "submitted": 0
+      },
+      "tts": {
+        "completed": 620,
+        "expired": 0,
+        "queue_us": 8252296,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 6396752,
+        "submitted": 620
+      }
+    }
+  },
+  "metrics_samples": [
+    {
+      "elapsed_s": 0.5023685600026511,
+      "metrics": {
+        "calls": 160,
+        "modules": {
+          "agent": {
+            "completed": 0,
+            "expired": 0,
+            "queue_us": 0,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 0,
+            "submitted": 0
+          },
+          "asr": {
+            "completed": 164,
+            "expired": 0,
+            "queue_us": 59167520,
+            "queued": 12,
+            "rejected": 0,
+            "service_us": 29532687,
+            "submitted": 180
+          },
+          "crm": {
+            "completed": 925,
+            "expired": 0,
+            "queue_us": 5231873,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 4875036,
+            "submitted": 925
+          },
+          "nlu": {
+            "completed": 164,
+            "expired": 0,
+            "queue_us": 7514,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 1455745,
+            "submitted": 164
+          },
+          "operator": {
+            "completed": 20,
+            "expired": 0,
+            "queue_us": 598,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 260741,
+            "submitted": 20
+          },
+          "sms": {
+            "completed": 0,
+            "expired": 0,
+            "queue_us": 0,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 0,
+            "submitted": 0
+          },
+          "tts": {
+            "completed": 584,
+            "expired": 0,
+            "queue_us": 8250838,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 6305634,
+            "submitted": 584
+          }
+        }
+      }
+    },
+    {
+      "elapsed_s": 1.0040632270029164,
+      "metrics": {
+        "calls": 160,
+        "modules": {
+          "agent": {
+            "completed": 0,
+            "expired": 0,
+            "queue_us": 0,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 0,
+            "submitted": 0
+          },
+          "asr": {
+            "completed": 171,
+            "expired": 0,
+            "queue_us": 63029919,
+            "queued": 5,
+            "rejected": 0,
+            "service_us": 31554012,
+            "submitted": 180
+          },
+          "crm": {
+            "completed": 936,
+            "expired": 0,
+            "queue_us": 5232355,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 4925611,
+            "submitted": 936
+          },
+          "nlu": {
+            "completed": 171,
+            "expired": 0,
+            "queue_us": 7847,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 1522212,
+            "submitted": 171
+          },
+          "operator": {
+            "completed": 20,
+            "expired": 0,
+            "queue_us": 598,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 260741,
+            "submitted": 20
+          },
+          "sms": {
+            "completed": 0,
+            "expired": 0,
+            "queue_us": 0,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 0,
+            "submitted": 0
+          },
+          "tts": {
+            "completed": 591,
+            "expired": 0,
+            "queue_us": 8251197,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 6324902,
+            "submitted": 591
+          }
+        }
+      }
+    },
+    {
+      "elapsed_s": 1.5050361330031592,
+      "metrics": {
+        "calls": 160,
+        "modules": {
+          "agent": {
+            "completed": 0,
+            "expired": 0,
+            "queue_us": 0,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 0,
+            "submitted": 0
+          },
+          "asr": {
+            "completed": 180,
+            "expired": 0,
+            "queue_us": 67663986,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 33613832,
+            "submitted": 180
+          },
+          "crm": {
+            "completed": 948,
+            "expired": 0,
+            "queue_us": 5232732,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 4973641,
+            "submitted": 948
+          },
+          "nlu": {
+            "completed": 180,
+            "expired": 0,
+            "queue_us": 8280,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 1591614,
+            "submitted": 180
+          },
+          "operator": {
+            "completed": 20,
+            "expired": 0,
+            "queue_us": 598,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 260741,
+            "submitted": 20
+          },
+          "sms": {
+            "completed": 0,
+            "expired": 0,
+            "queue_us": 0,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 0,
+            "submitted": 0
+          },
+          "tts": {
+            "completed": 600,
+            "expired": 0,
+            "queue_us": 8251555,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 6348899,
+            "submitted": 600
+          }
+        }
+      }
+    }
+  ],
+  "module_metrics": {
+    "crm": "module_requests_total{module=\"crm\"} 1228\nmodule_errors_total{module=\"crm\"} 0\nmodule_latency_seconds_sum{module=\"crm\"} 2.462789\nmodule_latency_seconds_count{module=\"crm\"} 1228\nmodule_latency_seconds_bucket{module=\"crm\",le=\"0.005\"} 1116\nmodule_latency_seconds_bucket{module=\"crm\",le=\"0.01\"} 1203\nmodule_latency_seconds_bucket{module=\"crm\",le=\"0.025\"} 1228\nmodule_latency_seconds_bucket{module=\"crm\",le=\"0.05\"} 1228\nmodule_latency_seconds_bucket{module=\"crm\",le=\"0.1\"} 1228\nmodule_latency_seconds_bucket{module=\"crm\",le=\"0.25\"} 1228\nmodule_latency_seconds_bucket{module=\"crm\",le=\"0.5\"} 1228\nmodule_latency_seconds_bucket{module=\"crm\",le=\"1.0\"} 1228\nmodule_latency_seconds_bucket{module=\"crm\",le=\"2.5\"} 1228\nmodule_latency_seconds_bucket{module=\"crm\",le=\"5.0\"} 1228\nmodule_latency_seconds_bucket{module=\"crm\",le=\"+Inf\"} 1228\n",
+    "nlu": "module_requests_total{module=\"nlu\"} 160\nmodule_errors_total{module=\"nlu\"} 0\nmodule_latency_seconds_sum{module=\"nlu\"} 1.099133\nmodule_latency_seconds_count{module=\"nlu\"} 160\nmodule_latency_seconds_bucket{module=\"nlu\",le=\"0.005\"} 3\nmodule_latency_seconds_bucket{module=\"nlu\",le=\"0.01\"} 157\nmodule_latency_seconds_bucket{module=\"nlu\",le=\"0.025\"} 158\nmodule_latency_seconds_bucket{module=\"nlu\",le=\"0.05\"} 159\nmodule_latency_seconds_bucket{module=\"nlu\",le=\"0.1\"} 160\nmodule_latency_seconds_bucket{module=\"nlu\",le=\"0.25\"} 160\nmodule_latency_seconds_bucket{module=\"nlu\",le=\"0.5\"} 160\nmodule_latency_seconds_bucket{module=\"nlu\",le=\"1.0\"} 160\nmodule_latency_seconds_bucket{module=\"nlu\",le=\"2.5\"} 160\nmodule_latency_seconds_bucket{module=\"nlu\",le=\"5.0\"} 160\nmodule_latency_seconds_bucket{module=\"nlu\",le=\"+Inf\"} 160\n",
+    "tts": "module_requests_total{module=\"tts\"} 620\nmodule_errors_total{module=\"tts\"} 0\nmodule_latency_seconds_sum{module=\"tts\"} 4.570823\nmodule_latency_seconds_count{module=\"tts\"} 620\nmodule_latency_seconds_bucket{module=\"tts\",le=\"0.005\"} 611\nmodule_latency_seconds_bucket{module=\"tts\",le=\"0.01\"} 611\nmodule_latency_seconds_bucket{module=\"tts\",le=\"0.025\"} 611\nmodule_latency_seconds_bucket{module=\"tts\",le=\"0.05\"} 611\nmodule_latency_seconds_bucket{module=\"tts\",le=\"0.1\"} 611\nmodule_latency_seconds_bucket{module=\"tts\",le=\"0.25\"} 614\nmodule_latency_seconds_bucket{module=\"tts\",le=\"0.5\"} 617\nmodule_latency_seconds_bucket{module=\"tts\",le=\"1.0\"} 619\nmodule_latency_seconds_bucket{module=\"tts\",le=\"2.5\"} 620\nmodule_latency_seconds_bucket{module=\"tts\",le=\"5.0\"} 620\nmodule_latency_seconds_bucket{module=\"tts\",le=\"+Inf\"} 620\n",
+    "asr": "module_requests_total{module=\"asr\"} 204\nmodule_errors_total{module=\"asr\"} 0\nmodule_latency_seconds_sum{module=\"asr\"} 34.771256\nmodule_latency_seconds_count{module=\"asr\"} 204\nmodule_latency_seconds_bucket{module=\"asr\",le=\"0.005\"} 0\nmodule_latency_seconds_bucket{module=\"asr\",le=\"0.01\"} 0\nmodule_latency_seconds_bucket{module=\"asr\",le=\"0.025\"} 2\nmodule_latency_seconds_bucket{module=\"asr\",le=\"0.05\"} 3\nmodule_latency_seconds_bucket{module=\"asr\",le=\"0.1\"} 80\nmodule_latency_seconds_bucket{module=\"asr\",le=\"0.25\"} 179\nmodule_latency_seconds_bucket{module=\"asr\",le=\"0.5\"} 201\nmodule_latency_seconds_bucket{module=\"asr\",le=\"1.0\"} 204\nmodule_latency_seconds_bucket{module=\"asr\",le=\"2.5\"} 204\nmodule_latency_seconds_bucket{module=\"asr\",le=\"5.0\"} 204\nmodule_latency_seconds_bucket{module=\"asr\",le=\"+Inf\"} 204\n"
+  },
+  "calls": [
+    {
+      "call_id": "load-1d0ac2096480-03",
+      "registrar": "8103",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 1.0188979740014474,
+          "fixture_id": "missing_patronymic-4",
+          "fixture_sha256": "1d8a97f36fd5130be6b257d5a1824ca3204d97ed94374a1e2d5d749f39077c1c",
+          "voice": "ru_dmitriy",
+          "speed": 1,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-03/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.09290950099966722,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-03/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-03/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.21202344300036202,
+      "target": "callback.ask_consent",
+      "trace": [
+        "voice.identity",
+        "identity.begin",
+        "identity.name",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "patient",
+          "text": "Да, всё верно.",
+          "state": "identity.name",
+          "step_index": 2,
+          "source": "real_asr"
+        },
+        {
+          "role": "patient",
+          "text": "Переключите меня на оператора.",
+          "state": "identity.name",
+          "step_index": 3,
+          "source": "real_asr"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-1d0ac2096480-13",
+      "registrar": "8113",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.9690053519989306,
+          "fixture_id": "doctor_choice-1",
+          "fixture_sha256": "a994d2b3e48615e451c911f7c84e46b1b13594356b63ce85b370019b2c38dd28",
+          "voice": "ru_ekaterina",
+          "speed": 1.25,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-13/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.11013501300112694,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-13/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-13/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.2105324809999729,
+      "target": "callback.ask_consent",
+      "trace": [
+        "voice.identity",
+        "identity.begin",
+        "identity.name",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "patient",
+          "text": "Хочу к врачу Семенову.",
+          "state": "identity.name",
+          "step_index": 2,
+          "source": "real_asr"
+        },
+        {
+          "role": "patient",
+          "text": "Переключите меня на оператора.",
+          "state": "identity.name",
+          "step_index": 3,
+          "source": "real_asr"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-1d0ac2096480-06",
+      "registrar": "8106",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.35728768699846114,
+          "fixture_id": "duplicate_appointment-3",
+          "fixture_sha256": "21671c53c0c3c87f1be528a29d4c7e436fd5a5e50cceb2770de029a606c17e92",
+          "voice": "ru_dmitriy",
+          "speed": 1,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-06/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.13071614600266912,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-06/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-06/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.1957235980007681,
+      "target": "callback.ask_consent",
+      "trace": [
+        "voice.identity",
+        "identity.begin",
+        "identity.name",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "patient",
+          "text": "Старую запись отменять не нужно.",
+          "state": "identity.name",
+          "step_index": 2,
+          "source": "real_asr"
+        },
+        {
+          "role": "patient",
+          "text": "Переключите меня на оператора.",
+          "state": "identity.name",
+          "step_index": 3,
+          "source": "real_asr"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-1d0ac2096480-00",
+      "registrar": "8100",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.2847957359990687,
+          "fixture_id": "missing_patronymic-1",
+          "fixture_sha256": "10b415e42613a4d54bc9551426a749f01e29170c946953b67b5c6dba7dc97ab2",
+          "voice": "ru_alexandr",
+          "speed": 0.75,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-00/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.15168618700045045,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-00/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-00/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.21234979899963946,
+      "target": "callback.ask_consent",
+      "trace": [
+        "voice.identity",
+        "identity.begin",
+        "identity.name",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "patient",
+          "text": "Хочу записаться к офтальмологу.",
+          "state": "identity.name",
+          "step_index": 2,
+          "source": "real_asr"
+        },
+        {
+          "role": "patient",
+          "text": "Переключите меня на оператора.",
+          "state": "identity.name",
+          "step_index": 3,
+          "source": "real_asr"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-1d0ac2096480-14",
+      "registrar": "8114",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 1.0706952469990938,
+          "fixture_id": "doctor_choice-2",
+          "fixture_sha256": "c72bf07443cba0eba084ff46785dc1c81c42a56fab0c4f83579e9c0a98db0026",
+          "voice": "ru_dmitriy",
+          "speed": 1.75,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-14/turn-1-1.wav",
+              "sha256": "86f085c998d79858e266acc2802b6c671f6ca6f944b5b16d6d232c329ab725c8",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 3.197125,
+              "rms": 3479.61,
+              "peak": 16304
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.17170103499665856,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-14/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-14/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.21176258000195958,
+      "target": "callback.ask_consent",
+      "trace": [
+        "voice.identity",
+        "identity.begin",
+        "identity.name",
+        "identity.remember_reply",
+        "identity.collect",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "patient",
+          "text": "Врач Семёнов Алексей Петрович.",
+          "state": "identity.name",
+          "step_index": 2,
+          "source": "real_asr"
+        },
+        {
+          "role": "patient",
+          "text": "Переключите меня на оператора.",
+          "state": "identity.name",
+          "step_index": 5,
+          "source": "real_asr"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-1d0ac2096480-05",
+      "registrar": "8105",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.9040877770021325,
+          "fixture_id": "duplicate_appointment-2",
+          "fixture_sha256": "f02086cbd26490b29a6a16e3a2a600b565ba63e1a1f1494271bf2639e63291c8",
+          "voice": "ru_dmitriy",
+          "speed": 0.75,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-05/turn-1-1.wav",
+              "sha256": "86f085c998d79858e266acc2802b6c671f6ca6f944b5b16d6d232c329ab725c8",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 3.197125,
+              "rms": 3479.61,
+              "peak": 16304
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.19588412400116795,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-05/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-05/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.2126942879986018,
+      "target": "callback.ask_consent",
+      "trace": [
+        "voice.identity",
+        "identity.begin",
+        "identity.name",
+        "identity.remember_reply",
+        "identity.collect",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "patient",
+          "text": "Я уже записан на сегодня в 14:00.",
+          "state": "identity.name",
+          "step_index": 2,
+          "source": "real_asr"
+        },
+        {
+          "role": "patient",
+          "text": "Переключите меня на оператора.",
+          "state": "identity.name",
+          "step_index": 5,
+          "source": "real_asr"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-1d0ac2096480-04",
+      "registrar": "8104",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.8347944989982352,
+          "fixture_id": "duplicate_appointment-1",
+          "fixture_sha256": "085b5a59497fa63636742e6a1491d30cb839a14d2cd6018a07fdc042e29f58bf",
+          "voice": "ru_dmitriy",
+          "speed": 0.75,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-04/turn-1-1.wav",
+              "sha256": "86f085c998d79858e266acc2802b6c671f6ca6f944b5b16d6d232c329ab725c8",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 3.197125,
+              "rms": 3479.61,
+              "peak": 16304
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.21226228000159608,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-04/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-04/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.21301979199779453,
+      "target": "callback.ask_consent",
+      "trace": [
+        "voice.identity",
+        "identity.begin",
+        "identity.name",
+        "identity.remember_reply",
+        "identity.collect",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "patient",
+          "text": "Запишите меня к офтальмологу.",
+          "state": "identity.name",
+          "step_index": 2,
+          "source": "real_asr"
+        },
+        {
+          "role": "patient",
+          "text": "Переключите меня на оператора.",
+          "state": "identity.name",
+          "step_index": 5,
+          "source": "real_asr"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-1d0ac2096480-09",
+      "registrar": "8109",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.6606589129987697,
+          "fixture_id": "night_callback-3",
+          "fixture_sha256": "6f619d9927f4c7faec2b535494906c83acf0dbd1b58b6e2595fdb9885707e0ec",
+          "voice": "ru_dmitriy",
+          "speed": 2.5,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-09/turn-1-1.wav",
+              "sha256": "86f085c998d79858e266acc2802b6c671f6ca6f944b5b16d6d232c329ab725c8",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 3.197125,
+              "rms": 3479.61,
+              "peak": 16304
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.2288450619998912,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-09/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-09/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.20739875200160895,
+      "target": "callback.ask_consent",
+      "trace": [
+        "voice.identity",
+        "identity.begin",
+        "identity.name",
+        "identity.remember_reply",
+        "identity.collect",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "patient",
+          "text": "Завтра с двенадцати до 13.",
+          "state": "identity.name",
+          "step_index": 2,
+          "source": "real_asr"
+        },
+        {
+          "role": "patient",
+          "text": "Переключите меня на оператора.",
+          "state": "identity.name",
+          "step_index": 5,
+          "source": "real_asr"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-1d0ac2096480-02",
+      "registrar": "8102",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.4590270139997301,
+          "fixture_id": "missing_patronymic-3",
+          "fixture_sha256": "5428ea7dc00f75468ab62f56ced1c3b7d1f423c4f25776c9b315d80c9b2f4550",
+          "voice": "ru_dmitriy",
+          "speed": 0.75,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-02/turn-1-1.wav",
+              "sha256": "5fbe3979fe57c86b7964654c6e9bd549f9e5defc3cad1473149930d3d3ba2eb7",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 4.385375,
+              "rms": 3979.28,
+              "peak": 24052
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.25546595199921285,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-02/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-02/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.2138931430017692,
+      "target": "callback.ask_consent",
+      "trace": [
+        "voice.identity",
+        "identity.begin",
+        "identity.name",
+        "identity.remember_reply",
+        "identity.collect",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "patient",
+          "text": "Отчество Петрович.",
+          "state": "identity.name",
+          "step_index": 2,
+          "source": "real_asr"
+        },
+        {
+          "role": "patient",
+          "text": "Переключите меня на оператора.",
+          "state": "identity.name",
+          "step_index": 5,
+          "source": "real_asr"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-1d0ac2096480-12",
+      "registrar": "8112",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 1.296969345999969,
+          "fixture_id": "night_no_callback-3",
+          "fixture_sha256": "939378884cc76fe7e74f92d871847a02291adcd0ebcb6c31428eb35e3e978d2f",
+          "voice": "ru_oksana",
+          "speed": 0.75,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-12/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.27505297899915604,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-12/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-12/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.21253584299847716,
+      "target": "callback.ask_consent",
+      "trace": [
+        "voice.identity",
+        "identity.begin",
+        "identity.name",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "patient",
+          "text": "Да, оставьте заявку и пришлите сообщение.",
+          "state": "identity.name",
+          "step_index": 2,
+          "source": "real_asr"
+        },
+        {
+          "role": "patient",
+          "text": "Переключите меня на оператора.",
+          "state": "identity.name",
+          "step_index": 3,
+          "source": "real_asr"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-1d0ac2096480-19",
+      "registrar": "8119",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.21866600600333186,
+          "fixture_id": "missing_patronymic-3",
+          "fixture_sha256": "5428ea7dc00f75468ab62f56ced1c3b7d1f423c4f25776c9b315d80c9b2f4550",
+          "voice": "ru_dmitriy",
+          "speed": 0.75,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-19/turn-1-1.wav",
+              "sha256": "5fbe3979fe57c86b7964654c6e9bd549f9e5defc3cad1473149930d3d3ba2eb7",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 4.385375,
+              "rms": 3979.28,
+              "peak": 24052
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.2912171190000663,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-19/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-19/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.2158179399993969,
+      "target": "callback.ask_consent",
+      "trace": [
+        "voice.identity",
+        "identity.begin",
+        "identity.name",
+        "identity.remember_reply",
+        "identity.collect",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "patient",
+          "text": "Отчество Петрович.",
+          "state": "identity.name",
+          "step_index": 2,
+          "source": "real_asr"
+        },
+        {
+          "role": "patient",
+          "text": "Переключите меня на оператора.",
+          "state": "identity.name",
+          "step_index": 5,
+          "source": "real_asr"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-1d0ac2096480-16",
+      "registrar": "8116",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.10953505300130928,
+          "fixture_id": "operator-2",
+          "fixture_sha256": "ac0e7903d61ae747f124a1f9cbf9eb73d1811fe993808703a06e05fe26419052",
+          "voice": "ru_dmitriy",
+          "speed": 1,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-16/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.31053382299796795,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-16/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-16/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.19111242699727882,
+      "target": "callback.ask_consent",
+      "trace": [
+        "voice.identity",
+        "identity.begin",
+        "identity.name",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "patient",
+          "text": "Да, я подожду.",
+          "state": "identity.name",
+          "step_index": 2,
+          "source": "real_asr"
+        },
+        {
+          "role": "patient",
+          "text": "Переключите меня на оператора.",
+          "state": "identity.name",
+          "step_index": 3,
+          "source": "real_asr"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-1d0ac2096480-01",
+      "registrar": "8101",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.7243752529975609,
+          "fixture_id": "missing_patronymic-2",
+          "fixture_sha256": "75dbad97c8dd632cb1d9074cddc346ed120821800ab8503e313467a9f301f53d",
+          "voice": "ru_alexandr",
+          "speed": 2.5,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-01/turn-1-1.wav",
+              "sha256": "15930e78afc0f20e818158a4d42d2bf24d831e2577f60cd86fd3a879e6ce0b31",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 4.8445,
+              "rms": 3435.07,
+              "peak": 20271
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.3338384099988616,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-01/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-01/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.20948758899976383,
+      "target": "callback.ask_consent",
+      "trace": [
+        "voice.identity",
+        "identity.begin",
+        "identity.name",
+        "identity.remember_reply",
+        "identity.collect",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "patient",
+          "text": "Иванов Иван родился 12 апреля 1985 года.",
+          "state": "identity.name",
+          "step_index": 2,
+          "source": "real_asr"
+        },
+        {
+          "role": "patient",
+          "text": "Переключите меня на оператора.",
+          "state": "identity.name",
+          "step_index": 5,
+          "source": "real_asr"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-1d0ac2096480-15",
+      "registrar": "8115",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.780008376998012,
+          "fixture_id": "doctor_choice-3",
+          "fixture_sha256": "c54aa41d3ef4ba76ed5b48d9031f9a7b3f4cb7dda6ae429da936450e2e496f7d",
+          "voice": "ru_alexandr",
+          "speed": 1.5,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-15/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.35587230600140174,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-15/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-15/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.2138320099984412,
+      "target": "callback.ask_consent",
+      "trace": [
+        "voice.identity",
+        "identity.begin",
+        "identity.name",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "patient",
+          "text": "Да, подтверждаю выбор врача.",
+          "state": "identity.name",
+          "step_index": 2,
+          "source": "real_asr"
+        },
+        {
+          "role": "patient",
+          "text": "Переключите меня на оператора.",
+          "state": "identity.name",
+          "step_index": 3,
+          "source": "real_asr"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-1d0ac2096480-08",
+      "registrar": "8108",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 1.1813535490000504,
+          "fixture_id": "night_callback-2",
+          "fixture_sha256": "b13fffa1a9f37aaa85ed1ab9f2bf56f5928e72ba3307efa43401ae8128c63ab9",
+          "voice": "ru_ekaterina",
+          "speed": 2,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-08/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.37409953599853907,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-08/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-08/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.21187973400083138,
+      "target": "callback.ask_consent",
+      "trace": [
+        "voice.identity",
+        "identity.begin",
+        "identity.name",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "patient",
+          "text": "Да, пусть регистратор перезвонит.",
+          "state": "identity.name",
+          "step_index": 2,
+          "source": "real_asr"
+        },
+        {
+          "role": "patient",
+          "text": "Переключите меня на оператора.",
+          "state": "identity.name",
+          "step_index": 3,
+          "source": "real_asr"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-1d0ac2096480-11",
+      "registrar": "8111",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 1.2341918510028336,
+          "fixture_id": "night_no_callback-2",
+          "fixture_sha256": "3c95df6bf6ac3cbb7773ccfdfe74b25c38875867f9963e797f0f5edd82618e8c",
+          "voice": "ru_ekaterina",
+          "speed": 1,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-11/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.39090538500022376,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-11/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-11/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.21032074699905934,
+      "target": "callback.ask_consent",
+      "trace": [
+        "voice.identity",
+        "identity.begin",
+        "identity.name",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "patient",
+          "text": "Нет, перезванивать не нужно.",
+          "state": "identity.name",
+          "step_index": 2,
+          "source": "real_asr"
+        },
+        {
+          "role": "patient",
+          "text": "Переключите меня на оператора.",
+          "state": "identity.name",
+          "step_index": 3,
+          "source": "real_asr"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-1d0ac2096480-18",
+      "registrar": "8118",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.6089319460006664,
+          "fixture_id": "missing_patronymic-2",
+          "fixture_sha256": "75dbad97c8dd632cb1d9074cddc346ed120821800ab8503e313467a9f301f53d",
+          "voice": "ru_alexandr",
+          "speed": 2.5,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-18/turn-1-1.wav",
+              "sha256": "15930e78afc0f20e818158a4d42d2bf24d831e2577f60cd86fd3a879e6ce0b31",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 4.8445,
+              "rms": 3435.07,
+              "peak": 20271
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.4135285259981174,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-18/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-18/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.2111650289989484,
+      "target": "callback.ask_consent",
+      "trace": [
+        "voice.identity",
+        "identity.begin",
+        "identity.name",
+        "identity.remember_reply",
+        "identity.collect",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "patient",
+          "text": "Иванов Иван родился 12 апреля 1985 года.",
+          "state": "identity.name",
+          "step_index": 2,
+          "source": "real_asr"
+        },
+        {
+          "role": "patient",
+          "text": "Переключите меня на оператора.",
+          "state": "identity.name",
+          "step_index": 5,
+          "source": "real_asr"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-1d0ac2096480-17",
+      "registrar": "8117",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.5487655500000983,
+          "fixture_id": "missing_patronymic-1",
+          "fixture_sha256": "10b415e42613a4d54bc9551426a749f01e29170c946953b67b5c6dba7dc97ab2",
+          "voice": "ru_alexandr",
+          "speed": 0.75,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-17/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.4305716560011206,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-17/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-17/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.21261152399893035,
+      "target": "callback.ask_consent",
+      "trace": [
+        "voice.identity",
+        "identity.begin",
+        "identity.name",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "patient",
+          "text": "Хочу записаться к офтальмологу.",
+          "state": "identity.name",
+          "step_index": 2,
+          "source": "real_asr"
+        },
+        {
+          "role": "patient",
+          "text": "Переключите меня на оператора.",
+          "state": "identity.name",
+          "step_index": 3,
+          "source": "real_asr"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-1d0ac2096480-07",
+      "registrar": "8107",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.1652948090013524,
+          "fixture_id": "night_callback-1",
+          "fixture_sha256": "cd65f5ee6aa40f2bbf4470adaaab5354c3ad130e3de84d968cbaedfc7241d38e",
+          "voice": "ru_alexandr",
+          "speed": 2,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-07/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.45546167999782483,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-07/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-07/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.20858504200077732,
+      "target": "callback.ask_consent",
+      "trace": [
+        "voice.identity",
+        "identity.begin",
+        "identity.name",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "patient",
+          "text": "Хочу записаться к терапевту.",
+          "state": "identity.name",
+          "step_index": 2,
+          "source": "real_asr"
+        },
+        {
+          "role": "patient",
+          "text": "Переключите меня на оператора.",
+          "state": "identity.name",
+          "step_index": 3,
+          "source": "real_asr"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    },
+    {
+      "call_id": "load-1d0ac2096480-10",
+      "registrar": "8110",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 1.1312457200001518,
+          "fixture_id": "night_no_callback-1",
+          "fixture_sha256": "d9ad6c23c5bca9c92422f0c52d3eb7620923f59994aad9e4743bc53265096d2e",
+          "voice": "ru_dmitriy",
+          "speed": 1.75,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-10/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.46949592500095605,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "callback.ask_consent",
+          "reply_audio": [
+            {
+              "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-10/turn-2-1.wav",
+              "sha256": "d6f2db8f547e5fd6da580b744853fbef390edb115c8b99755d94adb0c7e77209",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 6.442875,
+              "rms": 3508.92,
+              "peak": 23177
+            }
+          ]
+        }
+      ],
+      "status": "passed",
+      "start_audio": [
+        {
+          "file": "debug/runs/concurrent-calls/act/speech/load-1d0ac2096480-10/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.20627828699798556,
+      "target": "callback.ask_consent",
+      "trace": [
+        "voice.identity",
+        "identity.begin",
+        "identity.name",
+        "identity.name",
+        "callback.prepare",
+        "callback.ask_consent"
+      ],
+      "transcript": [
+        {
+          "role": "patient",
+          "text": "Запишите меня к терапевту.",
+          "state": "identity.name",
+          "step_index": 2,
+          "source": "real_asr"
+        },
+        {
+          "role": "patient",
+          "text": "Переключите меня на оператора.",
+          "state": "identity.name",
+          "step_index": 3,
+          "source": "real_asr"
+        }
+      ],
+      "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+    }
+  ],
+  "scope": "real audio/ASR/NLU/Rust/TTS; safe operator escalation, no appointment throughput claim",
+  "latency_origin": "after complete frozen user PCM is available; caller speaking duration excluded",
+  "vad_scope": "finished utterance ingress; noise endpointing requires separate tests"
+}

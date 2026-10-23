@@ -1,0 +1,9 @@
+{
+  "status": "passed",
+  "quality_policy_version": "ru-clinic-critical-3",
+  "model_sha256": "ba41b18f6a707ad93605a162998865e7c087153d2e010a26dd02229dab0e672a",
+  "voice": "silero-v5-cis-base:ru_ekaterina:ba41b18f6a707ad93605a162998865e7c087153d2e010a26dd02229dab0e672a:ru-clinic-4:pcm48-atempo-resample-1:bc97c9058612f73fb0ee1a442568895f7e66cb4f40d8018ffb6e4f587bc7032d",
+  "method": "real_asr_and_signal_checks",
+  "naturalness": "requires_listening",
+  "count": 41
+}

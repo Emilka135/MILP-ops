@@ -1,0 +1,51 @@
+# Optional local generative model. Own cache; no patient database access.
+services:
+  dialogue-llm:
+    image: ollama/ollama@sha256:f1a705f2bd113fb8d15f85f7c217f0dc5f6bebda6b0cc42b82c3ad165ffcb9dc
+    restart: unless-stopped
+    networks: [clinic]
+    runtime: nvidia
+    environment:
+      NVIDIA_VISIBLE_DEVICES: ${CLINIC_GPU_DEVICE:-0}
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+      OLLAMA_NUM_PARALLEL: "1"
+      OLLAMA_MAX_LOADED_MODELS: "1"
+      OLLAMA_CONTEXT_LENGTH: "2048"
+      OLLAMA_KEEP_ALIVE: "30m"
+    volumes: ["dialogue-models:/root/.ollama"]
+    ports: ["127.0.0.1:11435:11434"]
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    deploy:
+      resources:
+        limits: {memory: 4G}
+  dialogue-init:
+    image: ollama/ollama@sha256:f1a705f2bd113fb8d15f85f7c217f0dc5f6bebda6b0cc42b82c3ad165ffcb9dc
+    networks: [clinic]
+    restart: "no"
+    environment:
+      OLLAMA_HOST: http://dialogue-llm:11434
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["timeout 55 ollama run qwen3:1.7b --think=false 'Ответь одним словом: готов.' >/dev/null 2>&1"]
+    depends_on:
+      dialogue-llm: {condition: service_healthy}
+  scenario-editor:
+    environment:
+      DIALOGUE_LOCAL_URL: http://dialogue-llm:11434/v1
+    depends_on:
+      dialogue-init: {condition: service_completed_successfully}
+  crm:
+    environment:
+      DIALOGUE_LOCAL_URL: http://dialogue-llm:11434/v1
+    depends_on:
+      dialogue-init: {condition: service_completed_successfully}
+  nlu:
+    environment:
+      DIALOGUE_LOCAL_URL: http://dialogue-llm:11434/v1
+    depends_on:
+      dialogue-init: {condition: service_completed_successfully}
+volumes:
+  dialogue-models:

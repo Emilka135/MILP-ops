@@ -1,0 +1,76 @@
+flow callback
+  rate 1.5
+  entry prepare
+
+state prepare
+  set said_date = ""
+  set said_time = ""
+  goto ask_consent
+
+state ask_consent
+  say "Регистратор сейчас недоступен. Хотите, чтобы он перезвонил вам позже? Обратный звонок можно выбрать с десяти до шестнадцати часов. Для согласия на обратный звонок нажмите один. Чтобы отказаться, нажмите два."
+  listen 20s
+  dtmf 1 -> ask
+  dtmf 2 -> offer_request
+  yes -> ask
+  no -> offer_request
+  timeout 20s -> declined
+  silence -> declined
+  retry 2 -> declined
+
+state offer_request
+  say "Хотите оставить заявку на запись без обратного звонка? Регистратор рассмотрит её позже. СМС придёт только после подтверждённой записи. Один — оставить заявку. Два — завершить."
+  listen 20s
+  dtmf 1 -> save_request
+  dtmf 2 -> declined
+  yes -> save_request
+  no -> declined
+  timeout 20s -> declined
+  silence -> declined
+  retry 2 -> declined
+
+state save_request
+  call crm.booking_request patient_id=$patient_id phone=$caller_phone consent=true
+  ok -> request_done
+  error -> failed
+
+state request_done
+  say "Заявка сохранена. Это ещё не запись на приём. Перезванивать вам не будем. После подтверждённой записи вам отправят СМС. Всего доброго!"
+  end booking_request_saved
+
+state declined
+  say "Хорошо. Всего доброго!"
+  end callback_declined
+
+state ask
+  say "Я не могу справиться с этой задачей без помощи коллег. Когда вам удобно принять их звонок? Назовите день и время. Обратные звонки доступны {callback_hours}. Можно сказать: завтра в три часа дня."
+  listen 20s
+  loop 3 -> save_unscheduled
+  intent emergency -> operator reason=emergency
+  any -> save
+  timeout 20s -> save_unscheduled
+  silence -> save_unscheduled
+
+state save
+  call crm.callback_request call_id=$call_id phone=$caller_phone reason=$reason preferred_date=$said_date preferred_time=$said_time
+  ok -> done
+  invalid -> ask
+  error -> save_unscheduled
+
+state save_unscheduled
+  call crm.callback_request call_id=$call_id phone=$caller_phone reason=$reason unscheduled=true
+  ok -> done
+  error -> failed
+
+state done
+  say "Заявка на обратный звонок сохранена. Предпочтительное время: {callback_at}. Оператор увидит ваш вопрос в рабочее время. Всего доброго!"
+  end callback_requested
+
+state failed
+  say "Не удалось сохранить заявку. Пожалуйста, позвоните по официальному номеру поликлиники в рабочее время."
+  end callback_failed
+
+state operator
+  say "Перевожу экстренное обращение на оператора."
+  transfer reason=$reason
+  end transfer

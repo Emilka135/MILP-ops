@@ -1,0 +1,2010 @@
+{
+  "status": "failed",
+  "synthetic": true,
+  "mode": "speech",
+  "concurrent_calls": 20,
+  "barrier_parties": 20,
+  "total_s": 3.506603742000152,
+  "turns": 40,
+  "max_turn_s": 1.7889999189974333,
+  "p95_turn_s": 1.6391060109999671,
+  "target": "callback.ask_consent",
+  "no_booking_changes": true,
+  "no_operations": true,
+  "no_sms": true,
+  "metrics_before": {
+    "calls": 0,
+    "modules": {
+      "agent": {
+        "completed": 0,
+        "expired": 0,
+        "queue_us": 0,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 0,
+        "submitted": 0
+      },
+      "asr": {
+        "completed": 0,
+        "expired": 0,
+        "queue_us": 0,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 0,
+        "submitted": 0
+      },
+      "crm": {
+        "completed": 0,
+        "expired": 0,
+        "queue_us": 0,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 0,
+        "submitted": 0
+      },
+      "nlu": {
+        "completed": 0,
+        "expired": 0,
+        "queue_us": 0,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 0,
+        "submitted": 0
+      },
+      "operator": {
+        "completed": 0,
+        "expired": 0,
+        "queue_us": 0,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 0,
+        "submitted": 0
+      },
+      "sms": {
+        "completed": 0,
+        "expired": 0,
+        "queue_us": 0,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 0,
+        "submitted": 0
+      },
+      "tts": {
+        "completed": 0,
+        "expired": 0,
+        "queue_us": 0,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 0,
+        "submitted": 0
+      }
+    }
+  },
+  "metrics_after": {
+    "calls": 20,
+    "modules": {
+      "agent": {
+        "completed": 0,
+        "expired": 0,
+        "queue_us": 0,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 0,
+        "submitted": 0
+      },
+      "asr": {
+        "completed": 40,
+        "expired": 0,
+        "queue_us": 18611959,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 7920636,
+        "submitted": 40
+      },
+      "crm": {
+        "completed": 108,
+        "expired": 0,
+        "queue_us": 135170,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 414154,
+        "submitted": 108
+      },
+      "nlu": {
+        "completed": 40,
+        "expired": 0,
+        "queue_us": 1659,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 400417,
+        "submitted": 40
+      },
+      "operator": {
+        "completed": 20,
+        "expired": 0,
+        "queue_us": 598,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 260741,
+        "submitted": 20
+      },
+      "sms": {
+        "completed": 0,
+        "expired": 0,
+        "queue_us": 0,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 0,
+        "submitted": 0
+      },
+      "tts": {
+        "completed": 80,
+        "expired": 0,
+        "queue_us": 5824248,
+        "queued": 0,
+        "rejected": 0,
+        "service_us": 4397217,
+        "submitted": 80
+      }
+    }
+  },
+  "metrics_samples": [
+    {
+      "elapsed_s": 0.5074189699989802,
+      "metrics": {
+        "calls": 20,
+        "modules": {
+          "agent": {
+            "completed": 0,
+            "expired": 0,
+            "queue_us": 0,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 0,
+            "submitted": 0
+          },
+          "asr": {
+            "completed": 0,
+            "expired": 0,
+            "queue_us": 0,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 0,
+            "submitted": 0
+          },
+          "crm": {
+            "completed": 57,
+            "expired": 0,
+            "queue_us": 133001,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 166635,
+            "submitted": 57
+          },
+          "nlu": {
+            "completed": 0,
+            "expired": 0,
+            "queue_us": 0,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 0,
+            "submitted": 0
+          },
+          "operator": {
+            "completed": 0,
+            "expired": 0,
+            "queue_us": 0,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 0,
+            "submitted": 0
+          },
+          "sms": {
+            "completed": 0,
+            "expired": 0,
+            "queue_us": 0,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 0,
+            "submitted": 0
+          },
+          "tts": {
+            "completed": 17,
+            "expired": 0,
+            "queue_us": 5822048,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 389062,
+            "submitted": 20
+          }
+        }
+      }
+    },
+    {
+      "elapsed_s": 1.0224248429985892,
+      "metrics": {
+        "calls": 20,
+        "modules": {
+          "agent": {
+            "completed": 0,
+            "expired": 0,
+            "queue_us": 0,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 0,
+            "submitted": 0
+          },
+          "asr": {
+            "completed": 0,
+            "expired": 0,
+            "queue_us": 0,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 0,
+            "submitted": 0
+          },
+          "crm": {
+            "completed": 59,
+            "expired": 0,
+            "queue_us": 133106,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 177588,
+            "submitted": 59
+          },
+          "nlu": {
+            "completed": 0,
+            "expired": 0,
+            "queue_us": 0,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 0,
+            "submitted": 0
+          },
+          "operator": {
+            "completed": 0,
+            "expired": 0,
+            "queue_us": 0,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 0,
+            "submitted": 0
+          },
+          "sms": {
+            "completed": 0,
+            "expired": 0,
+            "queue_us": 0,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 0,
+            "submitted": 0
+          },
+          "tts": {
+            "completed": 19,
+            "expired": 0,
+            "queue_us": 5822048,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 1828463,
+            "submitted": 20
+          }
+        }
+      }
+    },
+    {
+      "elapsed_s": 1.524226388999523,
+      "metrics": {
+        "calls": 20,
+        "modules": {
+          "agent": {
+            "completed": 0,
+            "expired": 0,
+            "queue_us": 0,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 0,
+            "submitted": 0
+          },
+          "asr": {
+            "completed": 0,
+            "expired": 0,
+            "queue_us": 130,
+            "queued": 16,
+            "rejected": 0,
+            "service_us": 0,
+            "submitted": 20
+          },
+          "crm": {
+            "completed": 60,
+            "expired": 0,
+            "queue_us": 133155,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 181732,
+            "submitted": 60
+          },
+          "nlu": {
+            "completed": 0,
+            "expired": 0,
+            "queue_us": 0,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 0,
+            "submitted": 0
+          },
+          "operator": {
+            "completed": 0,
+            "expired": 0,
+            "queue_us": 0,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 0,
+            "submitted": 0
+          },
+          "sms": {
+            "completed": 0,
+            "expired": 0,
+            "queue_us": 0,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 0,
+            "submitted": 0
+          },
+          "tts": {
+            "completed": 20,
+            "expired": 0,
+            "queue_us": 5822048,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 2942932,
+            "submitted": 20
+          }
+        }
+      }
+    },
+    {
+      "elapsed_s": 2.0312671229985426,
+      "metrics": {
+        "calls": 20,
+        "modules": {
+          "agent": {
+            "completed": 0,
+            "expired": 0,
+            "queue_us": 0,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 0,
+            "submitted": 0
+          },
+          "asr": {
+            "completed": 7,
+            "expired": 0,
+            "queue_us": 4593661,
+            "queued": 9,
+            "rejected": 0,
+            "service_us": 2945960,
+            "submitted": 20
+          },
+          "crm": {
+            "completed": 68,
+            "expired": 0,
+            "queue_us": 133520,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 217174,
+            "submitted": 68
+          },
+          "nlu": {
+            "completed": 7,
+            "expired": 0,
+            "queue_us": 315,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 142309,
+            "submitted": 7
+          },
+          "operator": {
+            "completed": 0,
+            "expired": 0,
+            "queue_us": 0,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 0,
+            "submitted": 0
+          },
+          "sms": {
+            "completed": 0,
+            "expired": 0,
+            "queue_us": 0,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 0,
+            "submitted": 0
+          },
+          "tts": {
+            "completed": 25,
+            "expired": 0,
+            "queue_us": 5822331,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 3114219,
+            "submitted": 27
+          }
+        }
+      }
+    },
+    {
+      "elapsed_s": 2.5347328659991035,
+      "metrics": {
+        "calls": 20,
+        "modules": {
+          "agent": {
+            "completed": 0,
+            "expired": 0,
+            "queue_us": 0,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 0,
+            "submitted": 0
+          },
+          "asr": {
+            "completed": 15,
+            "expired": 0,
+            "queue_us": 13552301,
+            "queued": 1,
+            "rejected": 0,
+            "service_us": 4951002,
+            "submitted": 20
+          },
+          "crm": {
+            "completed": 79,
+            "expired": 0,
+            "queue_us": 133865,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 269843,
+            "submitted": 79
+          },
+          "nlu": {
+            "completed": 15,
+            "expired": 0,
+            "queue_us": 706,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 203322,
+            "submitted": 15
+          },
+          "operator": {
+            "completed": 0,
+            "expired": 0,
+            "queue_us": 0,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 0,
+            "submitted": 0
+          },
+          "sms": {
+            "completed": 0,
+            "expired": 0,
+            "queue_us": 0,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 0,
+            "submitted": 0
+          },
+          "tts": {
+            "completed": 35,
+            "expired": 0,
+            "queue_us": 5822700,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 3742129,
+            "submitted": 35
+          }
+        }
+      }
+    },
+    {
+      "elapsed_s": 3.0360813659972337,
+      "metrics": {
+        "calls": 20,
+        "modules": {
+          "agent": {
+            "completed": 0,
+            "expired": 0,
+            "queue_us": 0,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 0,
+            "submitted": 0
+          },
+          "asr": {
+            "completed": 21,
+            "expired": 0,
+            "queue_us": 14991920,
+            "queued": 15,
+            "rejected": 0,
+            "service_us": 6112786,
+            "submitted": 40
+          },
+          "crm": {
+            "completed": 88,
+            "expired": 0,
+            "queue_us": 134357,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 300486,
+            "submitted": 88
+          },
+          "nlu": {
+            "completed": 21,
+            "expired": 0,
+            "queue_us": 1011,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 252758,
+            "submitted": 21
+          },
+          "operator": {
+            "completed": 0,
+            "expired": 0,
+            "queue_us": 31,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 0,
+            "submitted": 1
+          },
+          "sms": {
+            "completed": 0,
+            "expired": 0,
+            "queue_us": 0,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 0,
+            "submitted": 0
+          },
+          "tts": {
+            "completed": 42,
+            "expired": 0,
+            "queue_us": 5822990,
+            "queued": 0,
+            "rejected": 0,
+            "service_us": 4332596,
+            "submitted": 42
+          }
+        }
+      }
+    }
+  ],
+  "module_metrics": {
+    "crm": "module_requests_total{module=\"crm\"} 145\nmodule_errors_total{module=\"crm\"} 0\nmodule_latency_seconds_sum{module=\"crm\"} 0.217654\nmodule_latency_seconds_count{module=\"crm\"} 145\nmodule_latency_seconds_bucket{module=\"crm\",le=\"0.005\"} 128\nmodule_latency_seconds_bucket{module=\"crm\",le=\"0.01\"} 144\nmodule_latency_seconds_bucket{module=\"crm\",le=\"0.025\"} 145\nmodule_latency_seconds_bucket{module=\"crm\",le=\"0.05\"} 145\nmodule_latency_seconds_bucket{module=\"crm\",le=\"0.1\"} 145\nmodule_latency_seconds_bucket{module=\"crm\",le=\"0.25\"} 145\nmodule_latency_seconds_bucket{module=\"crm\",le=\"0.5\"} 145\nmodule_latency_seconds_bucket{module=\"crm\",le=\"1.0\"} 145\nmodule_latency_seconds_bucket{module=\"crm\",le=\"2.5\"} 145\nmodule_latency_seconds_bucket{module=\"crm\",le=\"5.0\"} 145\nmodule_latency_seconds_bucket{module=\"crm\",le=\"+Inf\"} 145\n",
+    "nlu": "module_requests_total{module=\"nlu\"} 40\nmodule_errors_total{module=\"nlu\"} 0\nmodule_latency_seconds_sum{module=\"nlu\"} 0.338932\nmodule_latency_seconds_count{module=\"nlu\"} 40\nmodule_latency_seconds_bucket{module=\"nlu\",le=\"0.005\"} 1\nmodule_latency_seconds_bucket{module=\"nlu\",le=\"0.01\"} 38\nmodule_latency_seconds_bucket{module=\"nlu\",le=\"0.025\"} 39\nmodule_latency_seconds_bucket{module=\"nlu\",le=\"0.05\"} 39\nmodule_latency_seconds_bucket{module=\"nlu\",le=\"0.1\"} 40\nmodule_latency_seconds_bucket{module=\"nlu\",le=\"0.25\"} 40\nmodule_latency_seconds_bucket{module=\"nlu\",le=\"0.5\"} 40\nmodule_latency_seconds_bucket{module=\"nlu\",le=\"1.0\"} 40\nmodule_latency_seconds_bucket{module=\"nlu\",le=\"2.5\"} 40\nmodule_latency_seconds_bucket{module=\"nlu\",le=\"5.0\"} 40\nmodule_latency_seconds_bucket{module=\"nlu\",le=\"+Inf\"} 40\n",
+    "tts": "module_requests_total{module=\"tts\"} 80\nmodule_errors_total{module=\"tts\"} 0\nmodule_latency_seconds_sum{module=\"tts\"} 4.234149\nmodule_latency_seconds_count{module=\"tts\"} 80\nmodule_latency_seconds_bucket{module=\"tts\",le=\"0.005\"} 71\nmodule_latency_seconds_bucket{module=\"tts\",le=\"0.01\"} 71\nmodule_latency_seconds_bucket{module=\"tts\",le=\"0.025\"} 71\nmodule_latency_seconds_bucket{module=\"tts\",le=\"0.05\"} 71\nmodule_latency_seconds_bucket{module=\"tts\",le=\"0.1\"} 71\nmodule_latency_seconds_bucket{module=\"tts\",le=\"0.25\"} 74\nmodule_latency_seconds_bucket{module=\"tts\",le=\"0.5\"} 77\nmodule_latency_seconds_bucket{module=\"tts\",le=\"1.0\"} 79\nmodule_latency_seconds_bucket{module=\"tts\",le=\"2.5\"} 80\nmodule_latency_seconds_bucket{module=\"tts\",le=\"5.0\"} 80\nmodule_latency_seconds_bucket{module=\"tts\",le=\"+Inf\"} 80\n",
+    "asr": "module_requests_total{module=\"asr\"} 40\nmodule_errors_total{module=\"asr\"} 0\nmodule_latency_seconds_sum{module=\"asr\"} 7.782259\nmodule_latency_seconds_count{module=\"asr\"} 40\nmodule_latency_seconds_bucket{module=\"asr\",le=\"0.005\"} 0\nmodule_latency_seconds_bucket{module=\"asr\",le=\"0.01\"} 0\nmodule_latency_seconds_bucket{module=\"asr\",le=\"0.025\"} 0\nmodule_latency_seconds_bucket{module=\"asr\",le=\"0.05\"} 0\nmodule_latency_seconds_bucket{module=\"asr\",le=\"0.1\"} 15\nmodule_latency_seconds_bucket{module=\"asr\",le=\"0.25\"} 30\nmodule_latency_seconds_bucket{module=\"asr\",le=\"0.5\"} 37\nmodule_latency_seconds_bucket{module=\"asr\",le=\"1.0\"} 40\nmodule_latency_seconds_bucket{module=\"asr\",le=\"2.5\"} 40\nmodule_latency_seconds_bucket{module=\"asr\",le=\"5.0\"} 40\nmodule_latency_seconds_bucket{module=\"asr\",le=\"+Inf\"} 40\n"
+  },
+  "calls": [
+    {
+      "call_id": "load-c464c9b24b39-16",
+      "registrar": "8116",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.6018269029991643,
+          "fixture_id": "operator-2",
+          "fixture_sha256": "ac0e7903d61ae747f124a1f9cbf9eb73d1811fe993808703a06e05fe26419052",
+          "voice": "ru_dmitriy",
+          "speed": 1,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-16/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.15628628699778346,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "identity.operator",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-16/turn-2-1.wav",
+              "sha256": "62e262502c7ad82f7c12edcded0c17bfdc3f25d7ed035bd2500940dfaf33c871",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 3.37425,
+              "rms": 3751.16,
+              "peak": 24128
+            },
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-16/turn-2-2.wav",
+              "sha256": "0aff287b0255556d865181c31e8f843a6c994cf6e677325f972d3335e6fa0ab5",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 4,
+              "duration_s": 2.291625,
+              "rms": 4699.01,
+              "peak": 26456
+            }
+          ]
+        }
+      ],
+      "status": "failed",
+      "start_audio": [
+        {
+          "file": "/evidence/speech/load-c464c9b24b39-16/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.527421647002484,
+      "error": "AssertionError: {'wrong_target': 'identity.operator', 'expected': 'callback.ask_consent'}"
+    },
+    {
+      "call_id": "load-c464c9b24b39-15",
+      "registrar": "8115",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.8774247370020021,
+          "fixture_id": "doctor_choice-3",
+          "fixture_sha256": "c54aa41d3ef4ba76ed5b48d9031f9a7b3f4cb7dda6ae429da936450e2e496f7d",
+          "voice": "ru_alexandr",
+          "speed": 1.5,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-15/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.18461389000003692,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "identity.operator",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-15/turn-2-1.wav",
+              "sha256": "62e262502c7ad82f7c12edcded0c17bfdc3f25d7ed035bd2500940dfaf33c871",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 3.37425,
+              "rms": 3751.16,
+              "peak": 24128
+            },
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-15/turn-2-2.wav",
+              "sha256": "0aff287b0255556d865181c31e8f843a6c994cf6e677325f972d3335e6fa0ab5",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 4,
+              "duration_s": 2.291625,
+              "rms": 4699.01,
+              "peak": 26456
+            }
+          ]
+        }
+      ],
+      "status": "failed",
+      "start_audio": [
+        {
+          "file": "/evidence/speech/load-c464c9b24b39-15/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.5428948820008372,
+      "error": "AssertionError: {'wrong_target': 'identity.operator', 'expected': 'callback.ask_consent'}"
+    },
+    {
+      "call_id": "load-c464c9b24b39-04",
+      "registrar": "8104",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 1.5700501650026126,
+          "fixture_id": "duplicate_appointment-1",
+          "fixture_sha256": "085b5a59497fa63636742e6a1491d30cb839a14d2cd6018a07fdc042e29f58bf",
+          "voice": "ru_dmitriy",
+          "speed": 0.75,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-04/turn-1-1.wav",
+              "sha256": "86f085c998d79858e266acc2802b6c671f6ca6f944b5b16d6d232c329ab725c8",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 3.197125,
+              "rms": 3479.61,
+              "peak": 16304
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.18692510800246964,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "identity.operator",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-04/turn-2-1.wav",
+              "sha256": "62e262502c7ad82f7c12edcded0c17bfdc3f25d7ed035bd2500940dfaf33c871",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 3.37425,
+              "rms": 3751.16,
+              "peak": 24128
+            },
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-04/turn-2-2.wav",
+              "sha256": "0aff287b0255556d865181c31e8f843a6c994cf6e677325f972d3335e6fa0ab5",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 4,
+              "duration_s": 2.291625,
+              "rms": 4699.01,
+              "peak": 26456
+            }
+          ]
+        }
+      ],
+      "status": "failed",
+      "start_audio": [
+        {
+          "file": "/evidence/speech/load-c464c9b24b39-04/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.5450113959996088,
+      "error": "AssertionError: {'wrong_target': 'identity.operator', 'expected': 'callback.ask_consent'}"
+    },
+    {
+      "call_id": "load-c464c9b24b39-02",
+      "registrar": "8102",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 1.0230419389990857,
+          "fixture_id": "missing_patronymic-3",
+          "fixture_sha256": "5428ea7dc00f75468ab62f56ced1c3b7d1f423c4f25776c9b315d80c9b2f4550",
+          "voice": "ru_dmitriy",
+          "speed": 0.75,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-02/turn-1-1.wav",
+              "sha256": "5fbe3979fe57c86b7964654c6e9bd549f9e5defc3cad1473149930d3d3ba2eb7",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 4.385375,
+              "rms": 3979.28,
+              "peak": 24052
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.20059622899862006,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "identity.operator",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-02/turn-2-1.wav",
+              "sha256": "62e262502c7ad82f7c12edcded0c17bfdc3f25d7ed035bd2500940dfaf33c871",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 3.37425,
+              "rms": 3751.16,
+              "peak": 24128
+            },
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-02/turn-2-2.wav",
+              "sha256": "0aff287b0255556d865181c31e8f843a6c994cf6e677325f972d3335e6fa0ab5",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 4,
+              "duration_s": 2.291625,
+              "rms": 4699.01,
+              "peak": 26456
+            }
+          ]
+        }
+      ],
+      "status": "failed",
+      "start_audio": [
+        {
+          "file": "/evidence/speech/load-c464c9b24b39-02/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.5442574910011899,
+      "error": "AssertionError: {'wrong_target': 'identity.operator', 'expected': 'callback.ask_consent'}"
+    },
+    {
+      "call_id": "load-c464c9b24b39-12",
+      "registrar": "8112",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 1.0861684949995833,
+          "fixture_id": "night_no_callback-3",
+          "fixture_sha256": "939378884cc76fe7e74f92d871847a02291adcd0ebcb6c31428eb35e3e978d2f",
+          "voice": "ru_oksana",
+          "speed": 0.75,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-12/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.21332646000155364,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "identity.operator",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-12/turn-2-1.wav",
+              "sha256": "62e262502c7ad82f7c12edcded0c17bfdc3f25d7ed035bd2500940dfaf33c871",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 3.37425,
+              "rms": 3751.16,
+              "peak": 24128
+            },
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-12/turn-2-2.wav",
+              "sha256": "0aff287b0255556d865181c31e8f843a6c994cf6e677325f972d3335e6fa0ab5",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 4,
+              "duration_s": 2.291625,
+              "rms": 4699.01,
+              "peak": 26456
+            }
+          ]
+        }
+      ],
+      "status": "failed",
+      "start_audio": [
+        {
+          "file": "/evidence/speech/load-c464c9b24b39-12/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.5411901279985614,
+      "error": "AssertionError: {'wrong_target': 'identity.operator', 'expected': 'callback.ask_consent'}"
+    },
+    {
+      "call_id": "load-c464c9b24b39-05",
+      "registrar": "8105",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 1.6739081919986347,
+          "fixture_id": "duplicate_appointment-2",
+          "fixture_sha256": "f02086cbd26490b29a6a16e3a2a600b565ba63e1a1f1494271bf2639e63291c8",
+          "voice": "ru_dmitriy",
+          "speed": 0.75,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-05/turn-1-1.wav",
+              "sha256": "86f085c998d79858e266acc2802b6c671f6ca6f944b5b16d6d232c329ab725c8",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 3.197125,
+              "rms": 3479.61,
+              "peak": 16304
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.2183878329997242,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "identity.operator",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-05/turn-2-1.wav",
+              "sha256": "62e262502c7ad82f7c12edcded0c17bfdc3f25d7ed035bd2500940dfaf33c871",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 3.37425,
+              "rms": 3751.16,
+              "peak": 24128
+            },
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-05/turn-2-2.wav",
+              "sha256": "0aff287b0255556d865181c31e8f843a6c994cf6e677325f972d3335e6fa0ab5",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 4,
+              "duration_s": 2.291625,
+              "rms": 4699.01,
+              "peak": 26456
+            }
+          ]
+        }
+      ],
+      "status": "failed",
+      "start_audio": [
+        {
+          "file": "/evidence/speech/load-c464c9b24b39-05/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.5437183000030927,
+      "error": "AssertionError: {'wrong_target': 'identity.operator', 'expected': 'callback.ask_consent'}"
+    },
+    {
+      "call_id": "load-c464c9b24b39-03",
+      "registrar": "8103",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 1.3004560549998132,
+          "fixture_id": "missing_patronymic-4",
+          "fixture_sha256": "1d8a97f36fd5130be6b257d5a1824ca3204d97ed94374a1e2d5d749f39077c1c",
+          "voice": "ru_dmitriy",
+          "speed": 1,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-03/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.24529433399948175,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "identity.operator",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-03/turn-2-1.wav",
+              "sha256": "62e262502c7ad82f7c12edcded0c17bfdc3f25d7ed035bd2500940dfaf33c871",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 3.37425,
+              "rms": 3751.16,
+              "peak": 24128
+            },
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-03/turn-2-2.wav",
+              "sha256": "0aff287b0255556d865181c31e8f843a6c994cf6e677325f972d3335e6fa0ab5",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 4,
+              "duration_s": 2.291625,
+              "rms": 4699.01,
+              "peak": 26456
+            }
+          ]
+        }
+      ],
+      "status": "failed",
+      "start_audio": [
+        {
+          "file": "/evidence/speech/load-c464c9b24b39-03/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.5426682630022697,
+      "error": "AssertionError: {'wrong_target': 'identity.operator', 'expected': 'callback.ask_consent'}"
+    },
+    {
+      "call_id": "load-c464c9b24b39-08",
+      "registrar": "8108",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 1.514967439998145,
+          "fixture_id": "night_callback-2",
+          "fixture_sha256": "b13fffa1a9f37aaa85ed1ab9f2bf56f5928e72ba3307efa43401ae8128c63ab9",
+          "voice": "ru_ekaterina",
+          "speed": 2,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-08/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.269764488999499,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "identity.operator",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-08/turn-2-1.wav",
+              "sha256": "62e262502c7ad82f7c12edcded0c17bfdc3f25d7ed035bd2500940dfaf33c871",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 3.37425,
+              "rms": 3751.16,
+              "peak": 24128
+            },
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-08/turn-2-2.wav",
+              "sha256": "0aff287b0255556d865181c31e8f843a6c994cf6e677325f972d3335e6fa0ab5",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 4,
+              "duration_s": 2.291625,
+              "rms": 4699.01,
+              "peak": 26456
+            }
+          ]
+        }
+      ],
+      "status": "failed",
+      "start_audio": [
+        {
+          "file": "/evidence/speech/load-c464c9b24b39-08/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.624491782997211,
+      "error": "AssertionError: {'wrong_target': 'identity.operator', 'expected': 'callback.ask_consent'}"
+    },
+    {
+      "call_id": "load-c464c9b24b39-19",
+      "registrar": "8119",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.9056063530006213,
+          "fixture_id": "missing_patronymic-3",
+          "fixture_sha256": "5428ea7dc00f75468ab62f56ced1c3b7d1f423c4f25776c9b315d80c9b2f4550",
+          "voice": "ru_dmitriy",
+          "speed": 0.75,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-19/turn-1-1.wav",
+              "sha256": "5fbe3979fe57c86b7964654c6e9bd549f9e5defc3cad1473149930d3d3ba2eb7",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 4.385375,
+              "rms": 3979.28,
+              "peak": 24052
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.29934559800312854,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "identity.operator",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-19/turn-2-1.wav",
+              "sha256": "62e262502c7ad82f7c12edcded0c17bfdc3f25d7ed035bd2500940dfaf33c871",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 3.37425,
+              "rms": 3751.16,
+              "peak": 24128
+            },
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-19/turn-2-2.wav",
+              "sha256": "0aff287b0255556d865181c31e8f843a6c994cf6e677325f972d3335e6fa0ab5",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 4,
+              "duration_s": 2.291625,
+              "rms": 4699.01,
+              "peak": 26456
+            }
+          ]
+        }
+      ],
+      "status": "failed",
+      "start_audio": [
+        {
+          "file": "/evidence/speech/load-c464c9b24b39-19/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.5296789250023721,
+      "error": "AssertionError: {'wrong_target': 'identity.operator', 'expected': 'callback.ask_consent'}"
+    },
+    {
+      "call_id": "load-c464c9b24b39-06",
+      "registrar": "8106",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.9423249489991576,
+          "fixture_id": "duplicate_appointment-3",
+          "fixture_sha256": "21671c53c0c3c87f1be528a29d4c7e436fd5a5e50cceb2770de029a606c17e92",
+          "voice": "ru_dmitriy",
+          "speed": 1,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-06/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.3186029460011923,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "identity.operator",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-06/turn-2-1.wav",
+              "sha256": "62e262502c7ad82f7c12edcded0c17bfdc3f25d7ed035bd2500940dfaf33c871",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 3.37425,
+              "rms": 3751.16,
+              "peak": 24128
+            },
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-06/turn-2-2.wav",
+              "sha256": "0aff287b0255556d865181c31e8f843a6c994cf6e677325f972d3335e6fa0ab5",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 4,
+              "duration_s": 2.291625,
+              "rms": 4699.01,
+              "peak": 26456
+            }
+          ]
+        }
+      ],
+      "status": "failed",
+      "start_audio": [
+        {
+          "file": "/evidence/speech/load-c464c9b24b39-06/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.5449418909993256,
+      "error": "AssertionError: {'wrong_target': 'identity.operator', 'expected': 'callback.ask_consent'}"
+    },
+    {
+      "call_id": "load-c464c9b24b39-18",
+      "registrar": "8118",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 1.6391060109999671,
+          "fixture_id": "missing_patronymic-2",
+          "fixture_sha256": "75dbad97c8dd632cb1d9074cddc346ed120821800ab8503e313467a9f301f53d",
+          "voice": "ru_alexandr",
+          "speed": 2.5,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-18/turn-1-1.wav",
+              "sha256": "15930e78afc0f20e818158a4d42d2bf24d831e2577f60cd86fd3a879e6ce0b31",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 4.8445,
+              "rms": 3435.07,
+              "peak": 20271
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.33044624800095335,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "identity.operator",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-18/turn-2-1.wav",
+              "sha256": "62e262502c7ad82f7c12edcded0c17bfdc3f25d7ed035bd2500940dfaf33c871",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 3.37425,
+              "rms": 3751.16,
+              "peak": 24128
+            },
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-18/turn-2-2.wav",
+              "sha256": "0aff287b0255556d865181c31e8f843a6c994cf6e677325f972d3335e6fa0ab5",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 4,
+              "duration_s": 2.291625,
+              "rms": 4699.01,
+              "peak": 26456
+            }
+          ]
+        }
+      ],
+      "status": "failed",
+      "start_audio": [
+        {
+          "file": "/evidence/speech/load-c464c9b24b39-18/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.5428569549985696,
+      "error": "AssertionError: {'wrong_target': 'identity.operator', 'expected': 'callback.ask_consent'}"
+    },
+    {
+      "call_id": "load-c464c9b24b39-10",
+      "registrar": "8110",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.8177779270008614,
+          "fixture_id": "night_no_callback-1",
+          "fixture_sha256": "d9ad6c23c5bca9c92422f0c52d3eb7620923f59994aad9e4743bc53265096d2e",
+          "voice": "ru_dmitriy",
+          "speed": 1.75,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-10/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.363892200999544,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "identity.operator",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-10/turn-2-1.wav",
+              "sha256": "62e262502c7ad82f7c12edcded0c17bfdc3f25d7ed035bd2500940dfaf33c871",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 3.37425,
+              "rms": 3751.16,
+              "peak": 24128
+            },
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-10/turn-2-2.wav",
+              "sha256": "0aff287b0255556d865181c31e8f843a6c994cf6e677325f972d3335e6fa0ab5",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 4,
+              "duration_s": 2.291625,
+              "rms": 4699.01,
+              "peak": 26456
+            }
+          ]
+        }
+      ],
+      "status": "failed",
+      "start_audio": [
+        {
+          "file": "/evidence/speech/load-c464c9b24b39-10/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.5442345150004257,
+      "error": "AssertionError: {'wrong_target': 'identity.operator', 'expected': 'callback.ask_consent'}"
+    },
+    {
+      "call_id": "load-c464c9b24b39-00",
+      "registrar": "8100",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.7510065040005429,
+          "fixture_id": "missing_patronymic-1",
+          "fixture_sha256": "10b415e42613a4d54bc9551426a749f01e29170c946953b67b5c6dba7dc97ab2",
+          "voice": "ru_alexandr",
+          "speed": 0.75,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-00/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.38587407500017434,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "identity.operator",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-00/turn-2-1.wav",
+              "sha256": "62e262502c7ad82f7c12edcded0c17bfdc3f25d7ed035bd2500940dfaf33c871",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 3.37425,
+              "rms": 3751.16,
+              "peak": 24128
+            },
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-00/turn-2-2.wav",
+              "sha256": "0aff287b0255556d865181c31e8f843a6c994cf6e677325f972d3335e6fa0ab5",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 4,
+              "duration_s": 2.291625,
+              "rms": 4699.01,
+              "peak": 26456
+            }
+          ]
+        }
+      ],
+      "status": "failed",
+      "start_audio": [
+        {
+          "file": "/evidence/speech/load-c464c9b24b39-00/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 1.1531076089995622,
+      "error": "AssertionError: {'wrong_target': 'identity.operator', 'expected': 'callback.ask_consent'}"
+    },
+    {
+      "call_id": "load-c464c9b24b39-09",
+      "registrar": "8109",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.760987973997544,
+          "fixture_id": "night_callback-3",
+          "fixture_sha256": "6f619d9927f4c7faec2b535494906c83acf0dbd1b58b6e2595fdb9885707e0ec",
+          "voice": "ru_dmitriy",
+          "speed": 2.5,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-09/turn-1-1.wav",
+              "sha256": "86f085c998d79858e266acc2802b6c671f6ca6f944b5b16d6d232c329ab725c8",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 3.197125,
+              "rms": 3479.61,
+              "peak": 16304
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.4065426220004156,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "identity.operator",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-09/turn-2-1.wav",
+              "sha256": "62e262502c7ad82f7c12edcded0c17bfdc3f25d7ed035bd2500940dfaf33c871",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 3.37425,
+              "rms": 3751.16,
+              "peak": 24128
+            },
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-09/turn-2-2.wav",
+              "sha256": "0aff287b0255556d865181c31e8f843a6c994cf6e677325f972d3335e6fa0ab5",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 4,
+              "duration_s": 2.291625,
+              "rms": 4699.01,
+              "peak": 26456
+            }
+          ]
+        }
+      ],
+      "status": "failed",
+      "start_audio": [
+        {
+          "file": "/evidence/speech/load-c464c9b24b39-09/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.5441371099987009,
+      "error": "AssertionError: {'wrong_target': 'identity.operator', 'expected': 'callback.ask_consent'}"
+    },
+    {
+      "call_id": "load-c464c9b24b39-07",
+      "registrar": "8107",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 1.2516612489998806,
+          "fixture_id": "night_callback-1",
+          "fixture_sha256": "cd65f5ee6aa40f2bbf4470adaaab5354c3ad130e3de84d968cbaedfc7241d38e",
+          "voice": "ru_alexandr",
+          "speed": 2,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-07/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.44482215700190864,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "identity.operator",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-07/turn-2-1.wav",
+              "sha256": "62e262502c7ad82f7c12edcded0c17bfdc3f25d7ed035bd2500940dfaf33c871",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 3.37425,
+              "rms": 3751.16,
+              "peak": 24128
+            },
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-07/turn-2-2.wav",
+              "sha256": "0aff287b0255556d865181c31e8f843a6c994cf6e677325f972d3335e6fa0ab5",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 4,
+              "duration_s": 2.291625,
+              "rms": 4699.01,
+              "peak": 26456
+            }
+          ]
+        }
+      ],
+      "status": "failed",
+      "start_audio": [
+        {
+          "file": "/evidence/speech/load-c464c9b24b39-07/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.5412960880021274,
+      "error": "AssertionError: {'wrong_target': 'identity.operator', 'expected': 'callback.ask_consent'}"
+    },
+    {
+      "call_id": "load-c464c9b24b39-17",
+      "registrar": "8117",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 1.1445833840007253,
+          "fixture_id": "missing_patronymic-1",
+          "fixture_sha256": "10b415e42613a4d54bc9551426a749f01e29170c946953b67b5c6dba7dc97ab2",
+          "voice": "ru_alexandr",
+          "speed": 0.75,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-17/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.46221121400230913,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "identity.operator",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-17/turn-2-1.wav",
+              "sha256": "62e262502c7ad82f7c12edcded0c17bfdc3f25d7ed035bd2500940dfaf33c871",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 3.37425,
+              "rms": 3751.16,
+              "peak": 24128
+            },
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-17/turn-2-2.wav",
+              "sha256": "0aff287b0255556d865181c31e8f843a6c994cf6e677325f972d3335e6fa0ab5",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 4,
+              "duration_s": 2.291625,
+              "rms": 4699.01,
+              "peak": 26456
+            }
+          ]
+        }
+      ],
+      "status": "failed",
+      "start_audio": [
+        {
+          "file": "/evidence/speech/load-c464c9b24b39-17/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.5223405590004404,
+      "error": "AssertionError: {'wrong_target': 'identity.operator', 'expected': 'callback.ask_consent'}"
+    },
+    {
+      "call_id": "load-c464c9b24b39-11",
+      "registrar": "8111",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 1.1922860930026218,
+          "fixture_id": "night_no_callback-2",
+          "fixture_sha256": "3c95df6bf6ac3cbb7773ccfdfe74b25c38875867f9963e797f0f5edd82618e8c",
+          "voice": "ru_ekaterina",
+          "speed": 1,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-11/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.4848026319996279,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "identity.operator",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-11/turn-2-1.wav",
+              "sha256": "62e262502c7ad82f7c12edcded0c17bfdc3f25d7ed035bd2500940dfaf33c871",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 3.37425,
+              "rms": 3751.16,
+              "peak": 24128
+            },
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-11/turn-2-2.wav",
+              "sha256": "0aff287b0255556d865181c31e8f843a6c994cf6e677325f972d3335e6fa0ab5",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 4,
+              "duration_s": 2.291625,
+              "rms": 4699.01,
+              "peak": 26456
+            }
+          ]
+        }
+      ],
+      "status": "failed",
+      "start_audio": [
+        {
+          "file": "/evidence/speech/load-c464c9b24b39-11/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.545587054999487,
+      "error": "AssertionError: {'wrong_target': 'identity.operator', 'expected': 'callback.ask_consent'}"
+    },
+    {
+      "call_id": "load-c464c9b24b39-14",
+      "registrar": "8114",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.9953850260026229,
+          "fixture_id": "doctor_choice-2",
+          "fixture_sha256": "c72bf07443cba0eba084ff46785dc1c81c42a56fab0c4f83579e9c0a98db0026",
+          "voice": "ru_dmitriy",
+          "speed": 1.75,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-14/turn-1-1.wav",
+              "sha256": "86f085c998d79858e266acc2802b6c671f6ca6f944b5b16d6d232c329ab725c8",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 3.197125,
+              "rms": 3479.61,
+              "peak": 16304
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.5049517820007168,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "identity.operator",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-14/turn-2-1.wav",
+              "sha256": "62e262502c7ad82f7c12edcded0c17bfdc3f25d7ed035bd2500940dfaf33c871",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 3.37425,
+              "rms": 3751.16,
+              "peak": 24128
+            },
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-14/turn-2-2.wav",
+              "sha256": "0aff287b0255556d865181c31e8f843a6c994cf6e677325f972d3335e6fa0ab5",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 4,
+              "duration_s": 2.291625,
+              "rms": 4699.01,
+              "peak": 26456
+            }
+          ]
+        }
+      ],
+      "status": "failed",
+      "start_audio": [
+        {
+          "file": "/evidence/speech/load-c464c9b24b39-14/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.5280787330011663,
+      "error": "AssertionError: {'wrong_target': 'identity.operator', 'expected': 'callback.ask_consent'}"
+    },
+    {
+      "call_id": "load-c464c9b24b39-01",
+      "registrar": "8101",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 1.7889999189974333,
+          "fixture_id": "missing_patronymic-2",
+          "fixture_sha256": "75dbad97c8dd632cb1d9074cddc346ed120821800ab8503e313467a9f301f53d",
+          "voice": "ru_alexandr",
+          "speed": 2.5,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-01/turn-1-1.wav",
+              "sha256": "15930e78afc0f20e818158a4d42d2bf24d831e2577f60cd86fd3a879e6ce0b31",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 4.8445,
+              "rms": 3435.07,
+              "peak": 20271
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.5176946869978565,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "identity.operator",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-01/turn-2-1.wav",
+              "sha256": "62e262502c7ad82f7c12edcded0c17bfdc3f25d7ed035bd2500940dfaf33c871",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 3.37425,
+              "rms": 3751.16,
+              "peak": 24128
+            },
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-01/turn-2-2.wav",
+              "sha256": "0aff287b0255556d865181c31e8f843a6c994cf6e677325f972d3335e6fa0ab5",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 4,
+              "duration_s": 2.291625,
+              "rms": 4699.01,
+              "peak": 26456
+            }
+          ]
+        }
+      ],
+      "status": "failed",
+      "start_audio": [
+        {
+          "file": "/evidence/speech/load-c464c9b24b39-01/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.8858056850003777,
+      "error": "AssertionError: {'wrong_target': 'identity.operator', 'expected': 'callback.ask_consent'}"
+    },
+    {
+      "call_id": "load-c464c9b24b39-13",
+      "registrar": "8113",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "real_asr_audio",
+          "elapsed_s": 1.3711235500013572,
+          "fixture_id": "doctor_choice-1",
+          "fixture_sha256": "a994d2b3e48615e451c911f7c84e46b1b13594356b63ce85b370019b2c38dd28",
+          "voice": "ru_ekaterina",
+          "speed": 1.25,
+          "state": "identity.name",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-13/turn-1-1.wav",
+              "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 2,
+              "duration_s": 8.534,
+              "rms": 3430.12,
+              "peak": 19426
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "input": "real_asr_audio",
+          "elapsed_s": 0.5451368850008294,
+          "fixture_id": "operator-1",
+          "fixture_sha256": "5dffc31a6c69ef3754bd3d74c7a07b0bd8516bead2c0d1957f1817d7eb25bdc9",
+          "voice": "ru_ekaterina",
+          "speed": 0.75,
+          "state": "identity.operator",
+          "reply_audio": [
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-13/turn-2-1.wav",
+              "sha256": "62e262502c7ad82f7c12edcded0c17bfdc3f25d7ed035bd2500940dfaf33c871",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 3,
+              "duration_s": 3.37425,
+              "rms": 3751.16,
+              "peak": 24128
+            },
+            {
+              "file": "/evidence/speech/load-c464c9b24b39-13/turn-2-2.wav",
+              "sha256": "0aff287b0255556d865181c31e8f843a6c994cf6e677325f972d3335e6fa0ab5",
+              "engine": "silero-v5-cis-base",
+              "prompt_id": 4,
+              "duration_s": 2.291625,
+              "rms": 4699.01,
+              "peak": 26456
+            }
+          ]
+        }
+      ],
+      "status": "failed",
+      "start_audio": [
+        {
+          "file": "/evidence/speech/load-c464c9b24b39-13/welcome-1.wav",
+          "sha256": "3b0e9bd4ee69aac730138739b5cc417ea71c48d67d174c29dcbb63a83e84bb13",
+          "engine": "silero-v5-cis-base",
+          "prompt_id": 1,
+          "duration_s": 8.534,
+          "rms": 3430.12,
+          "peak": 19426
+        }
+      ],
+      "start_s": 0.5420635479968041,
+      "error": "AssertionError: {'wrong_target': 'identity.operator', 'expected': 'callback.ask_consent'}"
+    }
+  ],
+  "scope": "real audio/ASR/NLU/Rust/TTS; safe operator escalation, no appointment throughput claim",
+  "latency_origin": "after complete frozen user PCM is available; caller speaking duration excluded",
+  "vad_scope": "finished utterance ingress; noise endpointing requires separate tests"
+}

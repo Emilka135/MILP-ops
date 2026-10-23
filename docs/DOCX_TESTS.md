@@ -1,0 +1,1 @@
+../scenarios/docs/DOCX_TESTS.md

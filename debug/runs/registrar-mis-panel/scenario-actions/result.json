@@ -1,0 +1,67 @@
+{
+  "status": "passed",
+  "scope": "Real editor HTTP, Repository history and Learning SQLite; synthetic archive unless provided; no models/MIS/FSM execution",
+  "checks": [
+    "Admin edits an existing block in Chromium and saves through real Repository HTTP",
+    "Admin restores the actual saved historical version",
+    "Real knowledge API supplies exact local documents and flow steps; admin link opens the existing editor",
+    "Actual archived transcript and trace display exactly, including the final recorded state; this is archive validation only",
+    "Registrar proposal persists as queued on line 100 despite forged query scope; line 101 remains empty and common project is unchanged",
+    "Real backend denies observer writes, registrar global edits, and proposals for calls outside the owned archive",
+    "Real nightly preparation does not activate a profile; Learning explicitly blocks approval without deployment",
+    "Independent SQLite snapshot confirms scoped case, two labels, zero bookings and unchanged common project"
+  ],
+  "effects": {
+    "admin_saved_revision": "cbe7e4ff07b906133715c3e61453c9eea45efbad92bd4b28d5e6836a447139aa",
+    "restored_revision": "2f72a8159f574100b24786fd7ac23e6438489a431e002e23389bf924f3af10b5",
+    "archived": {
+      "call_id": "synthetic-runtime-action-probe",
+      "trace": [
+        "inbound.welcome",
+        "inbound.listen_free",
+        "inbound.operator"
+      ],
+      "target_state": "inbound.operator",
+      "transcript": [
+        {
+          "role": "assistant",
+          "text": "Здравствуйте. Это синтетическая архивная реплика.",
+          "state": "inbound.welcome",
+          "step_index": 0,
+          "source": "synthetic_archive"
+        },
+        {
+          "role": "patient",
+          "text": "Перенесите мой приём на утро, пожалуйста.",
+          "state": "inbound.listen_free",
+          "step_index": 1,
+          "source": "synthetic_archive"
+        },
+        {
+          "role": "assistant",
+          "text": "Передаю вопрос регистратору.",
+          "state": "inbound.operator",
+          "step_index": 2,
+          "source": "synthetic_archive"
+        }
+      ],
+      "archive_origin": "synthetic_archive_fixture",
+      "actual_fsm_executed_by_this_runner": false
+    },
+    "queued_case": {
+      "id": 1,
+      "status": "queued",
+      "registrar": "100",
+      "source_state": "inbound.listen_free",
+      "call_id": "synthetic-runtime-action-probe"
+    },
+    "review": {
+      "status": "blocked",
+      "payload": {
+        "error": "Развёртывание персональных версий ещё не подключено. Предложение сохранено для проверки."
+      }
+    },
+    "sqlite_verified": true
+  },
+  "errors": []
+}

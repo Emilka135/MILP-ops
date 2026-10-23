@@ -1,0 +1,4 @@
+interface:
+  display_name: "Локальная регистратура на GPU"
+  short_description: "Docker и реальная проверка голоса на NVIDIA GPU"
+  default_prompt: "Use $clinic-local-gpu to verify and launch the local clinic Docker stack on NVIDIA."

@@ -1,0 +1,180 @@
+time="2026-10-22T18:00:40+03:00" level=info msg="Using docker host 'unix:///var/run/docker.sock', and daemon socket 'unix:///var/run/docker.sock'"
+time="2026-10-22T18:00:40+03:00" level=info msg="Start server on http://198.18.0.1:34567"
+[score acceptance/isolated evidence and scenario editing] ⭐ Run Set up job
+[score acceptance/isolated evidence and scenario editing] 🚀  Start image=catthehacker/ubuntu:act-24.04
+[score acceptance/isolated evidence and scenario editing]   🐳  docker pull image=catthehacker/ubuntu:act-24.04 platform= username= forcePull=false
+[score acceptance/isolated evidence and scenario editing]   🐳  docker create image=catthehacker/ubuntu:act-24.04 platform= entrypoint=["tail" "-f" "/dev/null"] cmd=[] network="host"
+[score acceptance/isolated evidence and scenario editing]   🐳  docker run image=catthehacker/ubuntu:act-24.04 platform= entrypoint=["tail" "-f" "/dev/null"] cmd=[] network="host"
+[score acceptance/isolated evidence and scenario editing]   🐳  docker exec cmd=[node --no-warnings -e console.log(process.execPath)] user= workdir=
+[score acceptance/isolated evidence and scenario editing]   ✅  Success - Set up job
+[score acceptance/isolated evidence and scenario editing]   ☁  git clone 'https://github.com/actions/setup-python' # ref=v5
+[score acceptance/isolated evidence and scenario editing]   ☁  git clone 'https://github.com/actions/upload-artifact' # ref=v4
+[score acceptance/isolated evidence and scenario editing] ⭐ Run Main actions/checkout@v4
+[score acceptance/isolated evidence and scenario editing]   🐳  docker cp src=/home/alpaca/GitHub/calls/prodxak/clinic-voice/. dst=/home/alpaca/GitHub/calls/prodxak/clinic-voice
+[score acceptance/isolated evidence and scenario editing]   ✅  Success - Main actions/checkout@v4 [216.315828ms]
+[score acceptance/isolated evidence and scenario editing] ⭐ Run Main actions/setup-python@v5
+[score acceptance/isolated evidence and scenario editing]   🐳  docker cp src=/home/alpaca/.cache/act/actions-setup-python@v5/ dst=/var/run/act/actions/actions-setup-python@v5/
+[score acceptance/isolated evidence and scenario editing]   🐳  docker exec cmd=[/opt/acttoolcache/node/24.19.0/x64/bin/node /var/run/act/actions/actions-setup-python@v5/dist/setup/index.js] user= workdir=
+[score acceptance/isolated evidence and scenario editing]   ❓  ::group::Installed versions
+[score acceptance/isolated evidence and scenario editing]   | (node:31) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+[score acceptance/isolated evidence and scenario editing]   | (Use `node --trace-deprecation ...` to show where the warning was created)
+[score acceptance/isolated evidence and scenario editing]   | Successfully set up CPython (3.12.15)
+[score acceptance/isolated evidence and scenario editing]   ❓  ::endgroup::
+[score acceptance/isolated evidence and scenario editing]   ❓ add-matcher /run/act/actions/actions-setup-python@v5/.github/python.json
+[score acceptance/isolated evidence and scenario editing]   ✅  Success - Main actions/setup-python@v5 [362.779348ms]
+[score acceptance/isolated evidence and scenario editing]   ⚙  ::set-env:: LD_LIBRARY_PATH=/opt/hostedtoolcache/Python/3.12.15/x64/lib
+[score acceptance/isolated evidence and scenario editing]   ⚙  ::set-env:: pythonLocation=/opt/hostedtoolcache/Python/3.12.15/x64
+[score acceptance/isolated evidence and scenario editing]   ⚙  ::set-env:: PKG_CONFIG_PATH=/opt/hostedtoolcache/Python/3.12.15/x64/lib/pkgconfig
+[score acceptance/isolated evidence and scenario editing]   ⚙  ::set-env:: Python_ROOT_DIR=/opt/hostedtoolcache/Python/3.12.15/x64
+[score acceptance/isolated evidence and scenario editing]   ⚙  ::set-env:: Python2_ROOT_DIR=/opt/hostedtoolcache/Python/3.12.15/x64
+[score acceptance/isolated evidence and scenario editing]   ⚙  ::set-env:: Python3_ROOT_DIR=/opt/hostedtoolcache/Python/3.12.15/x64
+[score acceptance/isolated evidence and scenario editing]   ⚙  ::set-output:: python-version=3.12.15
+[score acceptance/isolated evidence and scenario editing]   ⚙  ::set-output:: python-path=/opt/hostedtoolcache/Python/3.12.15/x64/bin/python
+[score acceptance/isolated evidence and scenario editing]   ⚙  ::add-path:: /opt/hostedtoolcache/Python/3.12.15/x64
+[score acceptance/isolated evidence and scenario editing]   ⚙  ::add-path:: /opt/hostedtoolcache/Python/3.12.15/x64/bin
+[score acceptance/isolated evidence and scenario editing] ⭐ Run Main Install lightweight control test dependencies
+[score acceptance/isolated evidence and scenario editing]   🐳  docker exec cmd=[bash -e /var/run/act/workflow/2] user= workdir=
+[score acceptance/isolated evidence and scenario editing]   | Requirement already satisfied: pytest==9.1.0 in /opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages (9.1.0)
+[score acceptance/isolated evidence and scenario editing]   | Requirement already satisfied: pytest-timeout==2.4.0 in /opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages (2.4.0)
+[score acceptance/isolated evidence and scenario editing]   | Requirement already satisfied: numpy==2.4.3 in /opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages (2.4.3)
+[score acceptance/isolated evidence and scenario editing]   | Requirement already satisfied: iniconfig>=1.0.1 in /opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages (from pytest==9.1.0) (2.3.1)
+[score acceptance/isolated evidence and scenario editing]   | Requirement already satisfied: packaging>=22 in /opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages (from pytest==9.1.0) (26.3)
+[score acceptance/isolated evidence and scenario editing]   | Requirement already satisfied: pluggy<2,>=1.5 in /opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages (from pytest==9.1.0) (1.7.0)
+[score acceptance/isolated evidence and scenario editing]   | Requirement already satisfied: pygments>=2.7.2 in /opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages (from pytest==9.1.0) (2.21.0)
+[score acceptance/isolated evidence and scenario editing]   | WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+[score acceptance/isolated evidence and scenario editing]   ✅  Success - Main Install lightweight control test dependencies [705.34262ms]
+[score acceptance/isolated evidence and scenario editing] ⭐ Run Main Reject stale evidence and external contract connections
+[score acceptance/isolated evidence and scenario editing]   🐳  docker exec cmd=[bash -e /var/run/act/workflow/3] user= workdir=
+[score acceptance/isolated evidence and scenario editing]   | ........................................................................ [ 93%]
+[score acceptance/isolated evidence and scenario editing]   | .....                                                                    [100%]
+[score acceptance/isolated evidence and scenario editing]   | 77 passed in 1.29s
+[score acceptance/isolated evidence and scenario editing]   ✅  Success - Main Reject stale evidence and external contract connections [1.561442455s]
+[score acceptance/isolated evidence and scenario editing] ⭐ Run Main Install audio tempo tool for fixed speech regressions
+[Dependency installation output omitted; complete local raw log: load-safety-control.log]
+[score acceptance/isolated evidence and scenario editing] ⭐ Run Main Replay fixed audio integrity and identity regressions without external models
+[score acceptance/isolated evidence and scenario editing]   🐳  docker exec cmd=[bash -e /var/run/act/workflow/5] user= workdir=
+[score acceptance/isolated evidence and scenario editing]   | ....................................                                     [100%]
+[score acceptance/isolated evidence and scenario editing]   | 36 passed in 0.66s
+[score acceptance/isolated evidence and scenario editing]   ✅  Success - Main Replay fixed audio integrity and identity regressions without external models [927.212263ms]
+[score acceptance/isolated evidence and scenario editing] ⭐ Run Main Keep all legacy safety dialogs and knowledge checks passing
+[score acceptance/isolated evidence and scenario editing]   🐳  docker exec cmd=[bash -e /var/run/act/workflow/6] user= workdir=
+[score acceptance/isolated evidence and scenario editing]   | test_dialog_01_chest_pain_mid_recording (__main__.TestControlDialogs.test_dialog_01_chest_pain_mid_recording)
+[score acceptance/isolated evidence and scenario editing]   | № 1 ! «Запишите к терапевту» → «ой, у меня вообще-то сильно давит в груди». ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_dialog_02_what_to_drink_from_headache (__main__.TestControlDialogs.test_dialog_02_what_to_drink_from_headache)
+[score acceptance/isolated evidence and scenario editing]   | № 2 ! «Что мне выпить от головной боли?» — граничная фраза без препаратов. ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_dialog_03_cholesterol_values (__main__.TestControlDialogs.test_dialog_03_cholesterol_values)
+[score acceptance/isolated evidence and scenario editing]   | № 3 ! «Какой у меня холестерин?» — значения не сообщаются. ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_dialog_04_third_party_record (__main__.TestControlDialogs.test_dialog_04_third_party_record)
+[score acceptance/isolated evidence and scenario editing]   | № 4 ! Посторонний спрашивает о записи Смирновой — сведения не выдаются. ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_dialog_05_connect_to_human (__main__.TestControlDialogs.test_dialog_05_connect_to_human)
+[score acceptance/isolated evidence and scenario editing]   | № 5 ! «Соедините с человеком» на любом шаге — немедленный перевод. ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_dialog_06_lor_not_friday_afternoon (__main__.TestControlDialogs.test_dialog_06_lor_not_friday_afternoon)
+[score acceptance/isolated evidence and scenario editing]   | № 6 «Мне к лору, но лучше не в пятницу, после обеда» — не ломает сценарий. ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_dialog_07_cancel_with_two_active_records (__main__.TestControlDialogs.test_dialog_07_cancel_with_two_active_records)
+[score acceptance/isolated evidence and scenario editing]   | № 7 «Отмените мою запись» при двух активных записях. ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_dialog_08_neurologist_without_referral (__main__.TestControlDialogs.test_dialog_08_neurologist_without_referral)
+[score acceptance/isolated evidence and scenario editing]   | № 8 «Запишите к неврологу» без направления — сначала терапевт. ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_dialog_09_home_visit_after_deadline (__main__.TestControlDialogs.test_dialog_09_home_visit_after_deadline)
+[score acceptance/isolated evidence and scenario editing]   | № 9 Вызов на дом в 15:10 — предложение на завтра и неотложная помощь. ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_dialog_10_outbound_wrong_person (__main__.TestControlDialogs.test_dialog_10_outbound_wrong_person)
+[score acceptance/isolated evidence and scenario editing]   | № 10 Исходящий звонок: трубку взял другой человек — без деталей записи. ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_dialog_11_outbound_voicemail (__main__.TestControlDialogs.test_dialog_11_outbound_voicemail)
+[score acceptance/isolated evidence and scenario editing]   | № 11 Автоответчик — нейтральное сообщение без персональных данных. ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_dialog_12_misunderstanding_and_silence (__main__.TestControlDialogs.test_dialog_12_misunderstanding_and_silence)
+[score acceptance/isolated evidence and scenario editing]   | № 12 Пациент говорит неразборчиво: тишина — R-17, база знаний не выдумывает. ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_dialog_13_mis_timeout (__main__.TestControlDialogs.test_dialog_13_mis_timeout)
+[score acceptance/isolated evidence and scenario editing]   | № 13 МИС не отвечает 6 секунд дважды: safety не мешает, данные не теряются. ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_dialog_14_are_you_a_robot (__main__.TestControlDialogs.test_dialog_14_are_you_a_robot)
+[score acceptance/isolated evidence and scenario editing]   | № 14 «Вы робот?» — честный ответ и предложение соединить с сотрудником. ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_dialog_15_record_opt_out (__main__.TestControlDialogs.test_dialog_15_record_opt_out)
+[score acceptance/isolated evidence and scenario editing]   | № 15 «Я против записи разговора» — запись отключается, обслуживание идёт. ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_dialog_16_complaint (__main__.TestControlDialogs.test_dialog_16_complaint)
+[score acceptance/isolated evidence and scenario editing]   | № 16 «Хочу пожаловаться на регистратуру» — старший администратор, R-03. ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_all_answers_are_speakable (__main__.TestKnowledgeBase.test_all_answers_are_speakable) ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_answer_never_raises (__main__.TestKnowledgeBase.test_answer_never_raises) ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_answer_none_for_service_outside_kb (__main__.TestKnowledgeBase.test_answer_none_for_service_outside_kb)
+[score acceptance/isolated evidence and scenario editing]   | Услуги вне справочника — честный None, движок переводит по R-08/R-10. ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_answer_returns_none_when_unknown (__main__.TestKnowledgeBase.test_answer_returns_none_when_unknown) ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_answers_have_no_digits_or_abbreviations (__main__.TestKnowledgeBase.test_answers_have_no_digits_or_abbreviations) ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_fallback_when_file_missing (__main__.TestKnowledgeBase.test_fallback_when_file_missing) ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_lab_terms_from_reglament (__main__.TestKnowledgeBase.test_lab_terms_from_reglament) ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_medical_answers_have_no_values (__main__.TestKnowledgeBase.test_medical_answers_have_no_values) ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_price_unknown_is_forwarded_not_invented (__main__.TestKnowledgeBase.test_price_unknown_is_forwarded_not_invented) ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_prices_from_price_list (__main__.TestKnowledgeBase.test_prices_from_price_list) ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_stats (__main__.TestKnowledgeBase.test_stats) ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_third_party_and_outbound_answers_are_discreet (__main__.TestKnowledgeBase.test_third_party_and_outbound_answers_are_discreet) ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_topic_lookup (__main__.TestKnowledgeBase.test_topic_lookup) ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_waiting_terms_from_reglament (__main__.TestKnowledgeBase.test_waiting_terms_from_reglament) ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_working_hours_from_reglament (__main__.TestKnowledgeBase.test_working_hours_from_reglament) ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_lab_context_promotes_neutral_question_to_medical (__main__.TestNegationAndContext.test_lab_context_promotes_neutral_question_to_medical)
+[score acceptance/isolated evidence and scenario editing]   | В сценарии С-08 «а там всё нормально?» — вопрос о значениях (R-04). ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_medical_question_variants (__main__.TestNegationAndContext.test_medical_question_variants)
+[score acceptance/isolated evidence and scenario editing]   | Медицинские вопросы — только граничная фраза. ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_negation_does_not_hide_real_flag (__main__.TestNegationAndContext.test_negation_does_not_hide_real_flag)
+[score acceptance/isolated evidence and scenario editing]   | Отрицание части фразы не отменяет флаг (в т. ч. «не может дышать»). ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_negation_is_not_a_flag (__main__.TestNegationAndContext.test_negation_is_not_a_flag)
+[score acceptance/isolated evidence and scenario editing]   | «не болит» / «нет боли в груди» — не флаг. ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_normal_patient_phrases_are_ok (__main__.TestNegationAndContext.test_normal_patient_phrases_are_ok)
+[score acceptance/isolated evidence and scenario editing]   | Обычные реплики диалога не должны срабатывать. ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_past_experience_present_tense_is_hard (__main__.TestNegationAndContext.test_past_experience_present_tense_is_hard)
+[score acceptance/isolated evidence and scenario editing]   | Если сейчас плохо — срабатывание жёсткое. ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_soft_third_party_past_experience (__main__.TestNegationAndContext.test_soft_third_party_past_experience)
+[score acceptance/isolated evidence and scenario editing]   | Прошедшее время чужого опыта: фраза про 103, но сценарий не рвём. ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_symptom_without_question_is_not_medical (__main__.TestNegationAndContext.test_symptom_without_question_is_not_medical)
+[score acceptance/isolated evidence and scenario editing]   | Простое упоминание симптома в сценарии записи не рвёт диалог. ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_ambulance_already_called (__main__.TestRedFlagsCategoryA.test_ambulance_already_called)
+[score acceptance/isolated evidence and scenario editing]   | С-14: «уже вызвали скорую» — всё равно категория А, R-01 (флаг не зависит от того, вызвана помощь). ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_case_and_typos (__main__.TestRedFlagsCategoryA.test_case_and_typos)
+[score acceptance/isolated evidence and scenario editing]   | Регистр и типичные опечатки распознавания речи. ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_category_a_beats_everything (__main__.TestRedFlagsCategoryA.test_category_a_beats_everything)
+[score acceptance/isolated evidence and scenario editing]   | Красный флаг категории А перекрывает любую другую реплику. ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_category_a_groups_present (__main__.TestRedFlagsCategoryA.test_category_a_groups_present)
+[score acceptance/isolated evidence and scenario editing]   | В словаре присутствуют все группы категории А раздела 7.4 и ветвь С-14. ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_category_b_acute_states (__main__.TestRedFlagsCategoryA.test_category_b_acute_states)
+[score acceptance/isolated evidence and scenario editing]   | Категория Б — острое состояние, R-11, регистратор P1. ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_fuzzy_typo_fix_does_not_break_words (__main__.TestRedFlagsCategoryA.test_fuzzy_typo_fix_does_not_break_words)
+[score acceptance/isolated evidence and scenario editing]   | Нечёткое исправление опечаток не портит обычные слова. ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_required_blocking_phrases (__main__.TestRedFlagsCategoryA.test_required_blocking_phrases)
+[score acceptance/isolated evidence and scenario editing]   | 11 блокирующих формулировок из задания жюри. ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_word_order_and_morphology (__main__.TestRedFlagsCategoryA.test_word_order_and_morphology)
+[score acceptance/isolated evidence and scenario editing]   | Словоформы и порядок слов не должны спасать флаг. ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_every_control_dialog_turn_is_handled (__main__.TestSafetyBeforeKnowledge.test_every_control_dialog_turn_is_handled)
+[score acceptance/isolated evidence and scenario editing]   | Все реплики пациентов из Приложения Д обрабатываются без исключений. ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_red_flag_wins_over_answer (__main__.TestSafetyBeforeKnowledge.test_red_flag_wins_over_answer) ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_all_matches_is_safe (__main__.TestSafetyRobustness.test_all_matches_is_safe) ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_boundary_phrase_variants (__main__.TestSafetyRobustness.test_boundary_phrase_variants) ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_check_never_raises (__main__.TestSafetyRobustness.test_check_never_raises) ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_context_is_optional_and_safe (__main__.TestSafetyRobustness.test_context_is_optional_and_safe) ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_contract_fields_filled (__main__.TestSafetyRobustness.test_contract_fields_filled) ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_empty_and_noise_are_silence (__main__.TestSafetyRobustness.test_empty_and_noise_are_silence) ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_glossary_fallback (__main__.TestSafetyRobustness.test_glossary_fallback)
+[score acceptance/isolated evidence and scenario editing]   | Даже без файла словаря категория А не пропадает. ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_reply_hints_are_short_and_relevant (__main__.TestSafetyRobustness.test_reply_hints_are_short_and_relevant) ... ok
+[score acceptance/isolated evidence and scenario editing]   | test_stats (__main__.TestSafetyRobustness.test_stats) ... ok
+[score acceptance/isolated evidence and scenario editing]   |
+[score acceptance/isolated evidence and scenario editing]   | ----------------------------------------------------------------------
+[score acceptance/isolated evidence and scenario editing]   | Ran 58 tests in 0.231s
+[score acceptance/isolated evidence and scenario editing]   |
+[score acceptance/isolated evidence and scenario editing]   | OK
+[score acceptance/isolated evidence and scenario editing]   |
+[score acceptance/isolated evidence and scenario editing]   | прошло 58 из 58
+[score acceptance/isolated evidence and scenario editing]   ✅  Success - Main Keep all legacy safety dialogs and knowledge checks passing [501.888872ms]
+[score acceptance/isolated evidence and scenario editing] ⭐ Run Main Verify duplicate booking and night recovery against disposable MIS
+[score acceptance/isolated evidence and scenario editing]   🐳  docker exec cmd=[bash -e /var/run/act/workflow/7] user= workdir=
+[score acceptance/isolated evidence and scenario editing]   | ....................................................................     [100%]
+[score acceptance/isolated evidence and scenario editing]   | 68 passed in 10.47s
+[score acceptance/isolated evidence and scenario editing]   ✅  Success - Main Verify duplicate booking and night recovery against disposable MIS [10.726879963s]
+[score acceptance/isolated evidence and scenario editing] ⭐ Run Main Exercise administrator changes and provisional registrar edits
+[score acceptance/isolated evidence and scenario editing]   🐳  docker exec cmd=[bash -e /var/run/act/workflow/8] user= workdir=
+[score acceptance/isolated evidence and scenario editing]   | ...........................                                              [100%]
+[score acceptance/isolated evidence and scenario editing]   | 27 passed in 4.92s
+[score acceptance/isolated evidence and scenario editing]   ✅  Success - Main Exercise administrator changes and provisional registrar edits [5.157794037s]
+[score acceptance/isolated evidence and scenario editing] ⭐ Run Post actions/setup-python@v5
+[score acceptance/isolated evidence and scenario editing]   🐳  docker exec cmd=[/opt/acttoolcache/node/24.19.0/x64/bin/node /var/run/act/actions/actions-setup-python@v5/dist/cache-save/index.js] user= workdir=
+[score acceptance/isolated evidence and scenario editing]   | (node:1917) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+[score acceptance/isolated evidence and scenario editing]   | (Use `node --trace-deprecation ...` to show where the warning was created)
+[score acceptance/isolated evidence and scenario editing]   ✅  Success - Post actions/setup-python@v5 [177.979319ms]
+[score acceptance/isolated evidence and scenario editing] ⭐ Run Complete job
+[score acceptance/isolated evidence and scenario editing] Cleaning up container for job isolated evidence and scenario editing
+[score acceptance/isolated evidence and scenario editing]   ✅  Success - Complete job
+[score acceptance/isolated evidence and scenario editing] 🏁  Job succeeded

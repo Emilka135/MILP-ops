@@ -1,0 +1,38 @@
+name: visual-editor
+on: [push, pull_request]
+permissions: {contents: read}
+concurrency:
+  group: visual-editor-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '26', cache: npm, cache-dependency-path: scenario-editor/package-lock.json}
+      - run: pip install pytest
+      - run: npm ci && npm run build
+        working-directory: scenario-editor
+      - run: PYTHONPATH=runtime/src:. python -m pytest -q tests/integration/test_scenario_editor.py tests/integration/test_workshop_access.py tests/contracts/test_scenario_knowledge.py
+      - run: npx playwright install --with-deps chromium
+        working-directory: scenario-editor
+      - run: node --test scenario-editor/tests/connection.test.mjs
+      - run: node debug/run_editor_browser.mjs
+        env: {CHROME_PATH: ''}
+      - name: Verify registrar panels, docking and clipboard in Chromium
+        run: node debug/run_registrar_mis_panel.mjs
+        env: {CHROME_PATH: ''}
+      - name: Verify registrar proposals and real scenario knowledge through HTTP
+        run: node debug/run_registrar_scenario_actions.mjs
+        env: {CHROME_PATH: ''}
+      - uses: actions/upload-artifact@v4
+        if: always() && !env.ACT
+        with:
+          name: visual-editor
+          path: |
+            debug/runs/editor-browser/
+            debug/runs/registrar-mis-panel/

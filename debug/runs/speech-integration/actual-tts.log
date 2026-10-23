@@ -1,0 +1,3 @@
+<torch_package_0>.multi_acc_v3_package.py:180: SyntaxWarning: invalid escape sequence '\^'
+  text = re.sub(r'[^{}]'.format(self.symbols[3:] + '\^'), '', text)
+{"passed": true, "generated_names": 3}

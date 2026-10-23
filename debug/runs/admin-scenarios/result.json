@@ -1,0 +1,77 @@
+{
+  "status": "passed",
+  "scope": "Local module settings, isolated booking stand, call recording and transcript analysis",
+  "integration": {
+    "passed": 681,
+    "log": "integration-final.log"
+  },
+  "legacy": {
+    "passed": 390,
+    "log": "legacy-final.log"
+  },
+  "focused_module_tests": {
+    "passed": 41,
+    "log": "provider-contracts.log"
+  },
+  "browser": {
+    "status": "passed",
+    "base": "http://127.0.0.1:8090",
+    "checks": [
+      "Per-module settings and disabled extensions persist",
+      "Actual HQ TTS plays in Chrome",
+      "Greeting, repetition, slang, identity, slots and final booking pass in browser",
+      "Booking and parameterized SQL trace visible to admin",
+      "Anonymous access to call archives and SQL denied",
+      "Imported employee transcript is mapped without booking writes",
+      "Real WAV upload, ASR, consented archive and playback pass in Chrome",
+      "Mobile archive fits panel"
+    ],
+    "errors": []
+  },
+  "voice_only": {
+    "status": "passed",
+    "asr_turns": 6,
+    "dtmf_requests": 0,
+    "provider": "CUDAExecutionProvider",
+    "cuda_verified": true,
+    "report": "voice-only/result.json"
+  },
+  "microphone": {
+    "status": "passed",
+    "report": "microphone/browser-result.json"
+  },
+  "audio_bank": {
+    "status": "passed",
+    "count": 44,
+    "naturalness": "requires_listening"
+  },
+  "archive_after_recreation": {
+    "status": "passed",
+    "call_id": "8yEJ0tLUXM47dxQnLShjsjSJJgfvnDqzs8IcTS_Zwr8",
+    "archived_asr_turns": 6,
+    "audio_files_read_after_container_recreation": 13,
+    "source": "Actual test-call archive in retained editor-data volume"
+  },
+  "consent_storage": {
+    "status": "passed",
+    "archived_wavs": 27,
+    "all_audio_has_consent": true,
+    "temporary_wavs": 0
+  },
+  "security": {
+    "bandit_medium_high": 0
+  },
+  "screenshots_visually_inspected": [
+    "browser/01-independent-model-settings.png",
+    "browser/03-conversation-path-and-branches.png",
+    "browser/06-mobile-archive.png",
+    "browser/07-imported-audio-playback.png"
+  ],
+  "deployment": "Updated source layers over existing local project images; dependency downloads failed DNS. See local-images.json",
+  "limits": [
+    "External provider live calls not verified",
+    "No live MIS writes",
+    "ASR speaker roles require annotation",
+    "Imported confirmations are unverified observations"
+  ]
+}

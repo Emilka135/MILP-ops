@@ -1,0 +1,50 @@
+# Bounded LLM interpretation; no MIS query until the patient confirms the interval.
+flow time_clarification
+  rate 1.5
+  entry resolve
+
+state resolve
+  call nlu.resolve_time utterance=$availability_utterance constraints=$availability_constraints today=$today
+  proposal -> confirm
+  clarify -> ask
+  error -> operator reason=time_model_failed
+  loop 4 -> operator reason=time_not_understood
+
+state confirm
+  say "{availability_question}"
+  listen 20s field=free_text
+  dtmf 1 -> accept
+  dtmf 0 -> retry_question
+  yes -> accept
+  no -> retry_question
+  any -> remember
+  timeout 20s -> confirm
+  retry 2 -> operator reason=time_not_confirmed
+
+state ask
+  say "{availability_question}"
+  listen 20s field=free_text
+  any -> remember
+  timeout 20s -> ask
+  retry 2 -> operator reason=time_not_understood
+
+state retry_question
+  set availability_question = "Какое время вам удобно? Можно назвать часть дня или временной интервал."
+  goto ask
+
+state remember
+  set availability_utterance = $last_utterance
+  goto resolve
+
+state accept
+  call nlu.confirm_time proposal=$availability_proposal
+  ok -> done
+  error -> retry_question
+
+state done
+  return
+
+state operator
+  say "Передаю обращение сотруднику."
+  transfer reason=$reason
+  end transfer

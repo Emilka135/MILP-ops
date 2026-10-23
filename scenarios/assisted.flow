@@ -1,0 +1,101 @@
+# Standard demonstration: prepared prompts + bounded slot agent + confirmed CRM write.
+flow assisted
+  rate 1.5
+  entry identify_full
+
+state ask_request
+  say "К какому специалисту вас записать? Для терапевта нажмите один. Для другого специалиста назовите его. Для оператора нажмите два."
+  listen 15s
+  dtmf 1 -> requirements specialty="терапевт"
+  dtmf 2 -> operator reason=requested
+  intent emergency|medical|complaint|operator -> operator reason=human_only
+  any -> requirements
+  timeout 15s -> ask_request
+  retry 2 -> operator reason=no_valid_input
+
+state offer_fetch
+  call agent.offer patient_id=$patient_id specialty=$specialty said_date=$said_date said_time=$said_time said_daypart=$said_daypart attempt=$agent_attempt excluded=$agent_excluded
+  ok -> offer
+  empty -> operator reason=no_slots
+  exhausted -> operator reason=no_suitable_slot
+  error -> operator reason=agent_contract_error
+
+state offer
+  say "{agent_text}"
+  say "Подтвердите: один — подходит, ноль — предложить другое время, два — оператор. Можно ответить голосом."
+  listen 15s
+  dtmf 1 -> book
+  dtmf 0 -> offer_fetch
+  dtmf 2 -> operator reason=requested
+  yes -> book
+  no -> offer_fetch
+  date -> offer_fetch
+  time -> offer_fetch
+  daypart -> offer_fetch
+  any -> offer_fetch
+  timeout 15s -> offer_fetch
+  retry 2 -> operator reason=no_valid_input
+
+state book
+  call crm.book patient_id=$patient_id slot_id=$slot_id
+  ok -> success
+  taken -> offer_fetch
+  conflict -> conflict_race
+  busy -> recovery.overload
+  error -> recovery.route
+
+state success
+  set agent_completed = true
+  say "{patient_name}, вы записаны на {slot_date_spoken}, в {slot_time_spoken}."
+  say "Запись выполнена. Подробности придут вам в СМС. Если данные неверны, скажите нет или нажмите ноль."
+  sms booked
+  listen 5s
+  dtmf 0 -> operator reason=patient_disputes_booking
+  dtmf 2 -> operator reason=requested
+  no -> operator reason=patient_disputes_booking
+  yes -> feedback.ask
+  intent gratitude -> done
+  silence -> ask_more
+  timeout 5s -> ask_more
+
+state ask_more
+  say "Нужно ли вам что-нибудь ещё? Если да, нажмите один. Если нет, нажмите ноль. Для оператора нажмите два."
+  listen 6s
+  dtmf 1 -> operator reason=more_help
+  dtmf 2 -> operator reason=requested
+  dtmf 0 -> done
+  yes -> operator reason=more_help
+  no -> done
+  intent gratitude -> done
+  silence -> done
+  timeout 6s -> done
+  retry 2 -> done
+
+state done
+  end booked
+
+state operator
+  say "Перевожу звонок на оператора. История разговора сохранена."
+  transfer reason=$reason
+  end transfer
+
+state identify_full
+  enter identity.begin -> ask_request
+
+state requirements
+  call crm.referral_required specialty=$specialty
+  required -> verify_referral
+  not_required -> conflict_check
+  error -> operator reason=unknown_specialty
+
+state verify_referral
+  call crm.check_referral patient_id=$patient_id specialty=$specialty
+  ok -> conflict_check
+  missing -> operator reason=referral_not_verified
+  error -> operator reason=crm_error
+
+state conflict_check
+  enter booking_conflict.check -> offer_fetch
+
+state conflict_race
+  enter booking_conflict.ask -> offer_fetch

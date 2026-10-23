@@ -1,0 +1,11 @@
+# Optional explicit speech channel. The default inbound flow remains DTMF first.
+flow voice
+  rate 1.5
+  entry identity
+
+state identity
+  set intent = book
+  enter identity.begin -> ready
+
+state ready
+  goto inbound.book_entry

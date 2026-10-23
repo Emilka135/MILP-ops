@@ -1,0 +1,1888 @@
+{
+  "call_id": "load-1d0ac2096480-03",
+  "registrar": "8103",
+  "created_at": "2026-10-22T23:00:00+04:00",
+  "updated_at": "2026-10-22T23:00:00+04:00",
+  "finished": 0,
+  "outcome": "",
+  "duration_s": 1.580718318,
+  "transcript": [
+    {
+      "role": "assistant",
+      "text": "Назовите фамилию, имя и отчество пациента. Если удобнее назвать номер полиса ОМС, нажмите два.",
+      "state": "identity.name",
+      "step_index": 2,
+      "source": "scenario"
+    },
+    {
+      "role": "patient",
+      "text": "Да, всё верно.",
+      "state": "identity.name",
+      "step_index": 2,
+      "source": "real_asr"
+    },
+    {
+      "role": "assistant",
+      "text": "Назовите фамилию, имя и отчество пациента. Если удобнее назвать номер полиса ОМС, нажмите два.",
+      "state": "identity.name",
+      "step_index": 3,
+      "source": "scenario"
+    },
+    {
+      "role": "patient",
+      "text": "Переключите меня на оператора.",
+      "state": "identity.name",
+      "step_index": 3,
+      "source": "real_asr"
+    },
+    {
+      "role": "assistant",
+      "text": "Регистратор сейчас недоступен. Хотите, чтобы он перезвонил вам позже? Обратный звонок можно выбрать с десяти до шестнадцати часов. Один — да. Два — нет.",
+      "state": "callback.ask_consent",
+      "step_index": 5,
+      "source": "scenario"
+    }
+  ],
+  "trace": [
+    "voice.identity",
+    "identity.begin",
+    "identity.name",
+    "identity.name",
+    "callback.prepare",
+    "callback.ask_consent"
+  ],
+  "experiment_id": null,
+  "scenario_revision": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17",
+  "graph": {
+    "branches": {
+      "assisted.ask_more": [
+        "assisted.done",
+        "assisted.operator"
+      ],
+      "assisted.ask_request": [
+        "assisted.ask_request",
+        "assisted.operator",
+        "assisted.requirements"
+      ],
+      "assisted.book": [
+        "assisted.conflict_race",
+        "assisted.offer_fetch",
+        "assisted.success",
+        "recovery.overload",
+        "recovery.route"
+      ],
+      "assisted.conflict_check": [
+        "booking_conflict.check"
+      ],
+      "assisted.conflict_race": [
+        "booking_conflict.ask"
+      ],
+      "assisted.done": [],
+      "assisted.identify_full": [
+        "identity.begin"
+      ],
+      "assisted.offer": [
+        "assisted.book",
+        "assisted.offer_fetch",
+        "assisted.operator"
+      ],
+      "assisted.offer_fetch": [
+        "assisted.offer",
+        "assisted.operator"
+      ],
+      "assisted.operator": [],
+      "assisted.requirements": [
+        "assisted.conflict_check",
+        "assisted.operator",
+        "assisted.verify_referral"
+      ],
+      "assisted.success": [
+        "assisted.ask_more",
+        "assisted.done",
+        "assisted.operator",
+        "feedback.ask"
+      ],
+      "assisted.verify_referral": [
+        "assisted.conflict_check",
+        "assisted.operator"
+      ],
+      "booking_conflict.allow_new": [
+        "booking_conflict.continue",
+        "inbound.operator",
+        "recovery.overload"
+      ],
+      "booking_conflict.ask": [
+        "booking_conflict.allow_new",
+        "booking_conflict.ask",
+        "booking_conflict.keep",
+        "booking_conflict.select_cancel",
+        "booking_conflict.select_reschedule",
+        "inbound.operator"
+      ],
+      "booking_conflict.check": [
+        "booking_conflict.ask",
+        "booking_conflict.continue",
+        "inbound.operator",
+        "recovery.overload"
+      ],
+      "booking_conflict.continue": [],
+      "booking_conflict.keep": [],
+      "booking_conflict.select_cancel": [
+        "booking_conflict.check",
+        "inbound.cancel_confirm"
+      ],
+      "booking_conflict.select_reschedule": [
+        "booking_conflict.check",
+        "reschedule.rs_start"
+      ],
+      "callback.ask": [
+        "callback.operator",
+        "callback.save",
+        "callback.save_unscheduled"
+      ],
+      "callback.ask_consent": [
+        "callback.ask",
+        "callback.declined",
+        "callback.offer_request"
+      ],
+      "callback.declined": [],
+      "callback.done": [],
+      "callback.failed": [],
+      "callback.offer_request": [
+        "callback.declined",
+        "callback.save_request"
+      ],
+      "callback.operator": [],
+      "callback.prepare": [
+        "callback.ask_consent"
+      ],
+      "callback.request_done": [],
+      "callback.save": [
+        "callback.ask",
+        "callback.done",
+        "callback.save_unscheduled"
+      ],
+      "callback.save_request": [
+        "callback.failed",
+        "callback.request_done"
+      ],
+      "callback.save_unscheduled": [
+        "callback.done",
+        "callback.failed"
+      ],
+      "feedback.ask": [
+        "feedback.done",
+        "feedback.operator",
+        "feedback.save"
+      ],
+      "feedback.done": [],
+      "feedback.operator": [],
+      "feedback.save": [
+        "feedback.done"
+      ],
+      "identity.begin": [
+        "identity.name",
+        "identity.operator"
+      ],
+      "identity.birth": [
+        "identity.birth",
+        "identity.operator",
+        "identity.remember_birth"
+      ],
+      "identity.collect": [
+        "identity.birth",
+        "identity.name",
+        "identity.operator",
+        "identity.phone",
+        "identity.policy",
+        "identity.readback",
+        "identity.verified"
+      ],
+      "identity.name": [
+        "identity.name",
+        "identity.operator",
+        "identity.remember_reply",
+        "identity.use_policy"
+      ],
+      "identity.no_reply": [
+        "identity.collect"
+      ],
+      "identity.operator": [],
+      "identity.phone": [
+        "identity.operator",
+        "identity.phone",
+        "identity.remember_phone"
+      ],
+      "identity.policy": [
+        "identity.operator",
+        "identity.policy",
+        "identity.remember_policy"
+      ],
+      "identity.readback": [
+        "identity.no_reply",
+        "identity.operator",
+        "identity.readback",
+        "identity.remember_reply",
+        "identity.yes_reply"
+      ],
+      "identity.remember_birth": [
+        "identity.collect"
+      ],
+      "identity.remember_phone": [
+        "identity.collect"
+      ],
+      "identity.remember_policy": [
+        "identity.collect"
+      ],
+      "identity.remember_reply": [
+        "identity.collect"
+      ],
+      "identity.use_policy": [
+        "identity.operator",
+        "identity.policy"
+      ],
+      "identity.verified": [],
+      "identity.yes_reply": [
+        "identity.collect"
+      ],
+      "inbound.book_ask_specialty": [
+        "inbound.book_ask_specialty",
+        "inbound.book_specialty_from_speech",
+        "inbound.operator"
+      ],
+      "inbound.book_check_day": [
+        "inbound.book_offer",
+        "inbound.book_offer_other_day",
+        "inbound.operator"
+      ],
+      "inbound.book_conflict_check": [
+        "booking_conflict.check"
+      ],
+      "inbound.book_conflict_race": [
+        "booking_conflict.ask"
+      ],
+      "inbound.book_diagnostic": [
+        "inbound.book_diagnostic",
+        "inbound.book_specialty_from_speech",
+        "inbound.operator"
+      ],
+      "inbound.book_do": [
+        "inbound.book_conflict_race",
+        "inbound.book_done",
+        "inbound.book_taken",
+        "recovery.overload",
+        "recovery.route"
+      ],
+      "inbound.book_done": [],
+      "inbound.book_entry": [
+        "inbound.book_referral_check",
+        "inbound.book_start"
+      ],
+      "inbound.book_find_slot": [
+        "inbound.book_offer",
+        "inbound.book_offer_relaxed",
+        "inbound.operator"
+      ],
+      "inbound.book_has_referral": [
+        "inbound.book_conflict_check",
+        "inbound.book_no_referral",
+        "inbound.operator"
+      ],
+      "inbound.book_next_day": [
+        "inbound.book_offer",
+        "inbound.operator"
+      ],
+      "inbound.book_no_referral": [
+        "inbound.book_no_referral",
+        "inbound.book_set_1",
+        "inbound.operator"
+      ],
+      "inbound.book_offer": [
+        "inbound.book_check_day",
+        "inbound.book_do",
+        "inbound.book_next_day",
+        "inbound.book_offer",
+        "inbound.book_part_from_offer",
+        "inbound.operator"
+      ],
+      "inbound.book_offer_other_day": [
+        "inbound.book_offer"
+      ],
+      "inbound.book_offer_relaxed": [
+        "inbound.book_offer"
+      ],
+      "inbound.book_part_from_offer": [
+        "inbound.book_offer",
+        "inbound.operator"
+      ],
+      "inbound.book_referral_check": [
+        "inbound.book_conflict_check",
+        "inbound.book_has_referral",
+        "inbound.operator"
+      ],
+      "inbound.book_set_1": [
+        "inbound.book_referral_check"
+      ],
+      "inbound.book_specialty_from_speech": [
+        "inbound.book_referral_check",
+        "inbound.candidate_check"
+      ],
+      "inbound.book_specialty_unknown": [
+        "inbound.book_ask_specialty",
+        "inbound.operator"
+      ],
+      "inbound.book_start": [
+        "inbound.book_ask_specialty",
+        "inbound.book_diagnostic",
+        "inbound.book_set_1",
+        "inbound.book_specialty_from_speech",
+        "inbound.book_start",
+        "inbound.operator"
+      ],
+      "inbound.book_taken": [
+        "inbound.book_find_slot"
+      ],
+      "inbound.cancel_confirm": [
+        "inbound.cancel_do",
+        "inbound.cancel_offer",
+        "inbound.existing_menu",
+        "inbound.operator"
+      ],
+      "inbound.cancel_do": [
+        "inbound.cancel_done",
+        "recovery.overload",
+        "recovery.route"
+      ],
+      "inbound.cancel_done": [],
+      "inbound.cancel_offer": [
+        "inbound.cancel_confirm",
+        "inbound.cancel_offer",
+        "inbound.operator",
+        "reschedule.rs_start"
+      ],
+      "inbound.candidate_accept": [
+        "inbound.book_referral_check"
+      ],
+      "inbound.candidate_check": [
+        "inbound.book_specialty_unknown",
+        "inbound.candidate_confirm"
+      ],
+      "inbound.candidate_confirm": [
+        "inbound.book_ask_specialty",
+        "inbound.candidate_accept",
+        "inbound.candidate_confirm",
+        "inbound.operator"
+      ],
+      "inbound.confirm_do": [
+        "inbound.confirm_done",
+        "inbound.operator"
+      ],
+      "inbound.confirm_done": [],
+      "inbound.existing_choose": [
+        "inbound.existing_choose",
+        "inbound.existing_select",
+        "inbound.operator"
+      ],
+      "inbound.existing_menu": [
+        "inbound.cancel_offer",
+        "inbound.confirm_do",
+        "inbound.existing_menu",
+        "inbound.operator",
+        "reschedule.rs_start"
+      ],
+      "inbound.existing_none": [
+        "inbound.book_start",
+        "inbound.existing_none",
+        "inbound.goodbye"
+      ],
+      "inbound.existing_route": [
+        "inbound.cancel_offer",
+        "inbound.existing_menu",
+        "reschedule.rs_start"
+      ],
+      "inbound.existing_select": [
+        "inbound.existing_route",
+        "inbound.existing_start"
+      ],
+      "inbound.existing_start": [
+        "inbound.existing_choose",
+        "inbound.existing_none",
+        "inbound.existing_route",
+        "inbound.operator"
+      ],
+      "inbound.goodbye": [],
+      "inbound.goodbye_silent": [],
+      "inbound.id_done": [
+        "inbound.book_entry",
+        "inbound.existing_start",
+        "inbound.operator"
+      ],
+      "inbound.id_start": [
+        "identity.begin"
+      ],
+      "inbound.info_holidays": [
+        "inbound.info_say",
+        "inbound.operator"
+      ],
+      "inbound.info_menu": [
+        "inbound.info_holidays",
+        "inbound.info_menu",
+        "inbound.info_other",
+        "inbound.info_schedule",
+        "inbound.welcome"
+      ],
+      "inbound.info_other": [
+        "inbound.info_say"
+      ],
+      "inbound.info_say": [
+        "inbound.goodbye",
+        "inbound.info_say",
+        "inbound.intent_book"
+      ],
+      "inbound.info_schedule": [
+        "inbound.info_say",
+        "inbound.operator"
+      ],
+      "inbound.intent_book": [
+        "inbound.id_start"
+      ],
+      "inbound.intent_existing": [
+        "inbound.id_start"
+      ],
+      "inbound.listen_free": [
+        "inbound.goodbye_silent",
+        "inbound.info_holidays",
+        "inbound.info_other",
+        "inbound.info_schedule",
+        "inbound.intent_book",
+        "inbound.intent_existing",
+        "inbound.operator"
+      ],
+      "inbound.medical_boundary": [
+        "inbound.intent_book",
+        "inbound.medical_boundary",
+        "inbound.operator"
+      ],
+      "inbound.operator": [],
+      "inbound.welcome": [
+        "inbound.info_menu",
+        "inbound.info_other",
+        "inbound.info_schedule",
+        "inbound.intent_book",
+        "inbound.intent_existing",
+        "inbound.listen_free",
+        "inbound.medical_boundary",
+        "inbound.operator",
+        "inbound.welcome"
+      ],
+      "recovery.clarify": [
+        "callback.ask_consent"
+      ],
+      "recovery.form_error": [
+        "callback.ask_consent",
+        "recovery.form_handoff"
+      ],
+      "recovery.form_handoff": [
+        "inbound.operator"
+      ],
+      "recovery.night": [
+        "callback.ask_consent",
+        "recovery.reasoning_notice"
+      ],
+      "recovery.overload": [
+        "callback.ask_consent",
+        "recovery.form_handoff"
+      ],
+      "recovery.reasoning_notice": [
+        "callback.ask_consent",
+        "recovery.clarify",
+        "recovery.transfer"
+      ],
+      "recovery.route": [
+        "recovery.form_error",
+        "recovery.night",
+        "recovery.overload",
+        "recovery.transfer"
+      ],
+      "recovery.transfer": [],
+      "reminder.cancel_confirm": [
+        "reminder.cancel_do",
+        "reminder.cancel_offer",
+        "reminder.operator",
+        "reminder.start"
+      ],
+      "reminder.cancel_do": [
+        "reminder.cancel_done",
+        "reminder.operator"
+      ],
+      "reminder.cancel_done": [],
+      "reminder.cancel_offer": [
+        "reminder.cancel_confirm",
+        "reminder.cancel_offer",
+        "reminder.operator",
+        "reschedule.rs_start"
+      ],
+      "reminder.confirm_do": [
+        "reminder.confirm_done",
+        "reminder.operator"
+      ],
+      "reminder.confirm_done": [],
+      "reminder.identity": [
+        "reminder.no_verified_contact",
+        "reminder.verify_identity"
+      ],
+      "reminder.no_answer": [],
+      "reminder.no_verified_contact": [],
+      "reminder.operator": [],
+      "reminder.start": [
+        "reminder.cancel_offer",
+        "reminder.confirm_do",
+        "reminder.no_answer",
+        "reminder.operator",
+        "reminder.start",
+        "reschedule.rs_start"
+      ],
+      "reminder.verify_identity": [
+        "reminder.no_verified_contact",
+        "reminder.start"
+      ],
+      "reschedule.operator": [],
+      "reschedule.rs_ask_part": [
+        "reschedule.operator",
+        "reschedule.rs_ask_part",
+        "reschedule.rs_nearest_in_part",
+        "reschedule.rs_part_afternoon",
+        "reschedule.rs_part_morning",
+        "reschedule.rs_pick_time"
+      ],
+      "reschedule.rs_check_day": [
+        "reschedule.operator",
+        "reschedule.rs_day_parts",
+        "reschedule.rs_offer_day",
+        "reschedule.rs_offer_other_day"
+      ],
+      "reschedule.rs_day_parts": [
+        "reschedule.operator",
+        "reschedule.rs_ask_part",
+        "reschedule.rs_next_day",
+        "reschedule.rs_offer_time_single"
+      ],
+      "reschedule.rs_do": [
+        "recovery.overload",
+        "recovery.route",
+        "reschedule.rs_done",
+        "reschedule.rs_taken"
+      ],
+      "reschedule.rs_done": [],
+      "reschedule.rs_list_slots": [
+        "reschedule.operator",
+        "reschedule.rs_next_day",
+        "reschedule.rs_say_slots"
+      ],
+      "reschedule.rs_nearest_in_part": [
+        "reschedule.operator",
+        "reschedule.rs_next_day",
+        "reschedule.rs_offer_time"
+      ],
+      "reschedule.rs_next_day": [
+        "reschedule.operator",
+        "reschedule.rs_offer_day"
+      ],
+      "reschedule.rs_offer_datetime": [
+        "reschedule.operator",
+        "reschedule.rs_do",
+        "reschedule.rs_offer_datetime"
+      ],
+      "reschedule.rs_offer_day": [
+        "reschedule.operator",
+        "reschedule.rs_check_day",
+        "reschedule.rs_day_parts",
+        "reschedule.rs_next_day",
+        "reschedule.rs_offer_day"
+      ],
+      "reschedule.rs_offer_other_day": [
+        "reschedule.rs_offer_day"
+      ],
+      "reschedule.rs_offer_time": [
+        "reschedule.operator",
+        "reschedule.rs_do",
+        "reschedule.rs_list_slots",
+        "reschedule.rs_offer_time",
+        "reschedule.rs_pick_time"
+      ],
+      "reschedule.rs_offer_time_single": [
+        "reschedule.rs_offer_time"
+      ],
+      "reschedule.rs_part_afternoon": [
+        "reschedule.rs_nearest_in_part"
+      ],
+      "reschedule.rs_part_morning": [
+        "reschedule.rs_nearest_in_part"
+      ],
+      "reschedule.rs_part_other_day": [
+        "reschedule.operator",
+        "reschedule.rs_offer_datetime"
+      ],
+      "reschedule.rs_pick_time": [
+        "reschedule.operator",
+        "reschedule.rs_offer_time",
+        "reschedule.rs_say_slots"
+      ],
+      "reschedule.rs_say_slots": [
+        "reschedule.operator",
+        "reschedule.rs_part_other_day",
+        "reschedule.rs_pick_time",
+        "reschedule.rs_say_slots"
+      ],
+      "reschedule.rs_start": [
+        "reschedule.operator",
+        "reschedule.rs_offer_day"
+      ],
+      "reschedule.rs_taken": [
+        "reschedule.rs_start"
+      ],
+      "system_notices.complaint": [],
+      "system_notices.emergency": [],
+      "system_notices.record_opt_out": [],
+      "system_notices.select": [
+        "system_notices.complaint",
+        "system_notices.emergency",
+        "system_notices.record_opt_out",
+        "system_notices.self_identity"
+      ],
+      "system_notices.self_identity": [],
+      "voice.identity": [
+        "identity.begin"
+      ],
+      "voice.ready": [
+        "inbound.book_entry"
+      ]
+    },
+    "nodes": {
+      "assisted.ask_more": {
+        "flow": "assisted",
+        "id": "assisted.ask_more",
+        "lines": [
+          "Нужно ли вам что-нибудь ещё? Если да, нажмите один. Если нет, нажмите ноль. Для оператора нажмите два."
+        ],
+        "title": "Нужно ли вам что-нибудь ещё? Если да, нажмите один. Если нет, нажмите ноль. Для опера"
+      },
+      "assisted.ask_request": {
+        "flow": "assisted",
+        "id": "assisted.ask_request",
+        "lines": [
+          "К какому специалисту вас записать? Для терапевта нажмите один. Для другого специалиста назовите его. Для оператора нажмите два."
+        ],
+        "title": "К какому специалисту вас записать? Для терапевта нажмите один. Для другого специалист"
+      },
+      "assisted.book": {
+        "flow": "assisted",
+        "id": "assisted.book",
+        "lines": [],
+        "title": "assisted.book"
+      },
+      "assisted.conflict_check": {
+        "flow": "assisted",
+        "id": "assisted.conflict_check",
+        "lines": [],
+        "title": "assisted.conflict_check"
+      },
+      "assisted.conflict_race": {
+        "flow": "assisted",
+        "id": "assisted.conflict_race",
+        "lines": [],
+        "title": "assisted.conflict_race"
+      },
+      "assisted.done": {
+        "flow": "assisted",
+        "id": "assisted.done",
+        "lines": [],
+        "title": "assisted.done"
+      },
+      "assisted.identify_full": {
+        "flow": "assisted",
+        "id": "assisted.identify_full",
+        "lines": [],
+        "title": "assisted.identify_full"
+      },
+      "assisted.offer": {
+        "flow": "assisted",
+        "id": "assisted.offer",
+        "lines": [
+          "{agent_text}",
+          "Подтвердите: один — подходит, ноль — предложить другое время, два — оператор. Можно ответить голосом."
+        ],
+        "title": "{agent_text}"
+      },
+      "assisted.offer_fetch": {
+        "flow": "assisted",
+        "id": "assisted.offer_fetch",
+        "lines": [],
+        "title": "assisted.offer_fetch"
+      },
+      "assisted.operator": {
+        "flow": "assisted",
+        "id": "assisted.operator",
+        "lines": [
+          "Перевожу звонок на оператора. История разговора сохранена."
+        ],
+        "title": "Перевожу звонок на оператора. История разговора сохранена."
+      },
+      "assisted.requirements": {
+        "flow": "assisted",
+        "id": "assisted.requirements",
+        "lines": [],
+        "title": "assisted.requirements"
+      },
+      "assisted.success": {
+        "flow": "assisted",
+        "id": "assisted.success",
+        "lines": [
+          "{patient_name}, вы записаны на {slot_date_spoken}, в {slot_time_spoken}.",
+          "Запись выполнена. Подробности придут вам в СМС. Если данные неверны, скажите нет или нажмите ноль."
+        ],
+        "title": "{patient_name}, вы записаны на {slot_date_spoken}, в {slot_time_spoken}."
+      },
+      "assisted.verify_referral": {
+        "flow": "assisted",
+        "id": "assisted.verify_referral",
+        "lines": [],
+        "title": "assisted.verify_referral"
+      },
+      "booking_conflict.allow_new": {
+        "flow": "booking_conflict",
+        "id": "booking_conflict.allow_new",
+        "lines": [],
+        "title": "booking_conflict.allow_new"
+      },
+      "booking_conflict.ask": {
+        "flow": "booking_conflict",
+        "id": "booking_conflict.ask",
+        "lines": [
+          "У вас уже есть предстоящая запись к {specialty_dative}: {slot_date_spoken}, в {slot_time_spoken}, врач {doctor}. Один — оставить эту запись. Два — перенести её. Три — отменить. Четыре — оформить ещё одну запись к этой специальности, сохранив прежнюю."
+        ],
+        "title": "У вас уже есть предстоящая запись к {specialty_dative}: {slot_date_spoken}, в {slot_t"
+      },
+      "booking_conflict.check": {
+        "flow": "booking_conflict",
+        "id": "booking_conflict.check",
+        "lines": [],
+        "title": "booking_conflict.check"
+      },
+      "booking_conflict.continue": {
+        "flow": "booking_conflict",
+        "id": "booking_conflict.continue",
+        "lines": [],
+        "title": "booking_conflict.continue"
+      },
+      "booking_conflict.keep": {
+        "flow": "booking_conflict",
+        "id": "booking_conflict.keep",
+        "lines": [
+          "Ваша прежняя запись сохранена. Новую запись не создаём. Всего доброго!"
+        ],
+        "title": "Ваша прежняя запись сохранена. Новую запись не создаём. Всего доброго!"
+      },
+      "booking_conflict.select_cancel": {
+        "flow": "booking_conflict",
+        "id": "booking_conflict.select_cancel",
+        "lines": [],
+        "title": "booking_conflict.select_cancel"
+      },
+      "booking_conflict.select_reschedule": {
+        "flow": "booking_conflict",
+        "id": "booking_conflict.select_reschedule",
+        "lines": [],
+        "title": "booking_conflict.select_reschedule"
+      },
+      "callback.ask": {
+        "flow": "callback",
+        "id": "callback.ask",
+        "lines": [
+          "Я не могу справиться с этой задачей без помощи коллег. Когда вам удобно принять их звонок? Назовите день и время. Обратные звонки доступны {callback_hours}. Можно сказать: завтра в три часа дня."
+        ],
+        "title": "Я не могу справиться с этой задачей без помощи коллег. Когда вам удобно принять их зв"
+      },
+      "callback.ask_consent": {
+        "flow": "callback",
+        "id": "callback.ask_consent",
+        "lines": [
+          "Регистратор сейчас недоступен. Хотите, чтобы он перезвонил вам позже? Обратный звонок можно выбрать с десяти до шестнадцати часов. Один — да. Два — нет."
+        ],
+        "title": "Регистратор сейчас недоступен. Хотите, чтобы он перезвонил вам позже? Обратный звонок"
+      },
+      "callback.declined": {
+        "flow": "callback",
+        "id": "callback.declined",
+        "lines": [
+          "Хорошо. Всего доброго!"
+        ],
+        "title": "Хорошо. Всего доброго!"
+      },
+      "callback.done": {
+        "flow": "callback",
+        "id": "callback.done",
+        "lines": [
+          "Заявка на обратный звонок сохранена. Предпочтительное время: {callback_at}. Оператор увидит ваш вопрос в рабочее время. Всего доброго!"
+        ],
+        "title": "Заявка на обратный звонок сохранена. Предпочтительное время: {callback_at}. Оператор "
+      },
+      "callback.failed": {
+        "flow": "callback",
+        "id": "callback.failed",
+        "lines": [
+          "Не удалось сохранить заявку. Пожалуйста, позвоните по официальному номеру поликлиники в рабочее время."
+        ],
+        "title": "Не удалось сохранить заявку. Пожалуйста, позвоните по официальному номеру поликлиники"
+      },
+      "callback.offer_request": {
+        "flow": "callback",
+        "id": "callback.offer_request",
+        "lines": [
+          "Хотите оставить заявку на запись без обратного звонка? Регистратор рассмотрит её позже. СМС придёт только после подтверждённой записи. Один — оставить заявку. Два — завершить."
+        ],
+        "title": "Хотите оставить заявку на запись без обратного звонка? Регистратор рассмотрит её позж"
+      },
+      "callback.operator": {
+        "flow": "callback",
+        "id": "callback.operator",
+        "lines": [
+          "Перевожу экстренное обращение на оператора."
+        ],
+        "title": "Перевожу экстренное обращение на оператора."
+      },
+      "callback.prepare": {
+        "flow": "callback",
+        "id": "callback.prepare",
+        "lines": [],
+        "title": "callback.prepare"
+      },
+      "callback.request_done": {
+        "flow": "callback",
+        "id": "callback.request_done",
+        "lines": [
+          "Заявка сохранена. Это ещё не запись на приём. Перезванивать вам не будем. После подтверждённой записи вам отправят СМС. Всего доброго!"
+        ],
+        "title": "Заявка сохранена. Это ещё не запись на приём. Перезванивать вам не будем. После подтв"
+      },
+      "callback.save": {
+        "flow": "callback",
+        "id": "callback.save",
+        "lines": [],
+        "title": "callback.save"
+      },
+      "callback.save_request": {
+        "flow": "callback",
+        "id": "callback.save_request",
+        "lines": [],
+        "title": "callback.save_request"
+      },
+      "callback.save_unscheduled": {
+        "flow": "callback",
+        "id": "callback.save_unscheduled",
+        "lines": [],
+        "title": "callback.save_unscheduled"
+      },
+      "feedback.ask": {
+        "flow": "feedback",
+        "id": "feedback.ask",
+        "lines": [
+          "Что, по вашему мнению, нужно исправить в тестовом варианте помощника? Можно оставить предложение или просто попрощаться."
+        ],
+        "title": "Что, по вашему мнению, нужно исправить в тестовом варианте помощника? Можно оставить "
+      },
+      "feedback.done": {
+        "flow": "feedback",
+        "id": "feedback.done",
+        "lines": [
+          "Спасибо за помощь. Всего доброго!"
+        ],
+        "title": "Спасибо за помощь. Всего доброго!"
+      },
+      "feedback.operator": {
+        "flow": "feedback",
+        "id": "feedback.operator",
+        "lines": [
+          "Передаю ваше обращение сотруднику."
+        ],
+        "title": "Передаю ваше обращение сотруднику."
+      },
+      "feedback.save": {
+        "flow": "feedback",
+        "id": "feedback.save",
+        "lines": [],
+        "title": "feedback.save"
+      },
+      "identity.begin": {
+        "flow": "identity",
+        "id": "identity.begin",
+        "lines": [],
+        "title": "identity.begin"
+      },
+      "identity.birth": {
+        "flow": "identity",
+        "id": "identity.birth",
+        "lines": [
+          "{identity_question}"
+        ],
+        "title": "{identity_question}"
+      },
+      "identity.collect": {
+        "flow": "identity",
+        "id": "identity.collect",
+        "lines": [],
+        "title": "identity.collect"
+      },
+      "identity.name": {
+        "flow": "identity",
+        "id": "identity.name",
+        "lines": [
+          "{identity_question}"
+        ],
+        "title": "{identity_question}"
+      },
+      "identity.no_reply": {
+        "flow": "identity",
+        "id": "identity.no_reply",
+        "lines": [],
+        "title": "identity.no_reply"
+      },
+      "identity.operator": {
+        "flow": "identity",
+        "id": "identity.operator",
+        "lines": [
+          "Передаю обращение сотруднику."
+        ],
+        "title": "Передаю обращение сотруднику."
+      },
+      "identity.phone": {
+        "flow": "identity",
+        "id": "identity.phone",
+        "lines": [
+          "{identity_question}"
+        ],
+        "title": "{identity_question}"
+      },
+      "identity.policy": {
+        "flow": "identity",
+        "id": "identity.policy",
+        "lines": [
+          "{identity_question}"
+        ],
+        "title": "{identity_question}"
+      },
+      "identity.readback": {
+        "flow": "identity",
+        "id": "identity.readback",
+        "lines": [
+          "{identity_question}"
+        ],
+        "title": "{identity_question}"
+      },
+      "identity.remember_birth": {
+        "flow": "identity",
+        "id": "identity.remember_birth",
+        "lines": [],
+        "title": "identity.remember_birth"
+      },
+      "identity.remember_phone": {
+        "flow": "identity",
+        "id": "identity.remember_phone",
+        "lines": [],
+        "title": "identity.remember_phone"
+      },
+      "identity.remember_policy": {
+        "flow": "identity",
+        "id": "identity.remember_policy",
+        "lines": [],
+        "title": "identity.remember_policy"
+      },
+      "identity.remember_reply": {
+        "flow": "identity",
+        "id": "identity.remember_reply",
+        "lines": [],
+        "title": "identity.remember_reply"
+      },
+      "identity.use_policy": {
+        "flow": "identity",
+        "id": "identity.use_policy",
+        "lines": [],
+        "title": "identity.use_policy"
+      },
+      "identity.verified": {
+        "flow": "identity",
+        "id": "identity.verified",
+        "lines": [],
+        "title": "identity.verified"
+      },
+      "identity.yes_reply": {
+        "flow": "identity",
+        "id": "identity.yes_reply",
+        "lines": [],
+        "title": "identity.yes_reply"
+      },
+      "inbound.book_ask_specialty": {
+        "flow": "inbound",
+        "id": "inbound.book_ask_specialty",
+        "lines": [
+          "Назовите специалиста, к которому хотите записаться. Можно сразу сказать удобный день и время."
+        ],
+        "title": "Назовите специалиста, к которому хотите записаться. Можно сразу сказать удобный день "
+      },
+      "inbound.book_check_day": {
+        "flow": "inbound",
+        "id": "inbound.book_check_day",
+        "lines": [],
+        "title": "inbound.book_check_day"
+      },
+      "inbound.book_conflict_check": {
+        "flow": "inbound",
+        "id": "inbound.book_conflict_check",
+        "lines": [],
+        "title": "inbound.book_conflict_check"
+      },
+      "inbound.book_conflict_race": {
+        "flow": "inbound",
+        "id": "inbound.book_conflict_race",
+        "lines": [],
+        "title": "inbound.book_conflict_race"
+      },
+      "inbound.book_diagnostic": {
+        "flow": "inbound",
+        "id": "inbound.book_diagnostic",
+        "lines": [
+          "Какое исследование или анализ вам назначили?"
+        ],
+        "title": "Какое исследование или анализ вам назначили?"
+      },
+      "inbound.book_do": {
+        "flow": "inbound",
+        "id": "inbound.book_do",
+        "lines": [],
+        "title": "inbound.book_do"
+      },
+      "inbound.book_done": {
+        "flow": "inbound",
+        "id": "inbound.book_done",
+        "lines": [
+          "Готово! Запись оформлена: {patient_name}, к {specialty_dative}, {slot_date_spoken}, в {slot_time_spoken}, кабинет {cabinet}, врач {doctor}. Повторяю: {slot_date_spoken}, {slot_time_spoken}. Мы отправим СМС с деталями. На приём возьмите паспорт и полис. Всего доброго!"
+        ],
+        "title": "Готово! Запись оформлена: {patient_name}, к {specialty_dative}, {slot_date_spoken}, в"
+      },
+      "inbound.book_entry": {
+        "flow": "inbound",
+        "id": "inbound.book_entry",
+        "lines": [],
+        "title": "inbound.book_entry"
+      },
+      "inbound.book_find_slot": {
+        "flow": "inbound",
+        "id": "inbound.book_find_slot",
+        "lines": [],
+        "title": "inbound.book_find_slot"
+      },
+      "inbound.book_has_referral": {
+        "flow": "inbound",
+        "id": "inbound.book_has_referral",
+        "lines": [],
+        "title": "inbound.book_has_referral"
+      },
+      "inbound.book_next_day": {
+        "flow": "inbound",
+        "id": "inbound.book_next_day",
+        "lines": [],
+        "title": "inbound.book_next_day"
+      },
+      "inbound.book_no_referral": {
+        "flow": "inbound",
+        "id": "inbound.book_no_referral",
+        "lines": [
+          "Действующее направление в картотеке не найдено. Записать вас к участковому терапевту? Один — да. Два — регистратор."
+        ],
+        "title": "Действующее направление в картотеке не найдено. Записать вас к участковому терапевту?"
+      },
+      "inbound.book_offer": {
+        "flow": "inbound",
+        "id": "inbound.book_offer",
+        "lines": [
+          "Ближайшая запись к {specialty_dative}: {slot_date_spoken}, в {slot_time_spoken}, врач {doctor}, кабинет {cabinet}. Подходит? Нажмите 1 — да, 2 — предложить другой день, 0 — оператор. Можно назвать удобный день."
+        ],
+        "title": "Ближайшая запись к {specialty_dative}: {slot_date_spoken}, в {slot_time_spoken}, врач"
+      },
+      "inbound.book_offer_other_day": {
+        "flow": "inbound",
+        "id": "inbound.book_offer_other_day",
+        "lines": [
+          "На {asked_day_spoken} свободного времени нет."
+        ],
+        "title": "На {asked_day_spoken} свободного времени нет."
+      },
+      "inbound.book_offer_relaxed": {
+        "flow": "inbound",
+        "id": "inbound.book_offer_relaxed",
+        "lines": [
+          "На указанное время свободных мест нет."
+        ],
+        "title": "На указанное время свободных мест нет."
+      },
+      "inbound.book_part_from_offer": {
+        "flow": "inbound",
+        "id": "inbound.book_part_from_offer",
+        "lines": [],
+        "title": "inbound.book_part_from_offer"
+      },
+      "inbound.book_referral_check": {
+        "flow": "inbound",
+        "id": "inbound.book_referral_check",
+        "lines": [],
+        "title": "inbound.book_referral_check"
+      },
+      "inbound.book_set_1": {
+        "flow": "inbound",
+        "id": "inbound.book_set_1",
+        "lines": [],
+        "title": "inbound.book_set_1"
+      },
+      "inbound.book_specialty_from_speech": {
+        "flow": "inbound",
+        "id": "inbound.book_specialty_from_speech",
+        "lines": [],
+        "title": "inbound.book_specialty_from_speech"
+      },
+      "inbound.book_specialty_unknown": {
+        "flow": "inbound",
+        "id": "inbound.book_specialty_unknown",
+        "lines": [],
+        "title": "inbound.book_specialty_unknown"
+      },
+      "inbound.book_start": {
+        "flow": "inbound",
+        "id": "inbound.book_start",
+        "lines": [
+          "Куда вас записать? Участковый терапевт — один. Узкий специалист — два. Исследование или анализы — три. Можно назвать голосом."
+        ],
+        "title": "Куда вас записать? Участковый терапевт — один. Узкий специалист — два. Исследование и"
+      },
+      "inbound.book_taken": {
+        "flow": "inbound",
+        "id": "inbound.book_taken",
+        "lines": [
+          "К сожалению, это время только что заняли. Ищу другое."
+        ],
+        "title": "К сожалению, это время только что заняли. Ищу другое."
+      },
+      "inbound.cancel_confirm": {
+        "flow": "inbound",
+        "id": "inbound.cancel_confirm",
+        "lines": [
+          "Вы уверены, что хотите отменить запись {slot_date_spoken} в {slot_time_spoken}? Нажмите 1 — да, отменить. 2 — нет, оставить запись."
+        ],
+        "title": "Вы уверены, что хотите отменить запись {slot_date_spoken} в {slot_time_spoken}? Нажми"
+      },
+      "inbound.cancel_do": {
+        "flow": "inbound",
+        "id": "inbound.cancel_do",
+        "lines": [],
+        "title": "inbound.cancel_do"
+      },
+      "inbound.cancel_done": {
+        "flow": "inbound",
+        "id": "inbound.cancel_done",
+        "lines": [
+          "Запись пациента {patient_name} к {specialty_dative} {slot_date_spoken} отменена. Мы отправим СМС. Чтобы записаться снова, позвоните нам. Всего доброго!"
+        ],
+        "title": "Запись пациента {patient_name} к {specialty_dative} {slot_date_spoken} отменена. Мы о"
+      },
+      "inbound.cancel_offer": {
+        "flow": "inbound",
+        "id": "inbound.cancel_offer",
+        "lines": [
+          "Вместо отмены можно перенести запись на другой день. Хотите перенести? Один — перенести. Два — продолжить отмену."
+        ],
+        "title": "Вместо отмены можно перенести запись на другой день. Хотите перенести? Один — перенес"
+      },
+      "inbound.candidate_accept": {
+        "flow": "inbound",
+        "id": "inbound.candidate_accept",
+        "lines": [],
+        "title": "inbound.candidate_accept"
+      },
+      "inbound.candidate_check": {
+        "flow": "inbound",
+        "id": "inbound.candidate_check",
+        "lines": [],
+        "title": "inbound.candidate_check"
+      },
+      "inbound.candidate_confirm": {
+        "flow": "inbound",
+        "id": "inbound.candidate_confirm",
+        "lines": [
+          "Вы имеете в виду специальность {specialty_candidate_label}? Один — да. Два — назвать иначе."
+        ],
+        "title": "Вы имеете в виду специальность {specialty_candidate_label}? Один — да. Два — назвать "
+      },
+      "inbound.confirm_do": {
+        "flow": "inbound",
+        "id": "inbound.confirm_do",
+        "lines": [],
+        "title": "inbound.confirm_do"
+      },
+      "inbound.confirm_done": {
+        "flow": "inbound",
+        "id": "inbound.confirm_done",
+        "lines": [
+          "Спасибо! Запись пациента {patient_name} к {specialty_dative} {slot_date_spoken} в {slot_time_spoken} подтверждена. Ждём вас. Всего доброго!"
+        ],
+        "title": "Спасибо! Запись пациента {patient_name} к {specialty_dative} {slot_date_spoken} в {sl"
+      },
+      "inbound.existing_choose": {
+        "flow": "inbound",
+        "id": "inbound.existing_choose",
+        "lines": [
+          "У вас несколько записей. {booking_options} Назовите номер нужной записи. Для других вариантов — звёздочка."
+        ],
+        "title": "У вас несколько записей. {booking_options} Назовите номер нужной записи. Для других в"
+      },
+      "inbound.existing_menu": {
+        "flow": "inbound",
+        "id": "inbound.existing_menu",
+        "lines": [
+          "{patient_name}: запись к {specialty_dative}, {slot_date_spoken}, в {slot_time_spoken}, врач {doctor}. Подтвердить — нажмите 1. Отменить — 0. Перенести — 2. Оператор — 9."
+        ],
+        "title": "{patient_name}: запись к {specialty_dative}, {slot_date_spoken}, в {slot_time_spoken}"
+      },
+      "inbound.existing_none": {
+        "flow": "inbound",
+        "id": "inbound.existing_none",
+        "lines": [
+          "У пациента {patient_name} нет предстоящих записей. Хотите записаться? Нажмите 1 — да, 0 — завершить."
+        ],
+        "title": "У пациента {patient_name} нет предстоящих записей. Хотите записаться? Нажмите 1 — да,"
+      },
+      "inbound.existing_route": {
+        "flow": "inbound",
+        "id": "inbound.existing_route",
+        "lines": [],
+        "title": "inbound.existing_route"
+      },
+      "inbound.existing_select": {
+        "flow": "inbound",
+        "id": "inbound.existing_select",
+        "lines": [],
+        "title": "inbound.existing_select"
+      },
+      "inbound.existing_start": {
+        "flow": "inbound",
+        "id": "inbound.existing_start",
+        "lines": [],
+        "title": "inbound.existing_start"
+      },
+      "inbound.goodbye": {
+        "flow": "inbound",
+        "id": "inbound.goodbye",
+        "lines": [
+          "Спасибо за звонок. Всего доброго!"
+        ],
+        "title": "Спасибо за звонок. Всего доброго!"
+      },
+      "inbound.goodbye_silent": {
+        "flow": "inbound",
+        "id": "inbound.goodbye_silent",
+        "lines": [
+          "К сожалению, я вас не слышу. Перезвоните нам, пожалуйста, ещё раз. Всего доброго!"
+        ],
+        "title": "К сожалению, я вас не слышу. Перезвоните нам, пожалуйста, ещё раз. Всего доброго!"
+      },
+      "inbound.id_done": {
+        "flow": "inbound",
+        "id": "inbound.id_done",
+        "lines": [],
+        "title": "inbound.id_done"
+      },
+      "inbound.id_start": {
+        "flow": "inbound",
+        "id": "inbound.id_start",
+        "lines": [],
+        "title": "inbound.id_start"
+      },
+      "inbound.info_holidays": {
+        "flow": "inbound",
+        "id": "inbound.info_holidays",
+        "lines": [],
+        "title": "inbound.info_holidays"
+      },
+      "inbound.info_menu": {
+        "flow": "inbound",
+        "id": "inbound.info_menu",
+        "lines": [
+          "Режим работы поликлиники — нажмите 1. Работа в праздничные дни — нажмите 2. Адрес и документы — нажмите 3. Вернуться в начало — нажмите 9."
+        ],
+        "title": "Режим работы поликлиники — нажмите 1. Работа в праздничные дни — нажмите 2. Адрес и д"
+      },
+      "inbound.info_other": {
+        "flow": "inbound",
+        "id": "inbound.info_other",
+        "lines": [],
+        "title": "inbound.info_other"
+      },
+      "inbound.info_say": {
+        "flow": "inbound",
+        "id": "inbound.info_say",
+        "lines": [
+          "{info_text} Чтобы записаться к врачу, нажмите 1. Повторить — 2. Завершить — 0."
+        ],
+        "title": "{info_text} Чтобы записаться к врачу, нажмите 1. Повторить — 2. Завершить — 0."
+      },
+      "inbound.info_schedule": {
+        "flow": "inbound",
+        "id": "inbound.info_schedule",
+        "lines": [],
+        "title": "inbound.info_schedule"
+      },
+      "inbound.intent_book": {
+        "flow": "inbound",
+        "id": "inbound.intent_book",
+        "lines": [],
+        "title": "inbound.intent_book"
+      },
+      "inbound.intent_existing": {
+        "flow": "inbound",
+        "id": "inbound.intent_existing",
+        "lines": [],
+        "title": "inbound.intent_existing"
+      },
+      "inbound.listen_free": {
+        "flow": "inbound",
+        "id": "inbound.listen_free",
+        "lines": [
+          "Скажите, пожалуйста, чем могу помочь? Я передам ваше обращение регистратору."
+        ],
+        "title": "Скажите, пожалуйста, чем могу помочь? Я передам ваше обращение регистратору."
+      },
+      "inbound.medical_boundary": {
+        "flow": "inbound",
+        "id": "inbound.medical_boundary",
+        "lines": [
+          "Я не могу назначать лечение или советовать лекарства. Могу помочь записаться к врачу. Записать вас? Один — да. Два — регистратор."
+        ],
+        "title": "Я не могу назначать лечение или советовать лекарства. Могу помочь записаться к врачу."
+      },
+      "inbound.operator": {
+        "flow": "inbound",
+        "id": "inbound.operator",
+        "lines": [
+          "Перевожу на регистратора."
+        ],
+        "title": "Перевожу на регистратора."
+      },
+      "inbound.welcome": {
+        "flow": "inbound",
+        "id": "inbound.welcome",
+        "lines": [
+          "Здравствуйте. Чем могу помочь? Записаться можно голосом или нажать один. Изменить запись — два. Регистратор — ноль."
+        ],
+        "title": "Здравствуйте. Чем могу помочь? Записаться можно голосом или нажать один. Изменить зап"
+      },
+      "recovery.clarify": {
+        "flow": "recovery",
+        "id": "recovery.clarify",
+        "lines": [
+          "{recovery_question}"
+        ],
+        "title": "{recovery_question}"
+      },
+      "recovery.form_error": {
+        "flow": "recovery",
+        "id": "recovery.form_error",
+        "lines": [],
+        "title": "recovery.form_error"
+      },
+      "recovery.form_handoff": {
+        "flow": "recovery",
+        "id": "recovery.form_handoff",
+        "lines": [
+          "Не удалось проверить данные. Передам ваш вопрос регистратору."
+        ],
+        "title": "Не удалось проверить данные. Передам ваш вопрос регистратору."
+      },
+      "recovery.night": {
+        "flow": "recovery",
+        "id": "recovery.night",
+        "lines": [],
+        "title": "recovery.night"
+      },
+      "recovery.overload": {
+        "flow": "recovery",
+        "id": "recovery.overload",
+        "lines": [
+          "Система записи сейчас занята. Передам ваш вопрос регистратору."
+        ],
+        "title": "Система записи сейчас занята. Передам ваш вопрос регистратору."
+      },
+      "recovery.reasoning_notice": {
+        "flow": "recovery",
+        "id": "recovery.reasoning_notice",
+        "lines": [
+          "Оператора сейчас нет на месте. Вашим запросом занимается ИИ, пожалуйста, подождите."
+        ],
+        "title": "Оператора сейчас нет на месте. Вашим запросом занимается ИИ, пожалуйста, подождите."
+      },
+      "recovery.route": {
+        "flow": "recovery",
+        "id": "recovery.route",
+        "lines": [],
+        "title": "recovery.route"
+      },
+      "recovery.transfer": {
+        "flow": "recovery",
+        "id": "recovery.transfer",
+        "lines": [
+          "{recovery_message}"
+        ],
+        "title": "{recovery_message}"
+      },
+      "reminder.cancel_confirm": {
+        "flow": "reminder",
+        "id": "reminder.cancel_confirm",
+        "lines": [
+          "Вы хотите отменить запись {slot_date_spoken} в {slot_time_spoken}? Нажмите 1 — да, отменить. 2 — нет, оставить запись."
+        ],
+        "title": "Вы хотите отменить запись {slot_date_spoken} в {slot_time_spoken}? Нажмите 1 — да, от"
+      },
+      "reminder.cancel_do": {
+        "flow": "reminder",
+        "id": "reminder.cancel_do",
+        "lines": [],
+        "title": "reminder.cancel_do"
+      },
+      "reminder.cancel_done": {
+        "flow": "reminder",
+        "id": "reminder.cancel_done",
+        "lines": [
+          "Запись пациента {patient_name} к {specialty_dative} {slot_date_spoken} отменена. Мы отправим СМС. Чтобы записаться снова, позвоните в поликлинику. Всего доброго!"
+        ],
+        "title": "Запись пациента {patient_name} к {specialty_dative} {slot_date_spoken} отменена. Мы о"
+      },
+      "reminder.cancel_offer": {
+        "flow": "reminder",
+        "id": "reminder.cancel_offer",
+        "lines": [
+          "Вместо отмены можно перенести запись на другой день. Хотите перенести? Один — перенести. Два — продолжить отмену."
+        ],
+        "title": "Вместо отмены можно перенести запись на другой день. Хотите перенести? Один — перенес"
+      },
+      "reminder.confirm_do": {
+        "flow": "reminder",
+        "id": "reminder.confirm_do",
+        "lines": [],
+        "title": "reminder.confirm_do"
+      },
+      "reminder.confirm_done": {
+        "flow": "reminder",
+        "id": "reminder.confirm_done",
+        "lines": [
+          "Спасибо! Запись пациента {patient_name} к {specialty_dative} {slot_date_spoken} в {slot_time_spoken} подтверждена. Ждём вас, возьмите паспорт и полис. Всего доброго!"
+        ],
+        "title": "Спасибо! Запись пациента {patient_name} к {specialty_dative} {slot_date_spoken} в {sl"
+      },
+      "reminder.identity": {
+        "flow": "reminder",
+        "id": "reminder.identity",
+        "lines": [
+          "Здравствуйте! Это автоматический помощник поликлиники. Чтобы перейти к вашей записи, введите номер карты поликлиники и нажмите решётку. Можно назвать номер по одной цифре. Если вы не ожидаете звонка, положите трубку. Мы не просим банковские данные и коды из СМС."
+        ],
+        "title": "Здравствуйте! Это автоматический помощник поликлиники. Чтобы перейти к вашей записи, "
+      },
+      "reminder.no_answer": {
+        "flow": "reminder",
+        "id": "reminder.no_answer",
+        "lines": [
+          "Мы не получили ответа. Запись сохраняется. Если планы изменятся, позвоните в поликлинику. Всего доброго!"
+        ],
+        "title": "Мы не получили ответа. Запись сохраняется. Если планы изменятся, позвоните в поликлин"
+      },
+      "reminder.no_verified_contact": {
+        "flow": "reminder",
+        "id": "reminder.no_verified_contact",
+        "lines": [
+          "Личность получателя не подтверждена. Для вопросов о записи позвоните по официальному номеру поликлиники. Всего доброго."
+        ],
+        "title": "Личность получателя не подтверждена. Для вопросов о записи позвоните по официальному "
+      },
+      "reminder.operator": {
+        "flow": "reminder",
+        "id": "reminder.operator",
+        "lines": [
+          "Перевожу на оператора. Все данные разговора сохранены, повторять ничего не придётся."
+        ],
+        "title": "Перевожу на оператора. Все данные разговора сохранены, повторять ничего не придётся."
+      },
+      "reminder.start": {
+        "flow": "reminder",
+        "id": "reminder.start",
+        "lines": [
+          "Здравствуйте! Это автоматический звонок из {clinic_name}. Напоминаем: {patient_name} записан на приём к {specialty_dative} {slot_date_spoken}, в {slot_time_spoken}, кабинет {cabinet}. Если вы придёте, нажмите 1. Чтобы отменить запись, нажмите 0. Чтобы перенести — нажмите 2. Мы никогда не просим коды из СМС и данные банковских карт; наш номер указан на сайте поликлиники."
+        ],
+        "title": "Здравствуйте! Это автоматический звонок из {clinic_name}. Напоминаем: {patient_name} "
+      },
+      "reminder.verify_identity": {
+        "flow": "reminder",
+        "id": "reminder.verify_identity",
+        "lines": [],
+        "title": "reminder.verify_identity"
+      },
+      "reschedule.operator": {
+        "flow": "reschedule",
+        "id": "reschedule.operator",
+        "lines": [
+          "Перевожу на оператора. Все данные разговора сохранены, повторять ничего не придётся."
+        ],
+        "title": "Перевожу на оператора. Все данные разговора сохранены, повторять ничего не придётся."
+      },
+      "reschedule.rs_ask_part": {
+        "flow": "reschedule",
+        "id": "reschedule.rs_ask_part",
+        "lines": [
+          "Вам удобнее до обеда или после обеда? Нажмите 1 — до обеда, 2 — после обеда."
+        ],
+        "title": "Вам удобнее до обеда или после обеда? Нажмите 1 — до обеда, 2 — после обеда."
+      },
+      "reschedule.rs_check_day": {
+        "flow": "reschedule",
+        "id": "reschedule.rs_check_day",
+        "lines": [],
+        "title": "reschedule.rs_check_day"
+      },
+      "reschedule.rs_day_parts": {
+        "flow": "reschedule",
+        "id": "reschedule.rs_day_parts",
+        "lines": [],
+        "title": "reschedule.rs_day_parts"
+      },
+      "reschedule.rs_do": {
+        "flow": "reschedule",
+        "id": "reschedule.rs_do",
+        "lines": [],
+        "title": "reschedule.rs_do"
+      },
+      "reschedule.rs_done": {
+        "flow": "reschedule",
+        "id": "reschedule.rs_done",
+        "lines": [
+          "Готово! Запись пациента {patient_name} к {specialty_dative} перенесена: {slot_date_spoken}, в {slot_time_spoken}, кабинет {cabinet}, врач {doctor}. Повторяю: {slot_date_spoken}, {slot_time_spoken}. Мы отправим СМС. Всего доброго!"
+        ],
+        "title": "Готово! Запись пациента {patient_name} к {specialty_dative} перенесена: {slot_date_sp"
+      },
+      "reschedule.rs_list_slots": {
+        "flow": "reschedule",
+        "id": "reschedule.rs_list_slots",
+        "lines": [],
+        "title": "reschedule.rs_list_slots"
+      },
+      "reschedule.rs_nearest_in_part": {
+        "flow": "reschedule",
+        "id": "reschedule.rs_nearest_in_part",
+        "lines": [],
+        "title": "reschedule.rs_nearest_in_part"
+      },
+      "reschedule.rs_next_day": {
+        "flow": "reschedule",
+        "id": "reschedule.rs_next_day",
+        "lines": [],
+        "title": "reschedule.rs_next_day"
+      },
+      "reschedule.rs_offer_datetime": {
+        "flow": "reschedule",
+        "id": "reschedule.rs_offer_datetime",
+        "lines": [
+          "Ближайшее время {said_daypart_spoken}: {slot_date_spoken}, в {slot_time_spoken}, врач {doctor}, кабинет {cabinet}. Подходит? Нажмите 1 — да, 2 — нет."
+        ],
+        "title": "Ближайшее время {said_daypart_spoken}: {slot_date_spoken}, в {slot_time_spoken}, врач"
+      },
+      "reschedule.rs_offer_day": {
+        "flow": "reschedule",
+        "id": "reschedule.rs_offer_day",
+        "lines": [
+          "Ближайший день со свободным временем к {specialty_dative} — {day_spoken}. Подходит? Скажите «да» или «нет», либо назовите удобный день. Нажмите 1 — да, 2 — следующий день."
+        ],
+        "title": "Ближайший день со свободным временем к {specialty_dative} — {day_spoken}. Подходит? С"
+      },
+      "reschedule.rs_offer_other_day": {
+        "flow": "reschedule",
+        "id": "reschedule.rs_offer_other_day",
+        "lines": [
+          "На {asked_day_spoken} свободного времени нет."
+        ],
+        "title": "На {asked_day_spoken} свободного времени нет."
+      },
+      "reschedule.rs_offer_time": {
+        "flow": "reschedule",
+        "id": "reschedule.rs_offer_time",
+        "lines": [
+          "Ближайшее время {slot_date_spoken} — {slot_time_spoken}, врач {doctor}, кабинет {cabinet}. Подходит? Нажмите 1 — да, 2 — другое время."
+        ],
+        "title": "Ближайшее время {slot_date_spoken} — {slot_time_spoken}, врач {doctor}, кабинет {cabi"
+      },
+      "reschedule.rs_offer_time_single": {
+        "flow": "reschedule",
+        "id": "reschedule.rs_offer_time_single",
+        "lines": [
+          "В этот день есть время только {part_spoken}."
+        ],
+        "title": "В этот день есть время только {part_spoken}."
+      },
+      "reschedule.rs_part_afternoon": {
+        "flow": "reschedule",
+        "id": "reschedule.rs_part_afternoon",
+        "lines": [],
+        "title": "reschedule.rs_part_afternoon"
+      },
+      "reschedule.rs_part_morning": {
+        "flow": "reschedule",
+        "id": "reschedule.rs_part_morning",
+        "lines": [],
+        "title": "reschedule.rs_part_morning"
+      },
+      "reschedule.rs_part_other_day": {
+        "flow": "reschedule",
+        "id": "reschedule.rs_part_other_day",
+        "lines": [],
+        "title": "reschedule.rs_part_other_day"
+      },
+      "reschedule.rs_pick_time": {
+        "flow": "reschedule",
+        "id": "reschedule.rs_pick_time",
+        "lines": [],
+        "title": "reschedule.rs_pick_time"
+      },
+      "reschedule.rs_say_slots": {
+        "flow": "reschedule",
+        "id": "reschedule.rs_say_slots",
+        "lines": [
+          "Свободное время {slot_date_spoken}: {slots_spoken}. Назовите подходящее время. Можно сказать: утром, в обед или вечером — подберу ближайший день с таким временем."
+        ],
+        "title": "Свободное время {slot_date_spoken}: {slots_spoken}. Назовите подходящее время. Можно "
+      },
+      "reschedule.rs_start": {
+        "flow": "reschedule",
+        "id": "reschedule.rs_start",
+        "lines": [],
+        "title": "reschedule.rs_start"
+      },
+      "reschedule.rs_taken": {
+        "flow": "reschedule",
+        "id": "reschedule.rs_taken",
+        "lines": [
+          "Это время только что заняли. Подберу другое."
+        ],
+        "title": "Это время только что заняли. Подберу другое."
+      },
+      "system_notices.complaint": {
+        "flow": "system_notices",
+        "id": "system_notices.complaint",
+        "lines": [
+          "Мне жаль, что так вышло. Передам обращение старшему администратору."
+        ],
+        "title": "Мне жаль, что так вышло. Передам обращение старшему администратору."
+      },
+      "system_notices.emergency": {
+        "flow": "system_notices",
+        "id": "system_notices.emergency",
+        "lines": [
+          "Немедленно звоните сто три или сто двенадцать. Не ждите приёма в поликлинике."
+        ],
+        "title": "Немедленно звоните сто три или сто двенадцать. Не ждите приёма в поликлинике."
+      },
+      "system_notices.record_opt_out": {
+        "flow": "system_notices",
+        "id": "system_notices.record_opt_out",
+        "lines": [
+          "Хорошо, аудиозапись разговора отключена."
+        ],
+        "title": "Хорошо, аудиозапись разговора отключена."
+      },
+      "system_notices.select": {
+        "flow": "system_notices",
+        "id": "system_notices.select",
+        "lines": [],
+        "title": "system_notices.select"
+      },
+      "system_notices.self_identity": {
+        "flow": "system_notices",
+        "id": "system_notices.self_identity",
+        "lines": [
+          "Я виртуальный помощник поликлиники. Если хотите поговорить с сотрудником, скажите об этом."
+        ],
+        "title": "Я виртуальный помощник поликлиники. Если хотите поговорить с сотрудником, скажите об "
+      },
+      "voice.identity": {
+        "flow": "voice",
+        "id": "voice.identity",
+        "lines": [],
+        "title": "voice.identity"
+      },
+      "voice.ready": {
+        "flow": "voice",
+        "id": "voice.ready",
+        "lines": [],
+        "title": "voice.ready"
+      }
+    },
+    "titles": {
+      "assisted.ask_more": "Нужно ли вам что-нибудь ещё? Если да, нажмите один. Если нет, нажмите ноль. Для опера",
+      "assisted.ask_request": "К какому специалисту вас записать? Для терапевта нажмите один. Для другого специалист",
+      "assisted.book": "assisted.book",
+      "assisted.conflict_check": "assisted.conflict_check",
+      "assisted.conflict_race": "assisted.conflict_race",
+      "assisted.done": "assisted.done",
+      "assisted.identify_full": "assisted.identify_full",
+      "assisted.offer": "{agent_text}",
+      "assisted.offer_fetch": "assisted.offer_fetch",
+      "assisted.operator": "Перевожу звонок на оператора. История разговора сохранена.",
+      "assisted.requirements": "assisted.requirements",
+      "assisted.success": "{patient_name}, вы записаны на {slot_date_spoken}, в {slot_time_spoken}.",
+      "assisted.verify_referral": "assisted.verify_referral",
+      "booking_conflict.allow_new": "booking_conflict.allow_new",
+      "booking_conflict.ask": "У вас уже есть предстоящая запись к {specialty_dative}: {slot_date_spoken}, в {slot_t",
+      "booking_conflict.check": "booking_conflict.check",
+      "booking_conflict.continue": "booking_conflict.continue",
+      "booking_conflict.keep": "Ваша прежняя запись сохранена. Новую запись не создаём. Всего доброго!",
+      "booking_conflict.select_cancel": "booking_conflict.select_cancel",
+      "booking_conflict.select_reschedule": "booking_conflict.select_reschedule",
+      "callback.ask": "Я не могу справиться с этой задачей без помощи коллег. Когда вам удобно принять их зв",
+      "callback.ask_consent": "Регистратор сейчас недоступен. Хотите, чтобы он перезвонил вам позже? Обратный звонок",
+      "callback.declined": "Хорошо. Всего доброго!",
+      "callback.done": "Заявка на обратный звонок сохранена. Предпочтительное время: {callback_at}. Оператор ",
+      "callback.failed": "Не удалось сохранить заявку. Пожалуйста, позвоните по официальному номеру поликлиники",
+      "callback.offer_request": "Хотите оставить заявку на запись без обратного звонка? Регистратор рассмотрит её позж",
+      "callback.operator": "Перевожу экстренное обращение на оператора.",
+      "callback.prepare": "callback.prepare",
+      "callback.request_done": "Заявка сохранена. Это ещё не запись на приём. Перезванивать вам не будем. После подтв",
+      "callback.save": "callback.save",
+      "callback.save_request": "callback.save_request",
+      "callback.save_unscheduled": "callback.save_unscheduled",
+      "feedback.ask": "Что, по вашему мнению, нужно исправить в тестовом варианте помощника? Можно оставить ",
+      "feedback.done": "Спасибо за помощь. Всего доброго!",
+      "feedback.operator": "Передаю ваше обращение сотруднику.",
+      "feedback.save": "feedback.save",
+      "identity.begin": "identity.begin",
+      "identity.birth": "{identity_question}",
+      "identity.collect": "identity.collect",
+      "identity.name": "{identity_question}",
+      "identity.no_reply": "identity.no_reply",
+      "identity.operator": "Передаю обращение сотруднику.",
+      "identity.phone": "{identity_question}",
+      "identity.policy": "{identity_question}",
+      "identity.readback": "{identity_question}",
+      "identity.remember_birth": "identity.remember_birth",
+      "identity.remember_phone": "identity.remember_phone",
+      "identity.remember_policy": "identity.remember_policy",
+      "identity.remember_reply": "identity.remember_reply",
+      "identity.use_policy": "identity.use_policy",
+      "identity.verified": "identity.verified",
+      "identity.yes_reply": "identity.yes_reply",
+      "inbound.book_ask_specialty": "Назовите специалиста, к которому хотите записаться. Можно сразу сказать удобный день ",
+      "inbound.book_check_day": "inbound.book_check_day",
+      "inbound.book_conflict_check": "inbound.book_conflict_check",
+      "inbound.book_conflict_race": "inbound.book_conflict_race",
+      "inbound.book_diagnostic": "Какое исследование или анализ вам назначили?",
+      "inbound.book_do": "inbound.book_do",
+      "inbound.book_done": "Готово! Запись оформлена: {patient_name}, к {specialty_dative}, {slot_date_spoken}, в",
+      "inbound.book_entry": "inbound.book_entry",
+      "inbound.book_find_slot": "inbound.book_find_slot",
+      "inbound.book_has_referral": "inbound.book_has_referral",
+      "inbound.book_next_day": "inbound.book_next_day",
+      "inbound.book_no_referral": "Действующее направление в картотеке не найдено. Записать вас к участковому терапевту?",
+      "inbound.book_offer": "Ближайшая запись к {specialty_dative}: {slot_date_spoken}, в {slot_time_spoken}, врач",
+      "inbound.book_offer_other_day": "На {asked_day_spoken} свободного времени нет.",
+      "inbound.book_offer_relaxed": "На указанное время свободных мест нет.",
+      "inbound.book_part_from_offer": "inbound.book_part_from_offer",
+      "inbound.book_referral_check": "inbound.book_referral_check",
+      "inbound.book_set_1": "inbound.book_set_1",
+      "inbound.book_specialty_from_speech": "inbound.book_specialty_from_speech",
+      "inbound.book_specialty_unknown": "inbound.book_specialty_unknown",
+      "inbound.book_start": "Куда вас записать? Участковый терапевт — один. Узкий специалист — два. Исследование и",
+      "inbound.book_taken": "К сожалению, это время только что заняли. Ищу другое.",
+      "inbound.cancel_confirm": "Вы уверены, что хотите отменить запись {slot_date_spoken} в {slot_time_spoken}? Нажми",
+      "inbound.cancel_do": "inbound.cancel_do",
+      "inbound.cancel_done": "Запись пациента {patient_name} к {specialty_dative} {slot_date_spoken} отменена. Мы о",
+      "inbound.cancel_offer": "Вместо отмены можно перенести запись на другой день. Хотите перенести? Один — перенес",
+      "inbound.candidate_accept": "inbound.candidate_accept",
+      "inbound.candidate_check": "inbound.candidate_check",
+      "inbound.candidate_confirm": "Вы имеете в виду специальность {specialty_candidate_label}? Один — да. Два — назвать ",
+      "inbound.confirm_do": "inbound.confirm_do",
+      "inbound.confirm_done": "Спасибо! Запись пациента {patient_name} к {specialty_dative} {slot_date_spoken} в {sl",
+      "inbound.existing_choose": "У вас несколько записей. {booking_options} Назовите номер нужной записи. Для других в",
+      "inbound.existing_menu": "{patient_name}: запись к {specialty_dative}, {slot_date_spoken}, в {slot_time_spoken}",
+      "inbound.existing_none": "У пациента {patient_name} нет предстоящих записей. Хотите записаться? Нажмите 1 — да,",
+      "inbound.existing_route": "inbound.existing_route",
+      "inbound.existing_select": "inbound.existing_select",
+      "inbound.existing_start": "inbound.existing_start",
+      "inbound.goodbye": "Спасибо за звонок. Всего доброго!",
+      "inbound.goodbye_silent": "К сожалению, я вас не слышу. Перезвоните нам, пожалуйста, ещё раз. Всего доброго!",
+      "inbound.id_done": "inbound.id_done",
+      "inbound.id_start": "inbound.id_start",
+      "inbound.info_holidays": "inbound.info_holidays",
+      "inbound.info_menu": "Режим работы поликлиники — нажмите 1. Работа в праздничные дни — нажмите 2. Адрес и д",
+      "inbound.info_other": "inbound.info_other",
+      "inbound.info_say": "{info_text} Чтобы записаться к врачу, нажмите 1. Повторить — 2. Завершить — 0.",
+      "inbound.info_schedule": "inbound.info_schedule",
+      "inbound.intent_book": "inbound.intent_book",
+      "inbound.intent_existing": "inbound.intent_existing",
+      "inbound.listen_free": "Скажите, пожалуйста, чем могу помочь? Я передам ваше обращение регистратору.",
+      "inbound.medical_boundary": "Я не могу назначать лечение или советовать лекарства. Могу помочь записаться к врачу.",
+      "inbound.operator": "Перевожу на регистратора.",
+      "inbound.welcome": "Здравствуйте. Чем могу помочь? Записаться можно голосом или нажать один. Изменить зап",
+      "recovery.clarify": "{recovery_question}",
+      "recovery.form_error": "recovery.form_error",
+      "recovery.form_handoff": "Не удалось проверить данные. Передам ваш вопрос регистратору.",
+      "recovery.night": "recovery.night",
+      "recovery.overload": "Система записи сейчас занята. Передам ваш вопрос регистратору.",
+      "recovery.reasoning_notice": "Оператора сейчас нет на месте. Вашим запросом занимается ИИ, пожалуйста, подождите.",
+      "recovery.route": "recovery.route",
+      "recovery.transfer": "{recovery_message}",
+      "reminder.cancel_confirm": "Вы хотите отменить запись {slot_date_spoken} в {slot_time_spoken}? Нажмите 1 — да, от",
+      "reminder.cancel_do": "reminder.cancel_do",
+      "reminder.cancel_done": "Запись пациента {patient_name} к {specialty_dative} {slot_date_spoken} отменена. Мы о",
+      "reminder.cancel_offer": "Вместо отмены можно перенести запись на другой день. Хотите перенести? Один — перенес",
+      "reminder.confirm_do": "reminder.confirm_do",
+      "reminder.confirm_done": "Спасибо! Запись пациента {patient_name} к {specialty_dative} {slot_date_spoken} в {sl",
+      "reminder.identity": "Здравствуйте! Это автоматический помощник поликлиники. Чтобы перейти к вашей записи, ",
+      "reminder.no_answer": "Мы не получили ответа. Запись сохраняется. Если планы изменятся, позвоните в поликлин",
+      "reminder.no_verified_contact": "Личность получателя не подтверждена. Для вопросов о записи позвоните по официальному ",
+      "reminder.operator": "Перевожу на оператора. Все данные разговора сохранены, повторять ничего не придётся.",
+      "reminder.start": "Здравствуйте! Это автоматический звонок из {clinic_name}. Напоминаем: {patient_name} ",
+      "reminder.verify_identity": "reminder.verify_identity",
+      "reschedule.operator": "Перевожу на оператора. Все данные разговора сохранены, повторять ничего не придётся.",
+      "reschedule.rs_ask_part": "Вам удобнее до обеда или после обеда? Нажмите 1 — до обеда, 2 — после обеда.",
+      "reschedule.rs_check_day": "reschedule.rs_check_day",
+      "reschedule.rs_day_parts": "reschedule.rs_day_parts",
+      "reschedule.rs_do": "reschedule.rs_do",
+      "reschedule.rs_done": "Готово! Запись пациента {patient_name} к {specialty_dative} перенесена: {slot_date_sp",
+      "reschedule.rs_list_slots": "reschedule.rs_list_slots",
+      "reschedule.rs_nearest_in_part": "reschedule.rs_nearest_in_part",
+      "reschedule.rs_next_day": "reschedule.rs_next_day",
+      "reschedule.rs_offer_datetime": "Ближайшее время {said_daypart_spoken}: {slot_date_spoken}, в {slot_time_spoken}, врач",
+      "reschedule.rs_offer_day": "Ближайший день со свободным временем к {specialty_dative} — {day_spoken}. Подходит? С",
+      "reschedule.rs_offer_other_day": "На {asked_day_spoken} свободного времени нет.",
+      "reschedule.rs_offer_time": "Ближайшее время {slot_date_spoken} — {slot_time_spoken}, врач {doctor}, кабинет {cabi",
+      "reschedule.rs_offer_time_single": "В этот день есть время только {part_spoken}.",
+      "reschedule.rs_part_afternoon": "reschedule.rs_part_afternoon",
+      "reschedule.rs_part_morning": "reschedule.rs_part_morning",
+      "reschedule.rs_part_other_day": "reschedule.rs_part_other_day",
+      "reschedule.rs_pick_time": "reschedule.rs_pick_time",
+      "reschedule.rs_say_slots": "Свободное время {slot_date_spoken}: {slots_spoken}. Назовите подходящее время. Можно ",
+      "reschedule.rs_start": "reschedule.rs_start",
+      "reschedule.rs_taken": "Это время только что заняли. Подберу другое.",
+      "system_notices.complaint": "Мне жаль, что так вышло. Передам обращение старшему администратору.",
+      "system_notices.emergency": "Немедленно звоните сто три или сто двенадцать. Не ждите приёма в поликлинике.",
+      "system_notices.record_opt_out": "Хорошо, аудиозапись разговора отключена.",
+      "system_notices.select": "system_notices.select",
+      "system_notices.self_identity": "Я виртуальный помощник поликлиники. Если хотите поговорить с сотрудником, скажите об ",
+      "voice.identity": "voice.identity",
+      "voice.ready": "voice.ready"
+    },
+    "version": "b7cb8e02e52102104756744c6bd772205bd08759dfc60606492d330ecf0f3b17"
+  },
+  "expected_target": "callback.ask_consent"
+}

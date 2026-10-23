@@ -1,0 +1,166 @@
+# Перенос записи — общий подграф для входящих звонков и напоминаний.
+# Вход: patient_id, patient_name, booking_id, specialty, specialty_dative, today.
+# Логика (по ТЗ): ближайший день → да/нет; «нет» → следующий день (не больше 3 предложений);
+# ответ не про дату → человек; половина дня; ближайшее время; список оставшихся;
+# «утром / в обед / вечером» → ближайший день с таким временем; «нет» → человек с сохранением данных.
+flow reschedule
+  rate 1.5
+  entry rs_start
+
+state rs_start
+  set offers = 0
+  call crm.next_day specialty=$specialty after=$today offers=$offers
+  ok -> rs_offer_day
+  too_many -> operator reason=no_suitable_day
+  empty -> operator reason=no_slots
+  error -> operator reason=crm_error
+
+state rs_offer_day
+  say "Ближайший день со свободным временем к {specialty_dative} — {day_spoken}. Подходит? Скажите «да» или «нет», либо назовите удобный день. Нажмите 1 — да, 2 — следующий день."
+  listen 8s
+  dtmf 1 -> rs_day_parts
+  dtmf 2 -> rs_next_day
+  dtmf 0 -> operator reason=requested
+  intent emergency|complaint|medical|operator -> operator reason=human_only
+  date -> rs_check_day
+  yes -> rs_day_parts
+  no -> rs_next_day
+  any -> operator reason=not_a_date
+  silence -> rs_offer_day
+  timeout 8s -> rs_offer_day
+  retry 2 -> operator reason=no_valid_input
+
+state rs_next_day
+  call crm.next_day specialty=$specialty after=$day offers=$offers
+  ok -> rs_offer_day
+  too_many -> operator reason=no_suitable_day
+  empty -> operator reason=no_slots
+  error -> operator reason=crm_error
+
+state rs_check_day
+  call crm.check_day specialty=$specialty said_date=$said_date
+  ok -> rs_day_parts
+  other_day -> rs_offer_other_day
+  past -> rs_offer_day
+  empty -> operator reason=no_slots
+  error -> operator reason=crm_error
+
+state rs_offer_other_day
+  say "На {asked_day_spoken} свободного времени нет."
+  goto rs_offer_day
+
+state rs_day_parts
+  call crm.day_parts specialty=$specialty day=$day
+  both -> rs_ask_part
+  single -> rs_offer_time_single
+  empty -> rs_next_day
+  error -> operator reason=crm_error
+
+state rs_ask_part
+  say "Вам удобнее до обеда или после обеда? Нажмите 1 — до обеда, 2 — после обеда."
+  listen 8s
+  dtmf 1 -> rs_part_morning
+  dtmf 2 -> rs_part_afternoon
+  intent emergency|complaint|medical|operator -> operator reason=human_only
+  daypart -> rs_nearest_in_part
+  time -> rs_pick_time
+  any -> operator reason=not_a_daypart
+  silence -> rs_ask_part
+  timeout 8s -> rs_ask_part
+  retry 2 -> operator reason=no_valid_input
+
+state rs_part_morning
+  set said_daypart = morning
+  goto rs_nearest_in_part
+
+state rs_part_afternoon
+  set said_daypart = afternoon
+  goto rs_nearest_in_part
+
+state rs_offer_time_single
+  say "В этот день есть время только {part_spoken}."
+  goto rs_offer_time
+
+state rs_nearest_in_part
+  call crm.nearest_in_day_part specialty=$specialty day=$day said_daypart=$said_daypart
+  ok -> rs_offer_time
+  empty -> rs_next_day
+  error -> operator reason=crm_error
+
+state rs_offer_time
+  say "Ближайшее время {slot_date_spoken} — {slot_time_spoken}, врач {doctor}. Подходит? Нажмите 1 — да, 2 — другое время."
+  listen 8s
+  dtmf 1 -> rs_do
+  dtmf 2 -> rs_list_slots
+  intent emergency|complaint|medical|operator -> operator reason=human_only
+  time -> rs_pick_time
+  yes -> rs_do
+  no -> rs_list_slots
+  any -> operator reason=unclear
+  silence -> rs_offer_time
+  timeout 8s -> rs_offer_time
+  retry 2 -> operator reason=no_valid_input
+
+state rs_list_slots
+  call crm.list_slots specialty=$specialty day=$day said_daypart=$said_daypart
+  ok -> rs_say_slots
+  empty -> rs_next_day
+  error -> operator reason=crm_error
+
+state rs_say_slots
+  say "Свободное время {slot_date_spoken}: {slots_spoken}. Назовите подходящее время. Можно сказать: утром, в обед или вечером — подберу ближайший день с таким временем."
+  listen 10s
+  intent emergency|complaint|medical|operator -> operator reason=human_only
+  time -> rs_pick_time
+  daypart -> rs_part_other_day
+  no -> operator reason=none_suitable
+  any -> operator reason=unclear
+  silence -> rs_say_slots
+  timeout 10s -> rs_say_slots
+  retry 2 -> operator reason=no_valid_input
+
+state rs_pick_time
+  call crm.pick_time specialty=$specialty day=$day said_time=$said_time
+  ok -> rs_do
+  near -> rs_offer_time
+  empty -> rs_say_slots
+  error -> operator reason=crm_error
+
+state rs_part_other_day
+  call crm.nearest_in_part specialty=$specialty said_daypart=$said_daypart from_day=$day
+  ok -> rs_offer_datetime
+  empty -> operator reason=no_slots
+  error -> operator reason=crm_error
+
+state rs_offer_datetime
+  say "Ближайшее время {said_daypart_spoken}: {slot_date_spoken}, в {slot_time_spoken}, врач {doctor}. Подходит? Нажмите 1 — да, 2 — нет."
+  listen 8s
+  dtmf 1 -> rs_do
+  dtmf 2 -> operator reason=none_suitable
+  intent emergency|complaint|medical|operator -> operator reason=human_only
+  yes -> rs_do
+  no -> operator reason=none_suitable
+  any -> operator reason=unclear
+  silence -> rs_offer_datetime
+  timeout 8s -> rs_offer_datetime
+  retry 2 -> operator reason=no_valid_input
+
+state rs_do
+  call crm.reschedule booking_id=$booking_id slot_id=$slot_id
+  ok -> rs_done
+  taken -> rs_taken
+  error -> operator reason=crm_error
+
+state rs_taken
+  say "Это время только что заняли. Подберу другое."
+  goto rs_start
+
+state rs_done
+  say "Готово! Запись пациента {patient_name} к {specialty_dative} перенесена: {slot_date_spoken}, в {slot_time_spoken}, кабинет {cabinet}, врач {doctor}. Повторяю: {slot_date_spoken}, {slot_time_spoken}. Мы отправим СМС. Всего доброго!"
+  sms rescheduled
+  end rescheduled
+
+state operator
+  say "Перевожу на оператора. Все данные разговора сохранены, повторять ничего не придётся."
+  transfer reason=$reason
+  end transfer

@@ -1,0 +1,11 @@
+{
+  "target": "114",
+  "status": 200,
+  "rtp_in": 798,
+  "rtp_out": 1500,
+  "mode": "tones",
+  "registration": 200,
+  "received_pcm_bytes": 254930,
+  "scope": "actual phone account -> organizer SIP gateway -> VM Asterisk -> ARI/AudioSocket",
+  "passed": true
+}

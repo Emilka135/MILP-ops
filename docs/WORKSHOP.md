@@ -1,0 +1,1 @@
+../scenarios/docs/WORKSHOP.md

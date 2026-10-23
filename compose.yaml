@@ -1,0 +1,287 @@
+name: clinic-voice
+
+x-module: &module
+  restart: unless-stopped
+  networks: [clinic]
+  environment: &environment
+    APP_MODE: ${APP_MODE:-demo}
+    CRM_URL: http://crm:8080
+    MODULE_SETTINGS_FILE: /module-config/modules.json
+    MODULE_SECRETS_DIR: /run/secrets
+    DIALOGUE_LOCAL_URL: ${DIALOGUE_LOCAL_URL:-http://dialogue-llm:11434/v1}
+    OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+    OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    CRM_NOW: ${CRM_NOW:-}
+    OPERATOR_AVAILABLE: ${OPERATOR_AVAILABLE:-1}
+    CLINIC_NAME: ${CLINIC_NAME:-Демонстрационная поликлиника}
+    CLINIC_PHONE: ${CLINIC_PHONE:-+7 (000) 000-00-00}
+  volumes: ["editor-data:/module-config:ro", "./secrets:/run/secrets:ro"]
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health',timeout=2)"]
+    interval: 5s
+    timeout: 3s
+    retries: 12
+    start_period: 10s
+  deploy:
+    resources:
+      limits: {memory: 512M}
+
+services:
+  control-init:
+    build: {context: ., dockerfile: docker/control-init.Dockerfile}
+    network_mode: none
+    user: "0:0"
+    read_only: true
+    cap_drop: [ALL]
+    volumes: ["control-data:/control"]
+    restart: "no"
+  crm:
+    <<: *module
+    build: {context: ., dockerfile: docker/module.Dockerfile, args: {MODULE: crm}}
+    environment:
+      <<: *environment
+      CRM_DB: /data/clinic.sqlite
+      TTS_DOCTOR_BANK_SYNC: "1"
+      CONTROL_KEY_FILE: /control/editor-rpc.key
+      STAND_URL: ${STAND_URL:-}
+      STAND_TOKEN: ${STAND_TOKEN:-${DBI_API_TOKEN:-}}
+      CRM_SCHEDULE: ${CRM_SCHEDULE:-}
+      CRM_PATIENTS: ${CRM_PATIENTS:-}
+      CRM_BOOKINGS: ${CRM_BOOKINGS:-}
+      CRM_ASSIGNMENTS: ${CRM_ASSIGNMENTS:-}
+      CRM_SERVICE_HOURS: ${CRM_SERVICE_HOURS:-}
+      CRM_SERVICE_CALENDAR: ${CRM_SERVICE_CALENDAR:-}
+    volumes: ["clinic-data:/data", "./imports:/imports:ro", "control-data:/control:ro", "editor-data:/module-config:ro", "./secrets:/run/secrets:ro"]
+    depends_on:
+      control-init: {condition: service_completed_successfully}
+  nlu:
+    <<: *module
+    build: {context: ., dockerfile: docker/module.Dockerfile, args: {MODULE: nlu, WITH_ML: "${WITH_BGE:-0}"}}
+    environment:
+      <<: *environment
+      NLU_EMBEDDER: ${NLU_EMBEDDER:-e5}
+      NLU_MODEL: ${NLU_MODEL:-/models/USER-bge-m3}
+      NLU_MODEL_PATH: /models/multilingual-e5-small
+    volumes: ["./modules/nlu/models:/models:ro", "editor-data:/module-config:ro", "./secrets:/run/secrets:ro"]
+    deploy:
+      resources:
+        limits: {memory: 4G}
+  agent:
+    <<: *module
+    user: "${CLINIC_LOCAL_UID:-1000}:${CLINIC_LOCAL_GID:-1000}"
+    build: {context: ., dockerfile: docker/module.Dockerfile, args: {MODULE: agent}}
+    environment:
+      <<: *environment
+      AGENT_MODE: ${AGENT_MODE:-deterministic}
+      OPENROUTER_MODEL: ${OPENROUTER_MODEL:-}
+      OPENROUTER_API_KEY_FILE: /run/secrets/openrouter.key
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://hub.gigaschool.ru/api/v1/llm/v1}
+      OPENAI_MODEL: ${OPENAI_MODEL:-}
+      OPENAI_API_KEY_FILE: /run/secrets/openai.key
+    volumes: ["./secrets:/run/secrets:ro", "editor-data:/module-config:ro"]
+  sms:
+    <<: *module
+    build: {context: ., dockerfile: docker/module.Dockerfile, args: {MODULE: sms}}
+    environment:
+      <<: *environment
+      SMS_GATEWAY_URL: ${SMS_GATEWAY_URL:-}
+      SMS_GATEWAY_TOKEN: ${SMS_GATEWAY_TOKEN:-}
+  operator:
+    <<: *module
+    build: {context: ., dockerfile: docker/module.Dockerfile, args: {MODULE: operator}}
+  audio-init:
+    build: {context: ., dockerfile: docker/audio-init.Dockerfile}
+    network_mode: none
+    user: "0:0"
+    read_only: true
+    cap_drop: [ALL]
+    cap_add: [CHOWN, FOWNER]
+    command: ["python", "-c", "import os; os.chown('/audio',10001,10001); os.chmod('/audio',0o755)"]
+    volumes: ["audio-bank:/audio"]
+    restart: "no"
+  tts:
+    <<: *module
+    build: {context: ., dockerfile: docker/module.Dockerfile, args: {MODULE: tts, WITH_ML: "${WITH_ML:-1}"}}
+    environment:
+      <<: *environment
+      TTS_MODEL: /models/v5_cis_base.pt
+      TTS_SPEAKER: ${TTS_SPEAKER:-ru_ekaterina}
+      TTS_STRESS: "context"
+      SCENARIO_DIR: /scenarios
+      PROMPT_DIR: /audio
+      ASR_URL: http://asr:8080
+      NLU_URL: http://nlu:8080
+    depends_on:
+      audio-init: {condition: service_completed_successfully}
+    volumes: ["editor-data:/module-config:ro", "./secrets:/run/secrets:ro", "./modules/tts/models:/models:ro", "./scenarios:/scenarios:ro", "audio-bank:/audio"]
+    deploy:
+      resources:
+        limits: {memory: 3G}
+  asr:
+    <<: *module
+    build: {context: ., dockerfile: docker/module.Dockerfile, args: {MODULE: asr, WITH_ML: "${WITH_ML:-1}"}}
+    environment:
+      <<: *environment
+      ASR_MODEL: ${ASR_MODEL:-gigaam-v3-e2e-rnnt}
+      ASR_MODEL_PATH: /models
+      HF_HUB_OFFLINE: "1"
+    volumes: ["editor-data:/module-config:ro", "./secrets:/run/secrets:ro", "./modules/asr/models:/models:ro"]
+    deploy:
+      resources:
+        limits: {memory: 4G}
+  orchestrator:
+    restart: unless-stopped
+    build: {context: ., dockerfile: docker/orchestrator.Dockerfile}
+    networks: [clinic]
+    environment:
+      <<: *environment
+      NLU_URL: http://nlu:8080
+      SMS_URL: http://sms:8080
+      OPERATOR_URL: http://operator:8080
+      TTS_URL: http://tts:8080
+      ASR_URL: http://asr:8080
+      AGENT_URL: http://agent:8080
+      API_TOKEN: ${API_TOKEN:-}
+      BIND: 0.0.0.0:8080
+    ports: ["127.0.0.1:${HTTP_PORT:-8080}:8080"]
+    depends_on:
+      audio-check: {condition: service_completed_successfully}
+      crm: {condition: service_healthy}
+      nlu: {condition: service_healthy}
+      sms: {condition: service_healthy}
+      operator: {condition: service_healthy}
+      tts: {condition: service_healthy}
+      asr: {condition: service_healthy}
+      agent: {condition: service_healthy}
+      nightly: {condition: service_started}
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:8080/readyz"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    deploy:
+      resources:
+        limits: {memory: 512M}
+  audio-check:
+    <<: *module
+    build: {context: ., dockerfile: docker/audio-check.Dockerfile}
+    command: ["python", "-m", "clinic.audio_check"]
+    restart: "no"
+    healthcheck: {disable: true}
+    environment:
+      <<: *environment
+      TTS_URL: http://tts:8080
+    depends_on:
+      tts: {condition: service_healthy}
+      asr: {condition: service_healthy}
+  scenario-editor:
+    restart: unless-stopped
+    build: {context: ., dockerfile: docker/editor.Dockerfile, target: editor}
+    networks: [clinic]
+    environment:
+      APP_MODE: ${APP_MODE:-demo}
+      CONTROL_KEY_FILE: /control/editor-rpc.key
+      EDITOR_HOST: 0.0.0.0
+      EDITOR_PORT: 8090
+      EDITOR_DATA: /data
+      MODULE_SETTINGS_FILE: /data/modules.json
+      MODULE_SECRETS_DIR: /run/secrets
+      EDITOR_ALLOW_BUILD: ${EDITOR_ALLOW_BUILD:-0}
+      EDITOR_BUILD_QUEUE: "1"
+      AUDIO_BANK_DIR: /audio
+      CLINIC_SOURCE_DB: ${CLINIC_SOURCE_DB:-}
+      TTS_URL: http://tts:8080
+      CRM_URL: http://crm:8080
+      ASR_URL: http://asr:8080
+      NLU_URL: http://nlu:8080
+    ports: ["127.0.0.1:${EDITOR_PORT:-8090}:8090"]
+    volumes: ["./scenarios:/workspace/scenarios", "..:/source-files:ro", "./imports:/imports:ro", "editor-data:/data", "editor-cargo:/workspace/target", "audio-bank:/audio:ro", "control-data:/control:ro", "./secrets:/run/secrets:ro"]
+    depends_on:
+      control-init: {condition: service_completed_successfully}
+      crm: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8090/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+  scenario-builder:
+    profiles: [builder]
+    restart: unless-stopped
+    build: {context: ., dockerfile: docker/editor.Dockerfile, target: compiler}
+    network_mode: none
+    volumes: ["editor-data:/data", "editor-cargo:/cargo-target", "audio-bank:/audio:ro"]
+    environment:
+      EDITOR_DATA: /data
+      CARGO_BUILD_JOBS: "2"
+      AUDIO_BANK_DIR: /audio
+      CLINIC_SOURCE_DB: ${CLINIC_SOURCE_DB:-}
+  nightly:
+    <<: *module
+    build: {context: ., dockerfile: docker/module.Dockerfile, args: {MODULE: crm}}
+    command: ["python", "-m", "clinic", "nightly"]
+    healthcheck: {disable: true}
+    depends_on:
+      crm: {condition: service_healthy}
+  stand:
+    <<: *module
+    profiles: [contract]
+    build: {context: ., dockerfile: docker/module.Dockerfile, args: {MODULE: stand}}
+    environment:
+      <<: *environment
+      STAND_STATE: /data/stand.json
+      STAND_TOKEN: demo-token
+    volumes: ["stand-data:/data"]
+  outbound:
+    <<: *module
+    restart: "no"
+    profiles: [telephony]
+    build: {context: ., dockerfile: docker/module.Dockerfile, args: {MODULE: outbound}}
+    healthcheck: {disable: true}
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    environment:
+      <<: *environment
+      OUTBOUND_ENABLED: ${OUTBOUND_ENABLED:-0}
+      ANTI_FRAUD_PUBLISHED: ${ANTI_FRAUD_PUBLISHED:-0}
+      ARI_URL: http://host.docker.internal:8088
+      ARI_PASSWORD: ${ARI_PASSWORD:-}
+      SIP_OUTBOUND_ENDPOINT: ${SIP_OUTBOUND_ENDPOINT:-}
+  ari-bridge:
+    <<: *module
+    profiles: [telephony]
+    build: {context: ., dockerfile: docker/module.Dockerfile, args: {MODULE: crm}}
+    command: ["python", "-m", "clinic.telephony"]
+    healthcheck: {disable: true}
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    ports: ["9092:9092"]
+    environment:
+      <<: *environment
+      ORCHESTRATOR_URL: http://orchestrator:8080
+      ARI_URL: http://host.docker.internal:8088
+      ARI_PASSWORD: ${ARI_PASSWORD:-}
+      API_TOKEN: ${API_TOKEN:-}
+      AUDIOSOCKET_BIND: 0.0.0.0:9092
+      AUDIOSOCKET_ADVERTISE: ${AUDIOSOCKET_ADVERTISE:-127.0.0.1:9092}
+  telephony:
+    profiles: [telephony]
+    build: {context: ., dockerfile: docker/asterisk.Dockerfile}
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      ARI_PASSWORD: ${ARI_PASSWORD:-}
+      SIP_PHONE_PASSWORD: ${SIP_PHONE_PASSWORD:-}
+      SIP_OPERATOR_PASSWORD: ${SIP_OPERATOR_PASSWORD:-}
+    healthcheck:
+      test: ["CMD", "asterisk", "-rx", "core show uptime"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+networks:
+  clinic:
+volumes:
+  control-data:
+  clinic-data:
+  stand-data:
+  audio-bank:
+  editor-data:
+  editor-cargo:

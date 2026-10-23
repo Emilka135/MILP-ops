@@ -99,3 +99,27 @@ $RECYCLE.BIN/
 *.rej
 ~$*
 nul
+
+# Rust, models and generated local reports
+/target/
+/modules/*/models/*
+!/modules/*/models/.gitkeep
+/reports/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.pt
+*.onnx
+*.asc
+
+/imports/*
+!/imports/README.md
+
+**/node_modules/
+/scenario-editor/dist/
+/secrets/
+/data/audio/prompts/*
+!/data/audio/prompts/README.md
+
+# Local Docker networking/host overrides
+/compose.override.yaml
