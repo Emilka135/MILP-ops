@@ -210,7 +210,11 @@ class DialogueModel:
         local=item['provider']=='local'
         base=(item.get('base_url') or os.environ.get('DIALOGUE_LOCAL_URL','http://127.0.0.1:11435/v1')) if local else ('https://openrouter.ai/api/v1' if item['provider']=='openrouter' else item['base_url'])
         headers={'Content-Type':'application/json'}
-        if not local:headers['Authorization']='Bearer '+secret(item)
+        if not local:
+            try:headers['Authorization']='Bearer '+secret(item)
+            except ValueError:
+                event['status']='not_configured'
+                return None
         payload={'model':item['model'],'temperature':0,'max_tokens':240,'stream':False,
                  'messages':[{'role':'system','content':'Ты помощник регистратуры. Только JSON по схеме. Не придумывай данные, не подтверждай личность, не выполняй запись. /no_think'},
                              {'role':'user','content':json.dumps(task,ensure_ascii=False)}],

@@ -34,3 +34,12 @@ def test_unavailable_model_keeps_deterministic_question(monkeypatch):
     events=[]
     with model.track(events,'demo.menu'):assert model.clarification('test','menu','К какому врачу хотите записаться?')=='К какому врачу хотите записаться?'
     assert events[0]['status']=='unavailable' and events[0]['request_sent']
+
+
+def test_missing_external_key_does_not_break_the_call_or_claim_a_request(monkeypatch,tmp_path):
+    for key in ('CI','GITHUB_ACTIONS','ACT','CLINIC_ACCEPTANCE_TEST','ABSENT_MODEL_KEY'):monkeypatch.delenv(key,raising=False)
+    monkeypatch.setenv('MODULE_SECRETS_DIR',str(tmp_path))
+    model=DialogueModel(SimpleNamespace(read=lambda:{'dialogue':{'enabled':True,'provider':'compatible','model':'external','base_url':'https://model.example/v1','key_env':'ABSENT_MODEL_KEY'}}))
+    events=[]
+    with model.track(events,'demo.menu'):assert model.clarification('test','menu','К какому врачу хотите записаться?')=='К какому врачу хотите записаться?'
+    assert events[0]['status']=='not_configured' and not events[0]['request_sent']

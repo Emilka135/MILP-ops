@@ -390,6 +390,17 @@ class DemoCalls:
                     if patronym(words[1]):words=[words[2],words[0],words[1]]
                     call.patient_name=' '.join(words);call.name_offered=True;captured_name=True
                     break
+                from .identity_form import split_birth_utterance,surname_like
+                name_text,birth=split_birth_utterance(text,today=clinic_now().date())
+                if not captured_name:
+                    # A complete literal surname+name may precede the goal too.
+                    # Do not feed arbitrary menu prose to a name extractor.
+                    value=re.sub(r'^(?:меня зовут|фио)[: ,]*','',name_text.strip(),flags=re.I)
+                    words=value.split()
+                    if len(words)==2 and surname_like(words[0]) and all(re.fullmatch(r"[А-Яа-яЁё'-]+",w) for w in words):
+                        call.identity.accept_name(value,today=clinic_now().date())
+                        call.patient_name=call.identity.full_name;call.name_offered=True;captured_name=True
+                if captured_name and birth:call.identity.birth_date=birth
             if intent in {'greeting','repeat'}:return self._prompt(call)
             if intent=='back':
                 return self._back(call)
@@ -436,6 +447,7 @@ class DemoCalls:
         if call.state=='identity_confirm':
             if digit=='1' or yes_no is True:
                 call.identity.accept_name(call.patient_name)
+                if call.identity.birth_date and not call.identity.missing:return self._identity_lookup(call)
                 self._move(call,'identity_birth' if not call.identity.missing else 'identity_name');return self._prompt(call)
             if digit=='0' or yes_no is False:call.patient_name='';call.name_offered=False;call.identity.reset();self._move(call,'identity_name');return self._prompt(call)
         elif call.state=='identity_name':

@@ -417,6 +417,19 @@ def test_lowercase_name_with_purpose_preserves_name_without_filling_from_other_p
     assert not result['queries'] and not result['patient']
 
 
+def test_early_name_and_birth_asks_only_missing_patronymic_then_readback(app):
+    _,_,_,req,_=app
+    key=req('start')['call_id']
+    req('text',call_id=key,text='иванов петр 12.04.1985')
+    req('text',call_id=key,text='к терапевту')
+    assert req('text',call_id=key,text='да')['state']=='demo.identity_confirm'
+    result=req('text',call_id=key,text='да')
+    assert result['state']=='demo.identity_name' and 'отчество' in result['prompt']
+    assert result['identity_form']['birth_date']=='1985-04-12'
+    result=req('text',call_id=key,text='иванович')
+    assert result['state']=='demo.identity_readback' and not result['queries']
+
+
 def test_multiple_doctors_and_unknown_district_must_be_resolved(app):
     _,store,_,req,_=app
     with store.db:
