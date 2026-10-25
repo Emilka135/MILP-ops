@@ -47,6 +47,18 @@ def test_observer_reads_steps_and_call_detail_but_cannot_mutate(editor):
     assert not any(op in {'learning.propose','preview'} for _,op,_ in calls)
 
 
+def test_default_reference_links_and_their_contract_are_reachable(editor):
+    request,_=editor
+    profiles=request('/api/workshop/connections')[1]
+    assert profiles['mis']['reference'] and profiles['database']['reference']
+    status,mis,_=request(profiles['mis']['base_url'])
+    assert status==200 and mis['service']=='reference_mis'
+    status,contract,_=request(mis['schema'])
+    assert status==200 and contract['id']=='mis:contract'
+    status,database,_=request(profiles['database']['base_url'])
+    assert status==200 and 'patients' in database['tables']
+
+
 def test_user_user_has_bound_registrar_identity_and_actual_preview_route(editor):
     request,calls=editor
     status,_,cookie=request('/api/login',{'username':'user','password':'user'})

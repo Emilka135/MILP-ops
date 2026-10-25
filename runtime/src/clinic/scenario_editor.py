@@ -502,7 +502,7 @@ def make_server(repo, static, host="127.0.0.1", port=8090, token=""):
                         return self.send_json(200,result)
                     if route=='/api/workshop/connections' and not post:return self.send_json(200,workbench.public())
                     if route=='/api/workshop/reference-mis' and not post:
-                        return self.send_json(200,{'service':'reference_mis','schema':'/api/workshop/knowledge/document?id=mis','operations':['GET /doctors','GET /clients','GET /visits'],'console':'/registrar','note':'Выполнение через панель Ручные API; тестовые данные'})
+                        return self.send_json(200,{'service':'reference_mis','schema':'/api/workshop/knowledge/document?id=mis%3Acontract','operations':['GET /doctors','GET /clients','GET /visits'],'console':'/registrar','note':'Выполнение через панель Ручные API; тестовые данные'})
                     if route=='/api/workshop/sql' and not post:
                         return self.send_json(200,{'service':'reference_sqlite','tables':sorted(workbench.sql.TABLES),'console':'/registrar','request':{'sql':'SELECT id, full_name FROM patients LIMIT 20','params':[]},'note':'POST выполняет запрос в выбранном подключении; референсные данные входят в проект'})
                     if route in {'/api/workshop/sql','/api/workshop/request'} and post:
