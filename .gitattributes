@@ -32,3 +32,6 @@
 data/*.json linguist-generated=true
 data/reglament.txt linguist-vendored=true
 docs/openapi.json linguist-vendored=true
+
+# Supplied reference snapshots are byte-exact inputs with manifest SHA256.
+reference-data/*.csv -text

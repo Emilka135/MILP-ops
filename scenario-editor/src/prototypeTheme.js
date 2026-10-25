@@ -169,7 +169,7 @@ export function createWorkbenchTheme(root){
         root.style.setProperty('--shadow', dark ? '0 20px 70px #0005, 0 3px 12px #0003' : '0 16px 60px #242a3e18, 0 3px 12px #242a3e0a');
         root.style.setProperty('--accent-shadow', tokens.accent + '30');
         root.style.setProperty('--theme-position', `${view.effectiveLevel * 100}%`);
-        
+
         root.dispatchEvent(new CustomEvent('dialogue-themechange', { detail: view }));
       }
       function setLevel(value) { const number = Number(value); if (!Number.isFinite(number)) return; settings.level = clamp(number); settings.auto = false; persist(); apply(); }

@@ -18,7 +18,7 @@ jobs:
       - run: python tools/download_nlu.py
       - run: npm ci && npm run build
         working-directory: scenario-editor
-      - run: PYTHONPATH=runtime/src:. python -m pytest -q tests/integration/test_scenario_editor.py tests/integration/test_workshop_access.py tests/contracts/test_scenario_knowledge.py tests/integration/test_workbench.py tests/integration/test_dialogue_trace.py
+      - run: PYTHONPATH=runtime/src:. python -m pytest -q tests/integration/test_scenario_editor.py tests/integration/test_workshop_access.py tests/contracts/test_scenario_knowledge.py tests/integration/test_workbench.py tests/integration/test_dialogue_trace.py tests/contracts/test_reference_data.py
       - run: npx playwright install --with-deps chromium
         working-directory: scenario-editor
       - run: node --test scenario-editor/tests/connection.test.mjs
