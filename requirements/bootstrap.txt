@@ -1,3 +1,7 @@
 # Fixed installer for CI; keep pip-audit enabled.
 # https://github.com/advisories/GHSA-qwm4-qh6w-59xr
 pip==26.2.2
+
+# Do not retain a vulnerable wheel from a preinstalled CI Python.
+# https://github.com/advisories/GHSA-8rrh-rw8j-w5fx
+wheel==0.46.2
