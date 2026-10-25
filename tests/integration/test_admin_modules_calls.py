@@ -39,6 +39,24 @@ def to_slots(req):
     return key,result
 
 
+@pytest.mark.parametrize('phrase',['Первый вариант.','Вариант два.','Третий вариант!','1.'])
+def test_spoken_slot_choice_still_requires_explicit_confirmation(app,phrase):
+    _,store,_,req,_=app
+    key,_=to_slots(req)
+    result=req('text',call_id=key,text=phrase)
+    assert result['state']=='demo.booking_confirm'
+    assert not store.tables()['tables']['bookings']
+
+
+@pytest.mark.parametrize('phrase',['Не первый вариант.','Первый или второй.'])
+def test_uncertain_slot_choice_does_not_select_or_book(app,phrase):
+    _,store,_,req,_=app
+    key,_=to_slots(req)
+    result=req('text',call_id=key,text=phrase)
+    assert result['state']=='demo.slots'
+    assert not store.tables()['tables']['bookings']
+
+
 @pytest.mark.parametrize('phrase',['К глазнику','К глазнику меня запиши','К окулисту','К офтальмологу'])
 def test_colloquial_specialty(app,phrase):
     _,_,_,req,_=app

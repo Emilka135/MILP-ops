@@ -71,6 +71,15 @@ class Nlu:
         confidence = 1.0 if safety_intent else verified.confidence
         if meaning and not safety_intent:
             intent,confidence = meaning["intent"],meaning["confidence"]
+        # The generic semantic model can rank this exact operational request as
+        # unknown. Resolve only an unambiguous complete command; the dialogue
+        # still verifies identity, selects a real slot and asks for consent.
+        if not safety_intent and re.fullmatch(
+            r"\s*(?:пожалуйста[,\s]+)?(?:(?:хочу|нужно|надо|можно)\s+)?"
+            r"перен(?:ести|есите|есем|есём)\s+(?:мою\s+)?(?:запись|при[её]м)"
+            r"(?:[.!?,\s]|пожалуйста)*", text.lower()
+        ):
+            intent,confidence = 'reschedule',1.0
         # Disagreement can request a person; no speculative write is executed by an embedding.
         if not meaning and verified.action == "operator" and intent not in HUMAN_ONLY:
             intent = "operator"
