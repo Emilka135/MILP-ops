@@ -5,15 +5,20 @@ may extract literal name spans and phrase a question; it cannot return a patient
 ID, SQL, a birth date guessed from a partial year, or a booking decision.
 """
 from dataclasses import dataclass, field
+from contextlib import contextmanager
+from contextvars import ContextVar
 import json
+import logging
 import os
 import re
+import time
 import unicodedata
 import urllib.request
 
 from calls.services.netutil import open_http
 
 NAME_FIELDS = ('last_name', 'first_name', 'middle_name')
+_MODEL_EVENTS = ContextVar('clinic_dialogue_model_events', default=None)
 NAME_LABELS = dict(last_name='фамилию', first_name='имя', middle_name='отчество')
 QUESTIONS = dict(last_name='Назовите фамилию пациента. Можно произнести её по буквам.',
                  first_name='Назовите имя пациента.', middle_name='Назовите отчество пациента. Если отчества нет, скажите: нет отчества.',
@@ -174,14 +179,36 @@ class DialogueModel:
         self.settings=settings
         self.questions={}
 
+    @contextmanager
+    def track(self, events, state):
+        token=_MODEL_EVENTS.set((events,state))
+        try:yield
+        finally:_MODEL_EVENTS.reset(token)
+
+    def clarification(self, text, state, reference, field='goal'):
+        """Ask about an unresolved field; the model cannot choose a transition."""
+        schema={'type':'object','properties':{'field':{'type':'string','enum':[field]},'question':{'type':'string'}},'required':['field','question'],'additionalProperties':False}
+        answer=self.complete({'task':'Реплика не разобрана автоматом. Задай один короткий уточняющий вопрос только о поле. Не обещай запись, не сообщай факты о пациенте или расписании.','state':state,'field':field,'utterance':text,'reference':reference},schema)
+        question=answer.get('question','') if isinstance(answer,dict) else ''
+        relevant={'goal':r'врач|запис|помочь|нужн|обращ|цель','full_name':r'фамил|имя|отчеств','birth_date':r'рожден|дат'}.get(field,r'уточн|повтор')
+        if (answer and answer.get('field')==field and isinstance(question,str) and 8<=len(question)<=220
+            and '?' in question and re.search(relevant,folded(question))
+            and not re.search(r'\d|записан|подтвержден|вылеч|назнач|диагноз|лекарств',folded(question))):return question
+        return reference
+
     def complete(self,task,schema):
-        if any(os.environ.get(key, '').lower() in {'1', 'true', 'yes'} for key in ('CI', 'GITHUB_ACTIONS', 'ACT', 'CLINIC_ACCEPTANCE_TEST')):
-            return None
         item=self.settings.read().get('dialogue', {'enabled': False})
+        tracked=_MODEL_EVENTS.get()
+        event={'module':'dialogue','model':item.get('model'),'provider':item.get('provider'),'task':task.get('field') or task.get('requested_field') or 'structured_extraction','status':'disabled','request_sent':False}
+        if tracked:
+            events,state=tracked;event['state']=state;events.append(event)
+        if any(os.environ.get(key, '').lower() in {'1', 'true', 'yes'} for key in ('CI', 'GITHUB_ACTIONS', 'ACT', 'CLINIC_ACCEPTANCE_TEST')):
+            event['status']='disabled_in_ci'
+            return None
         if not item['enabled']:return None
         from .module_settings import secret
         local=item['provider']=='local'
-        base=os.environ.get('DIALOGUE_LOCAL_URL','http://127.0.0.1:11435/v1') if local else ('https://openrouter.ai/api/v1' if item['provider']=='openrouter' else item['base_url'])
+        base=(item.get('base_url') or os.environ.get('DIALOGUE_LOCAL_URL','http://127.0.0.1:11435/v1')) if local else ('https://openrouter.ai/api/v1' if item['provider']=='openrouter' else item['base_url'])
         headers={'Content-Type':'application/json'}
         if not local:headers['Authorization']='Bearer '+secret(item)
         payload={'model':item['model'],'temperature':0,'max_tokens':240,'stream':False,
@@ -191,12 +218,22 @@ class DialogueModel:
         if local:
             payload['reasoning_effort'] = 'none'
         req=urllib.request.Request(base.rstrip('/')+'/chat/completions',data=json.dumps(payload).encode(),headers=headers,method='POST')
+        started=time.monotonic()
+        event.update(status='requesting',request_sent=True)
+        logging.getLogger(__name__).info('dialogue_model_request model=%s provider=%s task=%s',event['model'],event['provider'],event['task'])
         try:
             with open_http(req,timeout=8) as response:
                 raw=response.read(32769)
             if len(raw)>32768:raise ValueError('model_response_too_large')
-            return json.loads(json.loads(raw)['choices'][0]['message']['content'])
-        except (OSError,ValueError,KeyError,IndexError,TypeError):return None
+            answer=json.loads(json.loads(raw)['choices'][0]['message']['content'])
+            event['status']='responded'
+            return answer
+        except (OSError,ValueError,KeyError,IndexError,TypeError):
+            event['status']='unavailable'
+            return None
+        finally:
+            event['duration_ms']=round((time.monotonic()-started)*1000)
+            logging.getLogger(__name__).info('dialogue_model_result model=%s status=%s duration_ms=%s',event['model'],event['status'],event['duration_ms'])
 
     def extract(self,text,requested):
         schema={'type':'object','properties':{key:{'type':'string'} for key in NAME_FIELDS},'required':list(NAME_FIELDS),'additionalProperties':False}

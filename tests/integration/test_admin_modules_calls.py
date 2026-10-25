@@ -387,6 +387,36 @@ def test_initial_name_is_retained_but_requires_confirmation(app):
     assert req('text',call_id=key,text='Да')['state']=='demo.identity_birth'
 
 
+@pytest.mark.parametrize('name',['иванов петр иванович','ИВАНОВ ПЕТР ИВАНОВИЧ','петр иванович иванов'])
+def test_name_before_purpose_is_progress_and_not_a_menu_failure(app,name):
+    demo,store,_,req,_=app
+    key=req('start')['call_id']
+    first=req('text',call_id=key,text=name)
+    assert first['state']=='demo.menu' and 'К какому врачу' in first['prompt']
+    assert 'Не удалось' not in first['prompt'] and demo.calls[key].attempts==0
+    assert not first['queries'] and not first['patient']
+    req('text',call_id=key,text='к терапевту')
+    offered=req('text',call_id=key,text='да')
+    assert offered['state']=='demo.identity_confirm' and 'иванов петр иванович' in offered['prompt'].casefold()
+    req('text',call_id=key,text='да')
+    readback=req('text',call_id=key,text='12.04.1985')
+    assert readback['state']=='demo.identity_readback' and not readback['queries']
+    missing=req('text',call_id=key,text='да')
+    assert 'Карточку по этим данным найти не удалось' in missing['prompt']
+    query=next(q for q in missing['queries'] if 'FROM identity_people' in q['sql'])
+    assert query['result']==[] and '1985-04-12' in query['params']
+    assert not store.tables()['tables']['bookings']
+
+
+def test_lowercase_name_with_purpose_preserves_name_without_filling_from_other_patient(app):
+    _,_,_,req,_=app
+    key=req('start')['call_id']
+    req('text',call_id=key,text='к терапевту иванов петр иванович')
+    result=req('text',call_id=key,text='да')
+    assert result['state']=='demo.identity_confirm' and 'иванов петр иванович' in result['prompt']
+    assert not result['queries'] and not result['patient']
+
+
 def test_multiple_doctors_and_unknown_district_must_be_resolved(app):
     _,store,_,req,_=app
     with store.db:

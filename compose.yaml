@@ -179,6 +179,7 @@ services:
     build: {context: ., dockerfile: docker/editor.Dockerfile, target: editor}
     networks: [clinic]
     environment:
+      DIALOGUE_LOCAL_URL: ${DIALOGUE_LOCAL_URL:-http://dialogue-llm:11434/v1}
       APP_MODE: ${APP_MODE:-demo}
       CONTROL_KEY_FILE: /control/editor-rpc.key
       EDITOR_HOST: 0.0.0.0

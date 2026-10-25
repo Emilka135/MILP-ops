@@ -81,6 +81,7 @@ class Call:
     slot: dict | None = None
     booking: dict | None = None
     queries: list = field(default_factory=list)
+    model_events: list = field(default_factory=list)
     key: str = ''
     analysis: bool = False
     registrar: str = '100'
@@ -174,7 +175,8 @@ class DemoCalls:
             source['step_index']=len(call.trace)-1
             call.transcript.append(source)
             source_step=len(call.trace)-1
-            prompt=self._advance(call,text,digit)
+            with self.dialogue_model.track(call.model_events,'demo.'+call.state):
+                prompt=self._advance(call,text,digit)
             seen={q['id'] for q in call.queries}
             call.queries.extend({**q,'step_index':source_step,'state':source['state']} for q in self.store.queries(key) if q['id'] not in seen)
             call.expires=self.clock()+self.ttl
@@ -374,13 +376,20 @@ class DemoCalls:
                 return 'Назовите данные пациента, которого нужно записать. '+self._prompt(call)
             if intent=='already_said':
                 return ('Сохранил названное ФИО: '+call.patient_name+'. ' if call.patient_name else 'Не удалось надёжно выделить ФИО пациента из предыдущей фразы. ')+self._prompt(call)
+            captured_name=False
             if call.state in {'menu','specialist'}:
                 # Capture structured data without treating it as verified identity.
-                match=re.search(r"(?<![А-Яа-яЁё])([А-ЯЁ][а-яё'-]+)\s+([А-ЯЁ][а-яё'-]+)\s+([А-ЯЁ][а-яё'-]+)(?![А-Яа-яЁё])",text)
-                if match and any(w.casefold().endswith(('вич','вна','ична','оглы')) for w in match.groups()):
+                # ASR and typed input need not capitalise names. Look ahead so
+                # preceding words ("к терапевту") cannot swallow the name span.
+                pattern=r"(?=(?<![А-Яа-яЁё])([А-Яа-яЁё][а-яё'-]+)\s+([А-Яа-яЁё][а-яё'-]+)\s+([А-Яа-яЁё][а-яё'-]+)(?![А-Яа-яЁё]))"
+                for match in re.finditer(pattern,text,re.I):
                     words=list(match.groups())
-                    if words[1].casefold().endswith(('вич','вна','ична','оглы')):words=[words[2],words[0],words[1]]
-                    call.patient_name=' '.join(words);call.name_offered=True
+                    if any(w.casefold() in {'врачу','доктору','терапевту','педиатру','специалисту','участковому','запишите','записаться','зовут','пожалуйста'} for w in words):continue
+                    patronym=lambda w:w.casefold().endswith(('вич','вна','ична','оглы','кызы'))
+                    if not (patronym(words[1]) or patronym(words[2])):continue
+                    if patronym(words[1]):words=[words[2],words[0],words[1]]
+                    call.patient_name=' '.join(words);call.name_offered=True;captured_name=True
+                    break
             if intent in {'greeting','repeat'}:return self._prompt(call)
             if intent=='back':
                 return self._back(call)
@@ -401,6 +410,12 @@ class DemoCalls:
                 item=self.dictionary.policy(specialty['id'])
                 if result.get('vars',{}).get('patient_group')=='child':item={**item,'label':'Детский '+item['label'].lower(),'patient_group':'child'}
                 return self._choose(call,item)
+            if captured_name:
+                # A valid early field is progress, not a failed menu attempt.
+                # Identity lookup still waits for DOB and explicit readback.
+                question='К какому врачу хотите записаться?'
+                if self.enabled(call,'dialogue'):question=self.dialogue_model.clarification(text,call.state,question)
+                return 'Сохранил названное ФИО: '+call.patient_name+'. '+question
         if getattr(call,'candidate',None) and digit=='1':
             item=call.candidate;call.candidate=None;return self._choose(call,item)
         if digit=='*':return self._handoff(call,'requested_operator')
@@ -547,6 +562,9 @@ class DemoCalls:
                 self._move(call,'specialist');return PROMPTS['specialist']
         call.attempts+=1
         if call.attempts>=3:return self._handoff(call,'unrecognized_repeatedly')
+        if text and self.enabled(call,'dialogue'):
+            field='goal' if call.state in {'menu','specialist'} else 'birth_date' if call.state=='identity_birth' else 'full_name' if call.state=='identity_name' else 'answer'
+            return self.dialogue_model.clarification(text,call.state,self._prompt(call),field)
         return 'Не удалось понять ответ. '+self._prompt(call)
 
     def document(self,call):
@@ -557,7 +575,7 @@ class DemoCalls:
             'steps':[{'id':'demo.'+s,'title':titles[s]} for s in call.trace],
             'graph':{'version':POLICY_VERSION,'titles':titles,'branches':BRANCHES},'flags':list(call.flags),
             'consent_audio':call.consent,'finished':call.state in TERMINAL,'catalog_source':CATALOG_SOURCE,
-            'source_data':self.store.source_info(),'queries':list(call.queries),'doctor':call.doctor,'district':call.district,
+            'source_data':self.store.source_info(),'queries':list(call.queries),'model_events':list(call.model_events),'doctor':call.doctor,'district':call.district,
             'offers':list(call.offers),'patient':call.patient,'analysis':call.analysis,'modules':call.modules,
             'extensions':call.extensions,'dictionary_revision':getattr(call,'dictionary_revision',None),'compiled_plan':[vars(n) for n in getattr(call,'plan',())],
             'identity_form':{'parts':dict(call.identity.parts),'birth_date':call.identity.birth_date,'missing_fields':call.identity.missing+([] if call.identity.birth_date else ['birth_date']),'requested_field':call.identity.requested,'candidate_count':len(call.candidates),'caller_phone_available':bool(call.caller_phone)},
