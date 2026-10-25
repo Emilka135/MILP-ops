@@ -8,7 +8,7 @@ from clinic.identity_form import DialogueModel
 def test_actual_boundary_call_is_distinct_from_disabled_or_failed(monkeypatch):
     for key in ('CI','GITHUB_ACTIONS','ACT','CLINIC_ACCEPTANCE_TEST'):
         monkeypatch.delenv(key,raising=False)
-    item={'enabled':True,'provider':'local','model':'another-local-model','base_url':'http://local-model:11434/v1'}
+    item={'enabled':True,'provider':'local','model':'another-local-model','local_base_url':'http://local-model:11434/v1','base_url':'https://unused-external.example/v1'}
     model=DialogueModel(SimpleNamespace(read=lambda:{'dialogue':item}))
     calls=[]
     def response(request,timeout):

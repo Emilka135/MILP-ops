@@ -208,7 +208,7 @@ class DialogueModel:
         if not item['enabled']:return None
         from .module_settings import secret
         local=item['provider']=='local'
-        base=(item.get('base_url') or os.environ.get('DIALOGUE_LOCAL_URL','http://127.0.0.1:11435/v1')) if local else ('https://openrouter.ai/api/v1' if item['provider']=='openrouter' else item['base_url'])
+        base=(item.get('local_base_url') or os.environ.get('DIALOGUE_LOCAL_URL','http://127.0.0.1:11435/v1')) if local else ('https://openrouter.ai/api/v1' if item['provider']=='openrouter' else item['base_url'])
         headers={'Content-Type':'application/json'}
         if not local:
             try:headers['Authorization']='Bearer '+secret(item)

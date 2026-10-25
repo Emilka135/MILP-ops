@@ -2,6 +2,9 @@
 
 ## PR #3 и восстановление рабочего места —25.10.2026
 
+- [x] Удалённый score CI обнаружил наследование внешнего base_url локальным провайдером. Адреса разделены: local_base_url для локальной LLM, base_url для compatible.33 целевых проверки и полный act control-contracts passed; включённый провайдер больше не использует старый внешний адрес.
+- [ ] Аудиты зависимостей на101a26b упали: PyPI подтвердил GHSA-xmj3-9gf7-h52w в setuptools83.0.0; проверяется точечное обновление до84.1.0 без отключения аудита.
+
 - [x] В main объединён ранее закрытый без merge PR #3 от clinch0 (dc653a7): подтверждённый SIP transfer, ограничение исходящих адресатов, WAV-ввод и сценарные исправления. Локальная независимая проверка в ML-контейнере без сети:73 passed; отчёт debug/runs/ui-text-repair/pr3-tests.log. Проверка не подтверждает повторный живой SIP/VM вызов.
 - [x] Перенесены theme engine и визуальные компоненты прототипа, рекурсивные области и floating с сохранением live state, самостоятельные SQL/API-панели и серверные настраиваемые адаптеры. Референсные источники перенесены в reference-data.18 docking +23 clipboard/archive +8 Repository/Learning browser checks; новый настоящий E5/FSM/SQLite browser9/9 и полный visual-editor act passed.50 server tests в этом workflow passed. Frozen WAV через настоящий browser microphone→CUDA ASR→E5→FSM:5/5; штатный audio-check46/46,exit0, все локальные образы обновлены. Сверка screenshot и архитектура: scenarios/docs/UI_BACKEND_ADAPTERS.md.
 - [ ] Профили ручных SQL/API пока не мигрируют production CRM/привязки ID: для живой телефонии остаются APP_MODE/STAND_URL. Нужны фиксированный профиль звонка и безопасная миграция mapping перед объединением настроек.

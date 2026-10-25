@@ -12,7 +12,7 @@ DEFAULTS = {
     'asr': {'enabled':True,'provider':'local','model':'gigaam-v3-e2e-rnnt','voice':'','base_url':'','key_env':'OPENROUTER_API_KEY'},
     'nlu': {'enabled':True,'provider':'local','model':'e5','voice':'','base_url':'','key_env':'OPENROUTER_API_KEY'},
     'agent': {'enabled':True,'provider':'local','model':'deterministic','voice':'','base_url':'','key_env':'OPENROUTER_API_KEY'},
-    'dialogue': {'enabled':False,'provider':'local','model':'qwen3:1.7b','voice':'','base_url':'','key_env':'OPENROUTER_API_KEY'},
+    'dialogue': {'enabled':False,'provider':'local','model':'qwen3:1.7b','voice':'','base_url':'','local_base_url':'','key_env':'OPENROUTER_API_KEY'},
     'crm': {'enabled':True,'provider':'local','model':'sqlite / МИС','voice':'','base_url':'','key_env':''},
     'sms': {'enabled':True,'provider':'local','model':'gateway','voice':'','base_url':'','key_env':''},
     'operator': {'enabled':True,'provider':'local','model':'queue','voice':'','base_url':'','key_env':''},
@@ -51,14 +51,16 @@ class ModuleSettings:
             if key not in {'tts','asr','nlu','agent','dialogue'} and item['provider']!='local': raise ValueError('Этот модуль использует адаптер приложения, а не речевую модель')
             for field in ('model','voice','base_url','key_env'):
                 if not isinstance(item[field],str) or len(item[field])>300: raise ValueError('Некорректное поле '+field)
+            if key=='dialogue' and (not isinstance(item['local_base_url'],str) or len(item['local_base_url'])>300):raise ValueError('Некорректный адрес локальной LLM')
             if not item['model'].strip(): raise ValueError('Укажите модель или стек')
             if item['provider']=='local' and key in {'tts','asr','nlu','agent','dialogue'}:
                 choices = {'tts':{'v5_cis_base'},'asr':{'gigaam-v3-e2e-rnnt'},'nlu':{'e5'},'agent':{'deterministic'},'dialogue':{'qwen3:1.7b'}}
                 if key!='dialogue' and item['model'] not in choices[key]: raise ValueError('Локальная модель не установлена / не разрешена')
             if item['provider']!='local':
                 if not re.fullmatch(r'[A-Z][A-Z0-9_]{2,79}',item['key_env']): raise ValueError('Укажите имя переменной ключа')
-            if item['provider']=='compatible' or key=='dialogue' and item['base_url']:
-                    url=urlsplit(item['base_url'])
+            local_url=item.get('local_base_url','') if item['provider']=='local' else ''
+            if item['provider']=='compatible' or local_url:
+                    url=urlsplit(local_url or item['base_url'])
                     if url.scheme not in {'http','https'} or not url.hostname or url.username or url.password or url.query or url.fragment: raise ValueError('Нужен базовый HTTP(S) URL без секрета')
                     if url.scheme=='http' and item['provider']!='local' and url.hostname not in {'localhost','127.0.0.1','host.docker.internal'}: raise ValueError('Для удалённого сервиса нужен HTTPS')
             checked[key]=item
