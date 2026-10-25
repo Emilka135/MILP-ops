@@ -1,7 +1,7 @@
 {
   "archive_origin": "synthetic_archive_fixture",
   "actual_fsm_executed_by_this_runner": false,
-  "current_project_revision": "2f72a8159f574100b24786fd7ac23e6438489a431e002e23389bf924f3af10b5",
+  "current_project_revision": "afc539486ea267b3bc4e45167ba3ffd50fa88d28e6ff8183f3b745c96ed160b7",
   "cases": [
     {
       "id": 1,

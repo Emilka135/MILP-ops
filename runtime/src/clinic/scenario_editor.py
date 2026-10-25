@@ -429,8 +429,10 @@ def make_server(repo, static, host="127.0.0.1", port=8090, token=""):
     demo = DemoCalls(store=SandboxStore(repo.data / 'call-log'),settings=settings)
     demo.dictionary=dictionary
     from .data_sources import DataSources
-    source_roots=[repo.root/'imports',repo.root.parent,Path('/imports'),Path('/source-files')]
+    source_roots=[repo.root/'reference-data',repo.root/'imports',repo.root.parent,Path('/imports'),Path('/source-files')]
     data_sources=DataSources(repo.data/'data-sources',demo.store,source_roots,flat_roots=[repo.root.parent,Path('/source-files')])
+    from .workbench import Connections,Workbench
+    workbench=Workbench(demo.store,Connections(repo.data/'connections.json'))
     from .call_analysis import Uploads
     demo.uploads=Uploads(demo)
     static = Path(static).resolve()
@@ -467,7 +469,8 @@ def make_server(repo, static, host="127.0.0.1", port=8090, token=""):
                     identity = {'username':'observer','role':'observer','registrar':None,'label':'Наблюдатель'}
                 if parsed.path != '/api/login' and identity is None:
                     return self.send_json(401, {'error':'Войдите с паролем администратора'})
-                if identity and identity['role'] == 'observer' and post and parsed.path != '/api/login' and not demo_call:
+                manual_read=parsed.path in {'/api/workshop/sql','/api/workshop/request'}
+                if identity and identity['role'] == 'observer' and post and parsed.path != '/api/login' and not demo_call and not manual_read:
                     return self.send_json(403, {'error':'Наблюдатель может только просматривать'})
                 extensions = parsed.path.startswith('/api/extensions/')
                 if identity and identity['role'] == 'registrar' and not (workshop or demo_call or extensions or parsed.path in {'/api/me','/api/logout'}):
@@ -493,6 +496,17 @@ def make_server(repo, static, host="127.0.0.1", port=8090, token=""):
                         if not isinstance(data, dict):
                             raise ValueError("Ожидается объект проекта")
                     route = parsed.path
+                    if route=='/api/settings/connections':
+                        if identity['role']!='admin':return self.send_json(403,{'error':'Требуется администратор'})
+                        result=workbench.connections.save(data.get('connections'),data.get('revision')) if post else workbench.connections.read()
+                        return self.send_json(200,result)
+                    if route=='/api/workshop/connections' and not post:return self.send_json(200,workbench.public())
+                    if route=='/api/workshop/reference-mis' and not post:
+                        return self.send_json(200,{'service':'reference_mis','schema':'/api/workshop/knowledge/document?id=mis','operations':['GET /doctors','GET /clients','GET /visits'],'console':'/registrar','note':'Выполнение через панель Ручные API; тестовые данные'})
+                    if route=='/api/workshop/sql' and not post:
+                        return self.send_json(200,{'service':'reference_sqlite','tables':sorted(workbench.sql.TABLES),'console':'/registrar','request':{'sql':'SELECT id, full_name FROM patients LIMIT 20','params':[]},'note':'POST выполняет запрос в выбранном подключении; референсные данные входят в проект'})
+                    if route in {'/api/workshop/sql','/api/workshop/request'} and post:
+                        return self.send_json(200,workbench.request(route,data,identity))
                     if route in {'/api/settings/sources','/api/settings/sources/check','/api/settings/sources/apply','/api/settings/scenarios','/api/settings/specialties','/api/settings/plans','/api/settings/modules','/api/settings/models','/api/sandbox/tables','/api/calls','/api/calls/detail','/api/calls/import','/api/calls/transcribe','/api/calls/audio','/api/calls/upload'}:
                         if identity.get('role') != 'admin':
                             return self.send_json(403,{'error':'Требуется администратор'})

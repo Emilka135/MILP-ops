@@ -1,0 +1,4 @@
+{
+  "mis": {"adapter": "reference_mis", "label": "Референсная МИС", "base_url": "/api/workshop/reference-mis", "key_env": ""},
+  "database": {"adapter": "reference_sqlite", "label": "Референсная SQLite", "base_url": "/api/workshop/sql", "key_env": ""}
+}

@@ -35,7 +35,7 @@ class ModuleSettings:
             return {key:{**copy.deepcopy(value),**stored.get(key,{})} for key,value in DEFAULTS.items()}
 
     def public(self):
-        return {'modules':self.read(),'labels':LABELS,'providers':['local','openrouter','compatible'],
+        return {'modules':self.read(),'defaults':copy.deepcopy(DEFAULTS),'labels':LABELS,'providers':['local','openrouter','compatible'],
                 'scope':'Настройки применяются к новым операциям. Снимок правил тестового звонка сохраняется в журнале.',
                 'secrets':'Ключ: переменная окружения или файл /run/secrets/<имя_переменной_в_нижнем_регистре>.key'}
 

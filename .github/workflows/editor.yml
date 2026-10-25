@@ -14,10 +14,11 @@ jobs:
         with: {python-version: '3.12'}
       - uses: actions/setup-node@v4
         with: {node-version: '26', cache: npm, cache-dependency-path: scenario-editor/package-lock.json}
-      - run: pip install pytest
+      - run: pip install pytest -r requirements/nlu-semantic.txt
+      - run: python tools/download_nlu.py
       - run: npm ci && npm run build
         working-directory: scenario-editor
-      - run: PYTHONPATH=runtime/src:. python -m pytest -q tests/integration/test_scenario_editor.py tests/integration/test_workshop_access.py tests/contracts/test_scenario_knowledge.py
+      - run: PYTHONPATH=runtime/src:. python -m pytest -q tests/integration/test_scenario_editor.py tests/integration/test_workshop_access.py tests/contracts/test_scenario_knowledge.py tests/integration/test_workbench.py tests/integration/test_dialogue_trace.py
       - run: npx playwright install --with-deps chromium
         working-directory: scenario-editor
       - run: node --test scenario-editor/tests/connection.test.mjs
@@ -26,9 +27,15 @@ jobs:
       - name: Verify registrar panels, docking and clipboard in Chromium
         run: node debug/run_registrar_mis_panel.mjs
         env: {CHROME_PATH: ''}
+      - name: Verify recursive splits and preserve active calls while docking
+        run: node debug/run_recursive_dock.mjs
+        env: {CHROME_PATH: ''}
       - name: Verify registrar proposals and real scenario knowledge through HTTP
         run: node debug/run_registrar_scenario_actions.mjs
         env: {CHROME_PATH: ''}
+      - name: Verify actual text call, E5, FSM and SQL through Chromium
+        run: node debug/run_text_call_ci.mjs
+        env: {CHROME_PATH: '', CLINIC_ACCEPTANCE_TEST: '1'}
       - uses: actions/upload-artifact@v4
         if: always() && !env.ACT
         with:
@@ -36,3 +43,5 @@ jobs:
           path: |
             debug/runs/editor-browser/
             debug/runs/registrar-mis-panel/
+            debug/runs/recursive-dock/
+            debug/runs/text-call-ci/

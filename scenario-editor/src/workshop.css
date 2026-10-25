@@ -21,3 +21,108 @@
 .registrar-workshop .knowledge-tree>button[aria-current=true]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}.registrar-workshop .knowledge-state-picker{display:grid;gap:5px;font-size:10px;color:var(--secondary);margin-bottom:15px}.registrar-workshop .knowledge-state-picker select{font-size:11px}
 .registrar-workshop .dock-panel[data-placement=left]>.dock-resizer,.registrar-workshop .dock-panel[data-placement=right]>.dock-resizer{top:37px;bottom:0;width:6px;height:auto;background:transparent;cursor:col-resize}.registrar-workshop .dock-panel[data-placement=right]>.dock-resizer{left:0;right:auto}.registrar-workshop .dock-panel[data-placement=top]>.dock-resizer,.registrar-workshop .dock-panel[data-placement=bottom]>.dock-resizer{left:0;right:0;width:auto;height:6px;background:transparent;cursor:row-resize}.registrar-workshop .dock-panel[data-placement=bottom]>.dock-resizer{top:0;bottom:auto}.registrar-workshop .dock-panel>.dock-resizer:hover,.registrar-workshop .dock-panel>.dock-resizer:focus-visible{background-color:var(--accent-soft)}.registrar-workshop .knowledge-source{font-size:10px;color:var(--secondary);padding:9px;background:var(--inset);border:1px solid var(--line);margin-bottom:15px}
 .registrar-workshop .dock-grip,.registrar-workshop .recent-calls>button,.registrar-workshop .transcript-line,.registrar-workshop .knowledge-tree>button{justify-content:flex-start}
+/* Extracted prototype surfaces and controls; provider data enters via adapters. */
+.registrar-workshop{font-family:'Golos Text',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-synthesis:none}
+.registrar-workshop .workspace-center-scroll:has(.prototype-call){display:flex;flex-direction:column}
+.registrar-workshop .workspace-center-scroll>div:has(>.prototype-call){display:flex;flex:1;min-height:0}
+.registrar-workshop .prototype-call{flex:1;display:flex;flex-direction:column;margin:0;padding:0;border:0;border-radius:0;background:var(--panel);box-shadow:none;min-height:440px}
+.registrar-workshop .prototype-call>header{padding:23px 24px 10px;align-items:center;gap:12px}
+.registrar-workshop .prototype-call>header h2{font-size:20px;letter-spacing:-.3px;margin:0 0 8px}
+.registrar-workshop .prototype-call>header p{font-size:12px;color:var(--secondary);margin:0}
+.registrar-workshop .call-setup{padding:0 24px 14px;display:grid;grid-template-columns:minmax(120px,1fr) minmax(120px,1fr);gap:12px;border-bottom:1px solid var(--line)}
+.registrar-workshop .call-setup>label{font-size:11px;display:grid;gap:5px;color:var(--secondary);margin:0}
+.registrar-workshop .call-setup>.observer-consent{display:flex;align-items:center;gap:7px;font-size:10px;line-height:1.6;margin-top:20px}
+.registrar-workshop .call-media{display:flex;align-items:center;gap:13px;padding:13px 24px;border-bottom:1px solid var(--line);background:var(--inset)}
+.registrar-workshop .microphone-button{height:44px;width:44px;flex:none;border-radius:50%;background:var(--accent);color:var(--on-accent);display:grid;place-items:center}
+.registrar-workshop .microphone-button.recording{background:var(--danger);outline:3px solid var(--accent-soft)}
+.registrar-workshop .call-media-content{flex:1;min-width:0;font-size:10px;color:var(--secondary)}
+.registrar-workshop .audio-transport{display:flex;align-items:center;gap:8px;min-width:0}
+.registrar-workshop .audio-transport audio{display:none}
+.registrar-workshop .audio-transport>select{width:54px;font-size:10px;border:0;padding:3px;background:transparent}
+.registrar-workshop .transport-play{padding:4px;display:flex;color:var(--accent)}
+.registrar-workshop .transport-time{font-variant-numeric:tabular-nums;font-size:9px;white-space:nowrap}
+.registrar-workshop .waveform-track{flex:1;min-width:20px;height:42px;position:relative}
+.registrar-workshop .waveform-track>svg{height:100%;width:100%;display:block;overflow:hidden}
+.registrar-workshop .waveform-track rect{fill:var(--muted);opacity:.65}
+.registrar-workshop .waveform-track rect.played{fill:var(--accent);opacity:1}
+.registrar-workshop .capturing .waveform-track rect{fill:var(--accent);opacity:1}
+.registrar-workshop .waveform-track>input{position:absolute;inset:0;margin:0;padding:0;width:100%;height:100%;opacity:0;cursor:crosshair}
+.registrar-workshop .waveform-track:focus-within{outline:2px solid var(--accent);border-radius:4px}
+.registrar-workshop .call-live-transcript{flex:1;min-height:160px;overflow:auto;padding:6px 24px 24px;overscroll-behavior:contain;scrollbar-width:thin}
+.registrar-workshop .live-turn{padding:14px 0;max-width:92%}
+.registrar-workshop .live-turn>small{font-size:10px;color:var(--secondary)}
+.registrar-workshop .live-turn.assistant>small{color:var(--accent)}
+.registrar-workshop .live-turn>p{font-size:13px;line-height:1.8;margin:7px 0 0}
+.registrar-workshop .live-turn.patient{margin-left:auto;background:var(--inset);padding:12px 16px;border:1px solid var(--line);border-radius:5px}
+.registrar-workshop .call-start-placeholder{display:grid;place-content:center;text-align:center;color:var(--muted);min-height:240px;gap:8px}
+.registrar-workshop .call-start-placeholder>svg{margin:auto;color:var(--accent)}
+.registrar-workshop .call-start-placeholder>p{max-width:340px;font-size:12px}
+.registrar-workshop .call-input-area{padding:12px 24px;border-top:1px solid var(--line);background:var(--inset)}
+.registrar-workshop .prototype-call .observer-text-input{display:flex;align-items:center;gap:8px;margin:0 0 8px}
+.registrar-workshop .prototype-call .observer-text-input>label{flex:1;margin:0}
+.registrar-workshop .prototype-call .observer-text-input input{font-size:12px;height:40px;background:var(--panel);border:1px solid var(--line-strong);border-radius:6px}
+.registrar-workshop .prototype-call .observer-text-input>button{height:40px;width:40px;padding:0;border-radius:6px;flex:none}
+.registrar-workshop .sr-only{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.registrar-workshop .call-bottom-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:10px;color:var(--secondary);flex-wrap:wrap}
+.registrar-workshop .call-bottom-actions>span{font-size:9px}
+.registrar-workshop .call-bottom-actions>details{position:relative}
+.registrar-workshop .call-bottom-actions>details[open]{flex-basis:100%;padding:8px;background:var(--panel);border:1px solid var(--line);border-radius:4px}
+.registrar-workshop .call-bottom-actions input[type=file]{font-size:10px;margin-top:6px}
+.registrar-workshop .prototype-call>.observer-call-transcript{margin:0;padding:8px 24px;border-top:1px solid var(--line);background:var(--inset);font-size:10px}
+.registrar-workshop .prototype-call>.observer-call-transcript:not([open]){max-height:33px;overflow:hidden}
+.registrar-workshop .prototype-call .observer-call-path{margin:8px 0;gap:4px}
+.registrar-workshop .model-trace{font:10px/1.7 ui-monospace,monospace}
+.registrar-workshop .theme-controls{display:flex;align-items:center;gap:6px;margin-left:auto;flex:none}
+.registrar-workshop .theme-controls>label{display:flex;align-items:center;gap:5px}
+.registrar-workshop .theme-settings>summary{display:flex;align-items:center;list-style:none;padding:4px;cursor:pointer}
+.registrar-workshop .theme-popover{position:fixed;bottom:36px;right:10px;z-index:110;width:340px;max-width:calc(100vw - 24px);padding:18px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);font-size:11px;color:var(--secondary)}
+.registrar-workshop .theme-popover>header{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.registrar-workshop .theme-popover h2{font-size:13px;font-weight:600;margin:0;letter-spacing:-.2px}
+.registrar-workshop .theme-popover>header label{display:flex;gap:7px;align-items:center}
+.registrar-workshop .theme-current{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:22px}
+.registrar-workshop .theme-current strong{color:var(--text);font-size:12px;font-weight:500}
+.registrar-workshop .theme-current output{font-size:10px;font-variant-numeric:tabular-nums}
+.registrar-workshop .theme-slider-row{display:flex;align-items:center;gap:8px;margin:7px 0}
+.registrar-workshop .liquid-theme-slider{flex:1;min-width:0;height:50px;position:relative;border-radius:9px;touch-action:none;display:flex;align-items:center}
+.registrar-workshop .liquid-theme-slider:focus-within{outline:2px solid var(--accent);outline-offset:-5px}
+.registrar-workshop .theme-css-track{position:absolute;left:0;right:0;height:12px;border-radius:9px;background:var(--theme-ramp);box-shadow:inset 0 1px 3px #0006}
+.registrar-workshop .liquid-theme-slider input{position:relative;width:100%;appearance:none;background:transparent;border:0;padding:0;outline:0}
+.registrar-workshop .liquid-theme-slider input::-webkit-slider-thumb{appearance:none;width:35px;height:25px;border-radius:12px;border:1px solid #ffffffb0;background:#ffffff66;box-shadow:0 3px 9px #0003,inset 0 1px 3px #ffffffc0;backdrop-filter:blur(3px);cursor:ew-resize}
+.registrar-workshop .theme-popover p{font-size:10px;line-height:1.7;margin:5px 0 14px}
+.registrar-workshop .theme-remember{display:flex;align-items:center;gap:7px;padding-top:12px;border-top:1px solid var(--line);font-size:11px}
+.registrar-workshop .theme-popover>button{display:flex;align-items:center;gap:5px;margin:12px 0 0;font-size:10px}
+.registrar-workshop .manual-console{padding:20px 24px;min-width:0}
+.registrar-workshop .manual-console h1{display:flex;align-items:center;gap:7px}
+.registrar-workshop .manual-console form{display:grid;gap:12px;margin-bottom:16px}
+.registrar-workshop .manual-console form>label{display:grid;gap:5px;font-size:11px}
+.registrar-workshop .manual-console textarea{font:12px/1.8 ui-monospace,monospace;resize:vertical}
+.registrar-workshop .manual-console .manual-consent{display:flex;align-items:center;gap:6px;font-size:10px}
+.registrar-workshop .manual-url{display:flex;gap:6px}
+.registrar-workshop .manual-url>select{width:85px;flex:none}
+.registrar-workshop .manual-url>input{flex:1}
+.registrar-workshop .manual-source{font-size:10px;color:var(--secondary);overflow-wrap:anywhere}
+.registrar-workshop .manual-source .copy-value{display:inline-flex;max-width:100%}
+.registrar-workshop .manual-result-status{font-size:10px;margin:12px 0;color:var(--secondary)}
+@media(max-width:760px){.registrar-workshop .prototype-call>header{padding:15px}.registrar-workshop .call-setup{padding:0 15px 12px;grid-template-columns:1fr}.registrar-workshop .call-setup>.observer-consent{margin-top:0}.registrar-workshop .call-media,.registrar-workshop .call-live-transcript,.registrar-workshop .call-input-area{padding-left:15px;padding-right:15px}.registrar-workshop .call-media{gap:7px}.registrar-workshop .microphone-button{width:34px;height:34px}.registrar-workshop .transport-time{display:none}.registrar-workshop .audio-transport{gap:3px}.registrar-workshop .manual-console{padding:14px}}
+.registrar-workshop .query-inspector{display:flex;flex-direction:column;min-height:100%;position:relative;padding-top:0}
+.registrar-workshop .mis-view-tabs{display:flex;gap:4px;margin:0 -11px 10px;border-bottom:1px solid var(--line);background:var(--inset);padding:0 8px}
+.registrar-workshop .mis-view-tabs>button{font-size:10px;border-radius:0;padding:10px 7px;border-bottom:2px solid transparent}
+.registrar-workshop .mis-view-tabs>button[aria-pressed=true]{border-bottom-color:var(--accent);color:var(--text)}
+.registrar-workshop .mis-bottom{margin-top:auto;padding-top:12px;display:flex;justify-content:space-between;align-items:center;font-size:9px;color:var(--secondary);gap:6px}
+.registrar-workshop .mis-bottom>button{font-size:10px;color:var(--accent);white-space:nowrap}
+.registrar-workshop .mis-sql-view{display:grid;gap:14px}
+.registrar-workshop .query-results .copy-value>button{font-size:0;width:21px;height:20px;padding:2px;opacity:.65}
+.registrar-workshop .query-results .copy-value>button::before{content:'⧉';font-size:12px}
+.registrar-workshop .query-results .copy-value>button:hover,.registrar-workshop .query-results .copy-value>button:focus-visible{opacity:1;background:var(--accent-soft)}
+.registrar-workshop .query-inspector>*{flex-shrink:0}
+.registrar-workshop .query-results{scroll-padding-top:38px}
+.registrar-workshop .query-results .copy-value>button{scroll-margin-top:38px}
+/* The prototype keeps workspace controls in the application header. */
+.registrar-workshop #workspace-panel-controls{flex:1;min-width:0;z-index:50}
+.registrar-workshop .workshop-header .recursive-toolbar{min-height:0;border:0;background:transparent;padding:0;gap:7px;flex-wrap:nowrap}
+.registrar-workshop .workshop-header .recursive-toolbar>span:first-child,.registrar-workshop .workshop-header .recursive-help{display:none}
+.registrar-workshop .workshop-header .recursive-toolbar select{max-width:140px;background:var(--inset)}
+.registrar-workshop .workshop-header .recursive-reset{margin-left:0}
+.registrar-workshop .workshop-header .recursive-reset>svg{flex:none}
+@media(max-width:1150px){.registrar-workshop .workshop-header .recursive-reset{font-size:0}.registrar-workshop .workshop-header .recursive-place-menu{display:none}.registrar-workshop .workshop-header-right .workplace{display:none}}
+@media(max-width:760px){.registrar-workshop #workspace-panel-controls{order:2;flex-basis:100%}.registrar-workshop .workshop-header .recursive-place-menu{display:block}.registrar-workshop .workshop-header .recursive-reset{margin-left:auto}.registrar-workshop .workshop-header .recursive-toolbar select{max-width:120px}}

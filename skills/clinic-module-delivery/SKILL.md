@@ -15,7 +15,7 @@ For speech changes use actual audible audio and real ASR; test speech, tones and
 
 Record skipped requirements and discovered defects in TODO.md before changing focus. Describe what is deployed, what is only a draft, and what has genuinely been tested. Keep the overall goal active while required modules remain unfinished.
 
-For scenario changes, score/CI work, MIS failures, or registrar suggestions, read [score-acceptance.md](references/score-acceptance.md). It records the user's test isolation, fixed speech corpus, night recovery and role-specific editing requirements. Run applicable workflows with act and report actual Actions results on the published SHA; local pytest alone is not workflow acceptance.
+For prototype refactoring, UI/backend adapter boundaries, scenario changes, score/CI work, MIS failures, or registrar suggestions, read [score-acceptance.md](references/score-acceptance.md). It records the user's test isolation, fixed speech corpus, night recovery and role-specific editing requirements. Run applicable workflows with act and report actual Actions results on the published SHA; local pytest alone is not workflow acceptance.
 
 ## Credential stop
 

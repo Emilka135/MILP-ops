@@ -17,6 +17,8 @@ COPY build.rs ./
 COPY src ./src
 COPY tools/compile_rust.py ./tools/compile_rust.py
 COPY runtime/src ./runtime/src
+COPY app/__init__.py app/types.py /workspace/app/
+COPY app/mis /workspace/app/mis
 ARG LOCAL_UID=1000
 RUN useradd -u ${LOCAL_UID} -m clinic && mkdir -p /data /cargo-target && chown -R clinic:clinic /data /cargo-target /workspace /usr/local/cargo
 ENV PYTHONPATH=/workspace/runtime/src CARGO_TARGET_DIR=/cargo-target EDITOR_DATA=/data
@@ -29,6 +31,8 @@ WORKDIR /workspace
 COPY requirements/editor.txt /workspace/requirements/editor.txt
 RUN --mount=type=cache,id=clinic-editor-pip,sharing=locked,target=/root/.cache/pip pip install -r requirements/editor.txt
 COPY runtime/src ./runtime/src
+COPY app/__init__.py app/types.py /workspace/app/
+COPY app/mis /workspace/app/mis
 COPY scenarios ./scenarios
 COPY --from=ui /ui/dist ./scenario-editor/dist
 ARG LOCAL_UID=1000
@@ -36,3 +40,5 @@ RUN useradd -u ${LOCAL_UID} -m clinic && mkdir -p /data /audio && chown -R clini
 ENV PYTHONPATH=/workspace/runtime/src EDITOR_HOST=0.0.0.0 EDITOR_PORT=8090 EDITOR_ALLOW_BUILD=0 EDITOR_BUILD_QUEUE=1 EDITOR_DATA=/data EDITOR_PASSWORD_FILE=/data/admin-password.json
 USER clinic
 CMD ["python3", "-m", "clinic.scenario_editor"]
+
+COPY reference-data /workspace/reference-data

@@ -1,0 +1,23 @@
+{
+  "files": [
+    {
+      "file": "21de07bd-6bc7-4d24-9aa1-15f9f32fd12a.csv",
+      "sha256": "bca1304ebe4c5fe3459ee1ac9b182ec2baef7bc220860ce48a16af834a4c3eb0",
+      "bytes": 1254940,
+      "origin": "supplied case export"
+    },
+    {
+      "file": "30aef650-1a0b-4238-8c14-2dba969a1a2c.csv",
+      "sha256": "1616223589475b99ec228ec37bb4cc922eb9189e2a2f267624de2e63b8b29677",
+      "bytes": 6391612,
+      "origin": "supplied case export"
+    },
+    {
+      "file": "Расписание_врачей_25.06-31.12.2026.xlsx",
+      "sha256": "1f1d1025a2fe74f245e200f2656b72b0ba678ac18a4b04eb45c68dd2937fae6c",
+      "bytes": 7094497,
+      "origin": "supplied case export"
+    }
+  ],
+  "patient_identity": "Appointment export contains hashes only; no FIO/DOB/OMS. Call numbers are masked. This is a reference snapshot, not live MIS."
+}

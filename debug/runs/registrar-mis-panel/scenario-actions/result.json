@@ -12,8 +12,8 @@
     "Independent SQLite snapshot confirms scoped case, two labels, zero bookings and unchanged common project"
   ],
   "effects": {
-    "admin_saved_revision": "cbe7e4ff07b906133715c3e61453c9eea45efbad92bd4b28d5e6836a447139aa",
-    "restored_revision": "2f72a8159f574100b24786fd7ac23e6438489a431e002e23389bf924f3af10b5",
+    "admin_saved_revision": "6806f392ada065c1793d20c38700442a8459c4451ff3c54e21b0edf2ed818934",
+    "restored_revision": "afc539486ea267b3bc4e45167ba3ffd50fa88d28e6ff8183f3b745c96ed160b7",
     "archived": {
       "call_id": "synthetic-runtime-action-probe",
       "trace": [

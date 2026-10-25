@@ -10,3 +10,12 @@
 !docker
 !docker/local-update.Dockerfile
 **/__pycache__
+
+!app
+!app/__init__.py
+!app/types.py
+!app/mis
+!app/mis/**
+
+!reference-data
+!reference-data/**
